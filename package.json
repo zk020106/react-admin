@@ -1,12 +1,15 @@
 {
   "name": "antd-react-admin",
-  "private": true,
   "version": "0.0.0",
+  "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "format": "oxfmt \"src/**/*.ts\" \"src/**/*.tsx\" \"src/**/*.css\" \"*.ts\" \"*.json\" --write",
+    "format:check": "oxfmt \"src/**/*.ts\" \"src/**/*.tsx\" \"src/**/*.css\" \"*.ts\" \"*.json\" --check",
+    "lint": "oxlint . --type-aware",
+    "lint:fix": "oxlint . --type-aware --fix",
     "preview": "vite preview",
     "test": "vitest run"
   },
@@ -25,6 +28,7 @@
     "lodash-es": "^4.18.1",
     "lucide-react": "^1.17.0",
     "next-themes": "^0.4.6",
+    "nprogress": "^0.2.0",
     "radix-ui": "^1.4.3",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
@@ -39,7 +43,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.29.0",
-    "@eslint/js": "^10.0.1",
     "@rolldown/plugin-babel": "^0.2.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -47,19 +50,19 @@
     "@types/babel__core": "^7.20.5",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^24.12.3",
+    "@types/nprogress": "^0.2.3",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
     "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^10.3.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.6.0",
     "jsdom": "^29.1.1",
+    "oxfmt": "^0.53.0",
+    "oxlint": "^1.68.0",
+    "oxlint-tsgolint": "^0.23.0",
     "shadcn": "^4.10.0",
     "typescript": "~6.0.2",
-    "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
-    "vitest": "^4.1.8"
+    "vitest": "^4.1.8",
+    "zip-a-folder": "^6.1.1"
   }
 }

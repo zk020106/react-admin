@@ -1,4 +1,4 @@
-import type { MenuRecord, TabRecord } from "./types"
+import type { MenuRecord, TabRecord } from "@/types/admin";
 
 export const adminMenu: MenuRecord[] = [
   {
@@ -35,7 +35,7 @@ export const adminMenu: MenuRecord[] = [
     path: "/effects",
     title: "交互能力",
   },
-]
+];
 
 export const affixTabs: TabRecord[] = [
   {
@@ -45,7 +45,42 @@ export const affixTabs: TabRecord[] = [
     path: "/dashboard",
     title: "仪表盘",
   },
-]
+];
+
+export const ADMIN_DEFAULT_PATH = "/dashboard";
+
+function flattenMenuRecords(menu: MenuRecord[]): MenuRecord[] {
+  return menu.flatMap((item) => [item, ...flattenMenuRecords(item.children ?? [])]);
+}
+
+function normalizePathname(pathname: string) {
+  const [path = ""] = pathname.split(/[?#]/);
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+
+  return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
+}
+
+export function getDefaultMenuPath(item: MenuRecord): string {
+  return item.children?.[0] ? getDefaultMenuPath(item.children[0]) : item.path;
+}
+
+export const adminRoutePaths = flattenMenuRecords(adminMenu).map((item) => item.path);
+
+export const adminPagePaths = flattenMenuRecords(adminMenu)
+  .filter((item) => !item.children?.length)
+  .map((item) => item.path);
+
+export function normalizeAdminPath(pathname: string) {
+  const path = normalizePathname(pathname);
+
+  if (path === "/") {
+    return ADMIN_DEFAULT_PATH;
+  }
+
+  const menuRecord = flattenMenuRecords(adminMenu).find((item) => item.path === path);
+
+  return menuRecord ? getDefaultMenuPath(menuRecord) : ADMIN_DEFAULT_PATH;
+}
 
 export const menuTitleMessages: Record<string, Record<string, string>> = {
   "/dashboard": {
@@ -88,10 +123,10 @@ export const menuTitleMessages: Record<string, Record<string, string>> = {
     "en-US": "Workplace",
     "zh-CN": "工作台",
   },
-}
+};
 
 export function translateMenuTitle(path: string, locale = "zh-CN") {
-  return menuTitleMessages[path]?.[locale] ?? menuTitleMessages[path]?.["zh-CN"] ?? path
+  return menuTitleMessages[path]?.[locale] ?? menuTitleMessages[path]?.["zh-CN"] ?? path;
 }
 
 export function localizeMenu(menu: MenuRecord[], locale = "zh-CN"): MenuRecord[] {
@@ -99,14 +134,14 @@ export function localizeMenu(menu: MenuRecord[], locale = "zh-CN"): MenuRecord[]
     ...item,
     children: item.children ? localizeMenu(item.children, locale) : undefined,
     title: translateMenuTitle(item.path, locale),
-  }))
+  }));
 }
 
 export function localizeTabs(tabs: TabRecord[], locale = "zh-CN"): TabRecord[] {
   return tabs.map((tab) => ({
     ...tab,
     title: translateMenuTitle(tab.path, locale),
-  }))
+  }));
 }
 
 export const overviewStats = [
@@ -114,20 +149,18 @@ export const overviewStats = [
   { label: "查询缓存命中", trend: "+6.4%", value: "96.8%" },
   { label: "待处理告警", trend: "-3", value: "17" },
   { label: "平均响应", trend: "-24ms", value: "184ms" },
-]
+];
 
 export const userRows = [
   { email: "root@example.com", role: "所有者", status: "启用", team: "平台组" },
   { email: "ops@example.com", role: "运营员", status: "启用", team: "运营组" },
   { email: "audit@example.com", role: "审计员", status: "复核中", team: "风控组" },
-]
+];
 
 export function getMenuTitle(path: string, locale = "zh-CN") {
-  const all = adminMenu.flatMap(function flatten(item): MenuRecord[] {
-    return [item, ...(item.children ?? []).flatMap(flatten)]
-  })
+  const all = flattenMenuRecords(adminMenu);
 
   return all.some((item) => item.path === path)
     ? translateMenuTitle(path, locale)
-    : translateMenuTitle("/dashboard", locale)
+    : translateMenuTitle("/dashboard", locale);
 }

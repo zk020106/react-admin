@@ -1,4 +1,4 @@
-import { TinyColor } from "@ctrl/tinycolor"
+import { TinyColor } from "@ctrl/tinycolor";
 
 export type BuiltinThemeType =
   | "custom"
@@ -15,29 +15,29 @@ export type BuiltinThemeType =
   | "slate"
   | "violet"
   | "yellow"
-  | "zinc"
+  | "zinc";
 
-export type VbenThemeMode = "auto" | "dark" | "light"
+export type VbenThemeMode = "auto" | "dark" | "light";
 
 export interface BuiltinThemePreset {
-  color: string
-  darkPrimaryColor?: string
-  primaryColor?: string
-  type: BuiltinThemeType
+  color: string;
+  darkPrimaryColor?: string;
+  primaryColor?: string;
+  type: BuiltinThemeType;
 }
 
 export interface VbenThemeOptions {
-  builtinType: BuiltinThemeType
-  colorDestructive?: string
-  colorPrimary?: string
-  colorSuccess?: string
-  colorWarning?: string
-  fontSize: number
-  mode: VbenThemeMode
-  radius: string
-  semiDarkHeader?: boolean
-  semiDarkSidebar?: boolean
-  semiDarkSidebarSub?: boolean
+  builtinType: BuiltinThemeType;
+  colorDestructive?: string;
+  colorPrimary?: string;
+  colorSuccess?: string;
+  colorWarning?: string;
+  fontSize: number;
+  mode: VbenThemeMode;
+  radius: string;
+  semiDarkHeader?: boolean;
+  semiDarkSidebar?: boolean;
+  semiDarkSidebarSub?: boolean;
 }
 
 export const BUILT_IN_THEME_PRESETS: BuiltinThemePreset[] = [
@@ -76,48 +76,50 @@ export const BUILT_IN_THEME_PRESETS: BuiltinThemePreset[] = [
     type: "gray",
   },
   { color: "", type: "custom" },
-]
+];
 
 export function isDarkTheme(mode: VbenThemeMode) {
   if (mode === "auto") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   }
 
-  return mode === "dark"
+  return mode === "dark";
 }
 
 export function applyVbenTheme(options: VbenThemeOptions) {
-  const root = document.documentElement
-  const dark = isDarkTheme(options.mode)
+  const root = document.documentElement;
+  const dark = isDarkTheme(options.mode);
 
-  root.classList.toggle("dark", dark)
-  root.classList.toggle("light", !dark)
-  root.dataset.theme = options.builtinType
-  root.style.setProperty("--radius", `${options.radius}rem`)
-  root.style.setProperty("--font-size-base", `${options.fontSize}px`)
-  root.style.setProperty("--menu-font-size", `calc(${options.fontSize}px * 0.875)`)
+  root.classList.toggle("dark", dark);
+  root.classList.toggle("light", !dark);
+  root.dataset.theme = options.builtinType;
+  root.style.setProperty("--radius", `${options.radius}rem`);
+  root.style.setProperty("--font-size-base", `${options.fontSize}px`);
+  root.style.setProperty("--menu-font-size", `calc(${options.fontSize}px * 0.875)`);
 
-  const primary = resolvePrimaryColor(options, dark)
+  const primary = resolvePrimaryColor(options, dark);
   const colorVariables = {
     "--destructive": toHslCssVar(options.colorDestructive ?? "hsl(348 100% 61%)"),
     "--primary": toHslCssVar(primary),
     ...resolveSurfaceVariables(dark, options),
     "--success": toHslCssVar(options.colorSuccess ?? "hsl(144 57% 58%)"),
     "--warning": toHslCssVar(options.colorWarning ?? "hsl(42 84% 61%)"),
-  }
+  };
 
   Object.entries(colorVariables).forEach(([name, value]) => {
-    root.style.setProperty(name, value)
-  })
-  updateCSSVariables(colorVariables)
+    root.style.setProperty(name, value);
+  });
+  updateCSSVariables(colorVariables);
 }
 
 function resolveSurfaceVariables(dark: boolean, options: VbenThemeOptions) {
-  const headerDark = dark || options.semiDarkHeader
-  const sidebarDark = dark || options.semiDarkSidebar
-  const sidebarSubDark = dark || options.semiDarkSidebarSub
-  const sidebarVariables = sidebarDark ? darkSidebarVariables() : lightSidebarVariables()
-  const sidebarSubVariables = sidebarSubDark ? darkSidebarSubVariables() : lightSidebarSubVariables()
+  const headerDark = dark || options.semiDarkHeader;
+  const sidebarDark = dark || options.semiDarkSidebar;
+  const sidebarSubDark = dark || options.semiDarkSidebarSub;
+  const sidebarVariables = sidebarDark ? darkSidebarVariables() : lightSidebarVariables();
+  const sidebarSubVariables = sidebarSubDark
+    ? darkSidebarSubVariables()
+    : lightSidebarSubVariables();
 
   return {
     "--header": headerDark ? "222.34deg 10.43% 12.27%" : "0 0% 100%",
@@ -125,7 +127,7 @@ function resolveSurfaceVariables(dark: boolean, options: VbenThemeOptions) {
     "--menu": sidebarVariables["--sidebar"],
     ...sidebarVariables,
     ...sidebarSubVariables,
-  }
+  };
 }
 
 function darkSidebarVariables() {
@@ -140,7 +142,7 @@ function darkSidebarVariables() {
     "--sidebar-foreground": "0 0% 78%",
     "--sidebar-hover": "216 5% 24%",
     "--sidebar-hover-foreground": "0 0% 95%",
-  }
+  };
 }
 
 function lightSidebarVariables() {
@@ -155,48 +157,48 @@ function lightSidebarVariables() {
     "--sidebar-foreground": "210 6% 21%",
     "--sidebar-hover": "240 5% 96%",
     "--sidebar-hover-foreground": "210 6% 21%",
-  }
+  };
 }
 
 function darkSidebarSubVariables() {
   return {
     "--sidebar-sub": "222.34deg 10.43% 12.27%",
     "--sidebar-deep": "220deg 13.06% 9%",
-  }
+  };
 }
 
 function lightSidebarSubVariables() {
   return {
     "--sidebar-sub": "0 0% 100%",
     "--sidebar-deep": "0 0% 100%",
-  }
+  };
 }
 
 function resolvePrimaryColor(options: VbenThemeOptions, dark: boolean) {
   if (options.builtinType === "custom") {
-    return options.colorPrimary ?? "hsl(212 100% 45%)"
+    return options.colorPrimary ?? "hsl(212 100% 45%)";
   }
 
-  const preset = BUILT_IN_THEME_PRESETS.find((item) => item.type === options.builtinType)
+  const preset = BUILT_IN_THEME_PRESETS.find((item) => item.type === options.builtinType);
 
   if (!preset) {
-    return options.colorPrimary ?? "hsl(212 100% 45%)"
+    return options.colorPrimary ?? "hsl(212 100% 45%)";
   }
 
-  return (dark ? preset.darkPrimaryColor : preset.primaryColor) || preset.color
+  return (dark ? preset.darkPrimaryColor : preset.primaryColor) || preset.color;
 }
 
 function toHslCssVar(color: string) {
-  const hslMatch = color.match(/^hsl\((.*)\)$/)
+  const hslMatch = color.match(/^hsl\((.*)\)$/);
 
   if (hslMatch?.[1]) {
-    return hslMatch[1].trim()
+    return hslMatch[1].trim();
   }
 
-  const { a, h, l, s } = new TinyColor(color).toHsl()
-  const hsl = `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`
+  const { a, h, l, s } = new TinyColor(color).toHsl();
+  const hsl = `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 
-  return a < 1 ? `${hsl} / ${a}` : hsl
+  return a < 1 ? `${hsl} / ${a}` : hsl;
 }
 
 function updateCSSVariables(
@@ -204,14 +206,15 @@ function updateCSSVariables(
   id = "__vben-styles__",
   selector = ":root",
 ) {
-  const styleElement = document.querySelector<HTMLStyleElement>(`#${id}`) ?? document.createElement("style")
+  const styleElement =
+    document.querySelector<HTMLStyleElement>(`#${id}`) ?? document.createElement("style");
 
-  styleElement.id = id
+  styleElement.id = id;
   styleElement.textContent = `${selector} {${Object.entries(variables)
     .map(([key, value]) => `${key}: ${value};`)
-    .join("")}}`
+    .join("")}}`;
 
   if (!styleElement.parentElement) {
-    document.head.append(styleElement)
+    document.head.append(styleElement);
   }
 }

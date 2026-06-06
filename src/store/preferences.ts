@@ -1,6 +1,11 @@
-import { createStore } from "zustand/vanilla"
+import { createStore } from "zustand/vanilla";
 
-import type { AdminPreferences, LayoutMode, PreferencesButtonPosition, TransitionName } from "./types"
+import type {
+  AdminPreferences,
+  LayoutMode,
+  PreferencesButtonPosition,
+  TransitionName,
+} from "@/types/admin";
 
 export const DEFAULT_PREFERENCES: AdminPreferences = {
   animationEnable: true,
@@ -93,7 +98,7 @@ export const DEFAULT_PREFERENCES: AdminPreferences = {
   widgetSidebarToggle: true,
   widgetThemeToggle: true,
   widgetTimezone: true,
-}
+};
 
 const LAYOUTS = new Set<LayoutMode>([
   "full-content",
@@ -103,88 +108,88 @@ const LAYOUTS = new Set<LayoutMode>([
   "mixed-nav",
   "sidebar-mixed-nav",
   "sidebar-nav",
-])
+]);
 
-const TRANSITIONS = new Set<TransitionName>(["fade", "fade-down", "fade-slide", "fade-up"])
+const TRANSITIONS = new Set<TransitionName>(["fade", "fade-down", "fade-slide", "fade-up"]);
 const PREFERENCES_BUTTON_POSITIONS = new Set<PreferencesButtonPosition>([
   "auto",
   "fixed",
   "header",
   "user-dropdown",
-])
+]);
 
 export interface PreferenceStoreState {
-  preferences: AdminPreferences
-  resetPreferences: () => void
+  preferences: AdminPreferences;
+  resetPreferences: () => void;
   setPreferences: (
     updater:
       | ((preferences: AdminPreferences) => Partial<AdminPreferences>)
       | Partial<AdminPreferences>,
-  ) => void
+  ) => void;
 }
 
 interface PreferenceStoreOptions {
-  persist?: boolean
-  storageKey?: string
+  persist?: boolean;
+  storageKey?: string;
 }
 
-const PREFERENCES_STORAGE_KEY = "antd-react-admin:preferences"
+const PREFERENCES_STORAGE_KEY = "antd-react-admin:preferences";
 
 function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max)
+  return Math.min(Math.max(value, min), max);
 }
 
 function getLocalStorage() {
   if (typeof window === "undefined") {
-    return undefined
+    return undefined;
   }
 
   try {
-    return window.localStorage
+    return window.localStorage;
   } catch {
-    return undefined
+    return undefined;
   }
 }
 
 function readStoredPreferences(storageKey: string): Partial<AdminPreferences> | undefined {
-  const storage = getLocalStorage()
+  const storage = getLocalStorage();
 
   if (!storage) {
-    return undefined
+    return undefined;
   }
 
   try {
-    const raw = storage.getItem(storageKey)
+    const raw = storage.getItem(storageKey);
 
     if (!raw) {
-      return undefined
+      return undefined;
     }
 
-    const parsed = JSON.parse(raw) as unknown
+    const parsed = JSON.parse(raw) as unknown;
 
     if (parsed && typeof parsed === "object" && "preferences" in parsed) {
-      return (parsed as { preferences?: Partial<AdminPreferences> }).preferences
+      return (parsed as { preferences?: Partial<AdminPreferences> }).preferences;
     }
 
     if (parsed && typeof parsed === "object") {
-      return parsed as Partial<AdminPreferences>
+      return parsed as Partial<AdminPreferences>;
     }
   } catch {
-    storage.removeItem(storageKey)
+    storage.removeItem(storageKey);
   }
 
-  return undefined
+  return undefined;
 }
 
 function writeStoredPreferences(storageKey: string, preferences: AdminPreferences) {
-  const storage = getLocalStorage()
+  const storage = getLocalStorage();
 
   if (!storage) {
-    return
+    return;
   }
 
   try {
-    storage.setItem(storageKey, JSON.stringify({ preferences }))
+    storage.setItem(storageKey, JSON.stringify({ preferences }));
   } catch {
     // Ignore storage quota or privacy-mode failures; the in-memory store still works.
   }
@@ -194,7 +199,7 @@ export function normalizePreferences(
   next: Partial<AdminPreferences> = {},
   base: AdminPreferences = DEFAULT_PREFERENCES,
 ): AdminPreferences {
-  const merged = { ...base, ...next }
+  const merged = { ...base, ...next };
 
   return {
     ...merged,
@@ -202,7 +207,9 @@ export function normalizePreferences(
     contentPadding: clamp(merged.contentPadding, 0, 48),
     headerHeight: clamp(merged.headerHeight, 40, 80),
     layout: LAYOUTS.has(merged.layout) ? merged.layout : DEFAULT_PREFERENCES.layout,
-    appPreferencesButtonPosition: PREFERENCES_BUTTON_POSITIONS.has(merged.appPreferencesButtonPosition)
+    appPreferencesButtonPosition: PREFERENCES_BUTTON_POSITIONS.has(
+      merged.appPreferencesButtonPosition,
+    )
       ? merged.appPreferencesButtonPosition
       : DEFAULT_PREFERENCES.appPreferencesButtonPosition,
     sidebarMixedWidth: clamp(merged.sidebarMixedWidth, 60, 120),
@@ -214,38 +221,38 @@ export function normalizePreferences(
     transitionName: TRANSITIONS.has(merged.transitionName)
       ? merged.transitionName
       : DEFAULT_PREFERENCES.transitionName,
-  }
+  };
 }
 
 export function createPreferenceStore(
   initial?: Partial<AdminPreferences>,
   options: PreferenceStoreOptions = {},
 ) {
-  const storageKey = options.storageKey ?? PREFERENCES_STORAGE_KEY
-  const persisted = options.persist ? readStoredPreferences(storageKey) : undefined
-  const initialPreferences = normalizePreferences({ ...persisted, ...initial })
+  const storageKey = options.storageKey ?? PREFERENCES_STORAGE_KEY;
+  const persisted = options.persist ? readStoredPreferences(storageKey) : undefined;
+  const initialPreferences = normalizePreferences({ ...persisted, ...initial });
 
   return createStore<PreferenceStoreState>()((set, get) => ({
     preferences: initialPreferences,
     resetPreferences: () => {
-      set({ preferences: DEFAULT_PREFERENCES })
+      set({ preferences: DEFAULT_PREFERENCES });
 
       if (options.persist) {
-        writeStoredPreferences(storageKey, DEFAULT_PREFERENCES)
+        writeStoredPreferences(storageKey, DEFAULT_PREFERENCES);
       }
     },
     setPreferences: (updater) => {
-      const current = get().preferences
-      const patch = typeof updater === "function" ? updater(current) : updater
-      const preferences = normalizePreferences(patch, current)
+      const current = get().preferences;
+      const patch = typeof updater === "function" ? updater(current) : updater;
+      const preferences = normalizePreferences(patch, current);
 
-      set({ preferences })
+      set({ preferences });
 
       if (options.persist) {
-        writeStoredPreferences(storageKey, preferences)
+        writeStoredPreferences(storageKey, preferences);
       }
     },
-  }))
+  }));
 }
 
-export const preferenceStore = createPreferenceStore(undefined, { persist: true })
+export const preferenceStore = createPreferenceStore(undefined, { persist: true });

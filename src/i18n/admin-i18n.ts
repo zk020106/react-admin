@@ -1,7 +1,7 @@
-import type { AdminPreferences } from "./types"
+import type { AdminPreferences } from "@/types/admin";
 
-export type AdminLocale = "en-US" | "zh-CN"
-export type PreferenceTabValue = "appearance" | "general" | "layout" | "shortcut"
+export type AdminLocale = "en-US" | "zh-CN";
+export type PreferenceTabValue = "appearance" | "general" | "layout" | "shortcut";
 
 const layoutValues: AdminPreferences["layout"][] = [
   "sidebar-nav",
@@ -11,21 +11,31 @@ const layoutValues: AdminPreferences["layout"][] = [
   "mixed-nav",
   "header-mixed-nav",
   "full-content",
-]
+];
 
-const colorModeValues: AdminPreferences["colorMode"][] = ["light", "dark", "system"]
-const contentValues: AdminPreferences["contentCompact"][] = ["wide", "compact"]
-const navigationStyleValues: AdminPreferences["navigationStyleType"][] = ["rounded", "plain"]
-const headerModeValues: AdminPreferences["headerMode"][] = ["static", "fixed", "auto", "auto-scroll"]
-const headerAlignValues: AdminPreferences["headerMenuAlign"][] = ["start", "center", "end"]
-const tabbarStyleValues: AdminPreferences["tabbarStyleType"][] = ["chrome", "plain", "card", "brisk"]
+const colorModeValues: AdminPreferences["colorMode"][] = ["light", "dark", "system"];
+const contentValues: AdminPreferences["contentCompact"][] = ["wide", "compact"];
+const navigationStyleValues: AdminPreferences["navigationStyleType"][] = ["rounded", "plain"];
+const headerModeValues: AdminPreferences["headerMode"][] = [
+  "static",
+  "fixed",
+  "auto",
+  "auto-scroll",
+];
+const headerAlignValues: AdminPreferences["headerMenuAlign"][] = ["start", "center", "end"];
+const tabbarStyleValues: AdminPreferences["tabbarStyleType"][] = [
+  "chrome",
+  "plain",
+  "card",
+  "brisk",
+];
 const preferenceButtonPositionValues: AdminPreferences["appPreferencesButtonPosition"][] = [
   "auto",
   "header",
   "fixed",
   "user-dropdown",
-]
-const preferenceTabValues: PreferenceTabValue[] = ["appearance", "layout", "shortcut", "general"]
+];
+const preferenceTabValues: PreferenceTabValue[] = ["appearance", "layout", "shortcut", "general"];
 
 export const adminMessages = {
   "en-US": {
@@ -237,7 +247,12 @@ export const adminMessages = {
         rows: [
           { email: "root@example.com", role: "Owner", status: "Enabled", team: "Platform" },
           { email: "ops@example.com", role: "Operator", status: "Enabled", team: "Operations" },
-          { email: "audit@example.com", role: "Auditor", status: "In review", team: "Risk control" },
+          {
+            email: "audit@example.com",
+            role: "Auditor",
+            status: "In review",
+            team: "Risk control",
+          },
         ],
         title: "Users",
       },
@@ -403,7 +418,8 @@ export const adminMessages = {
     },
     lock: {
       back: "Back",
-      description: "Set a lock-screen password for this session. You need it to return to the system.",
+      description:
+        "Set a lock-screen password for this session. You need it to return to the system.",
       error: "Incorrect password. Please try again.",
       password: "Lock password",
       placeholder: "Enter lock password",
@@ -798,119 +814,123 @@ export const adminMessages = {
       unlock: "解锁",
     },
   },
-} as const
+} as const;
 
-export type AdminMessages = (typeof adminMessages)[AdminLocale]
+export type AdminMessages = (typeof adminMessages)[AdminLocale];
 
 export function getAdminLocale(locale?: string): AdminLocale {
-  return locale === "en-US" ? "en-US" : "zh-CN"
+  return locale === "en-US" ? "en-US" : "zh-CN";
 }
 
 export function getAdminMessages(locale?: string): AdminMessages {
-  return adminMessages[getAdminLocale(locale)]
+  return adminMessages[getAdminLocale(locale)];
 }
 
 export function getLayoutOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.layout
+  const options = getAdminMessages(locale).options.layout;
 
   return layoutValues.map((value) => ({
     label: options[value].label,
     tip: options[value].tip,
     value,
-  }))
+  }));
 }
 
 export function getColorModeOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.colorMode
+  const options = getAdminMessages(locale).options.colorMode;
 
   return colorModeValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getContentOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.content
+  const options = getAdminMessages(locale).options.content;
 
   return contentValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getNavigationStyleOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.navigationStyle
+  const options = getAdminMessages(locale).options.navigationStyle;
 
   return navigationStyleValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getHeaderModeOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.headerMode
+  const options = getAdminMessages(locale).options.headerMode;
 
   return headerModeValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getHeaderAlignOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.headerAlign
+  const options = getAdminMessages(locale).options.headerAlign;
 
   return headerAlignValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getTabbarStyleOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.tabbarStyle
+  const options = getAdminMessages(locale).options.tabbarStyle;
 
   return tabbarStyleValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getLocaleOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.locale
+  const options = getAdminMessages(locale).options.locale;
 
   return [
     { label: options["zh-CN"], value: "zh-CN" },
     { label: options["en-US"], value: "en-US" },
-  ]
+  ];
 }
 
 export function getPreferenceButtonPositionOptions(locale?: string) {
-  const options = getAdminMessages(locale).options.preferenceButtonPosition
+  const options = getAdminMessages(locale).options.preferenceButtonPosition;
 
   return preferenceButtonPositionValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getPreferenceTabs(locale?: string) {
-  const options = getAdminMessages(locale).options.preferenceTab
+  const options = getAdminMessages(locale).options.preferenceTab;
 
   return preferenceTabValues.map((value) => ({
     label: options[value],
     value,
-  }))
+  }));
 }
 
 export function getThemePresetLabel(type: AdminPreferences["themeBuiltinType"], locale?: string) {
-  return getAdminMessages(locale).options.themePreset[type] ?? type
+  return getAdminMessages(locale).options.themePreset[type] ?? type;
 }
 
-export function getPreferenceStepAria(locale: string | undefined, action: "decrease" | "increase", label: string) {
-  const normalizedLocale = getAdminLocale(locale)
+export function getPreferenceStepAria(
+  locale: string | undefined,
+  action: "decrease" | "increase",
+  label: string,
+) {
+  const normalizedLocale = getAdminLocale(locale);
 
   if (normalizedLocale === "en-US") {
-    return `${action === "decrease" ? "Decrease" : "Increase"} ${label}`
+    return `${action === "decrease" ? "Decrease" : "Increase"} ${label}`;
   }
 
-  return `${action === "decrease" ? "减小" : "增大"}${label}`
+  return `${action === "decrease" ? "减小" : "增大"}${label}`;
 }
