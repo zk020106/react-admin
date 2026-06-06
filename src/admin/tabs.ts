@@ -5,12 +5,15 @@ import type { TabRecord } from "./types"
 export interface TabsStoreState {
   activeKey?: string
   closeAll: () => void
+  closeLeft: (key: string) => void
   closeOthers: (key: string) => void
+  closeRight: (key: string) => void
   closeTab: (key: string) => void
   openTab: (tab: TabRecord) => void
   reorderTabs: (fromIndex: number, toIndex: number) => void
   setActiveKey: (key: string) => void
   tabs: TabRecord[]
+  toggleAffix: (key: string) => void
 }
 
 function uniqueTabs(tabs: TabRecord[]) {
@@ -30,15 +33,46 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
     activeKey: normalized[0]?.key,
     closeAll: () => {
       const affixTabs = get().tabs.filter((tab) => tab.affix)
+      const tabs = affixTabs.length > 0 ? affixTabs : get().tabs.slice(0, 1)
       set({
-        activeKey: affixTabs[0]?.key,
-        tabs: affixTabs,
+        activeKey: tabs[0]?.key,
+        tabs,
+      })
+    },
+    closeLeft: (key) => {
+      const current = get()
+      const targetIndex = current.tabs.findIndex((tab) => tab.key === key)
+
+      if (targetIndex <= 0) {
+        return
+      }
+
+      const tabs = current.tabs.filter((tab, index) => tab.affix || index >= targetIndex)
+
+      set({
+        activeKey: tabs.some((tab) => tab.key === current.activeKey) ? current.activeKey : key,
+        tabs,
       })
     },
     closeOthers: (key) => {
       const tabs = get().tabs.filter((tab) => tab.affix || tab.key === key)
       set({
         activeKey: tabs.some((tab) => tab.key === key) ? key : tabs[0]?.key,
+        tabs,
+      })
+    },
+    closeRight: (key) => {
+      const current = get()
+      const targetIndex = current.tabs.findIndex((tab) => tab.key === key)
+
+      if (targetIndex < 0 || targetIndex >= current.tabs.length - 1) {
+        return
+      }
+
+      const tabs = current.tabs.filter((tab, index) => tab.affix || index <= targetIndex)
+
+      set({
+        activeKey: tabs.some((tab) => tab.key === current.activeKey) ? current.activeKey : key,
         tabs,
       })
     },
@@ -92,6 +126,13 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
     },
     setActiveKey: (key) => set({ activeKey: key }),
     tabs: normalized,
+    toggleAffix: (key) => {
+      set({
+        tabs: get().tabs.map((tab) =>
+          tab.key === key ? { ...tab, affix: !tab.affix } : tab,
+        ),
+      })
+    },
   }))
 }
 

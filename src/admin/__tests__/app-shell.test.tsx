@@ -1,14 +1,40 @@
-import { cleanup, render, screen } from "@testing-library/react"
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { afterEach, describe, expect, it } from "vitest"
 
 import App from "../../App"
 import { preferenceStore } from "../preferences"
 
+async function openSystemMenu(sidebarNavigation: HTMLElement) {
+  const systemTrigger = within(sidebarNavigation).getByRole("button", {
+    name: /系统管理/,
+  })
+
+  if (systemTrigger.getAttribute("aria-expanded") !== "true") {
+    await userEvent.click(systemTrigger)
+  }
+
+  return {
+    rolesLink: await within(sidebarNavigation).findByRole("link", { name: /角色管理/ }),
+    systemTrigger,
+    usersLink: await within(sidebarNavigation).findByRole("link", { name: /用户管理/ }),
+  }
+}
+
+function resizeViewport(width: number) {
+  Object.defineProperty(window, "innerWidth", {
+    configurable: true,
+    value: width,
+    writable: true,
+  })
+  window.dispatchEvent(new Event("resize"))
+}
+
 describe("admin app shell", () => {
   afterEach(() => {
     cleanup()
     preferenceStore.getState().resetPreferences()
+    resizeViewport(1024)
     document.body.style.pointerEvents = ""
     document.body.removeAttribute("data-scroll-locked")
   })
@@ -17,15 +43,147 @@ describe("admin app shell", () => {
     preferenceStore.getState().resetPreferences()
     render(<App />)
 
-    expect(screen.getByRole("heading", { name: "Vben React Admin" })).toBeInTheDocument()
-    expect(screen.getByRole("button", { name: "Preferences" })).toBeInTheDocument()
-    expect(screen.getByRole("tab", { name: "Dashboard" })).toBeInTheDocument()
-    expect(screen.getByRole("link", { name: /Users/ })).toBeInTheDocument()
+    expect(screen.getByRole("heading", { name: "React Admin" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "偏好设置" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "仪表盘" })).toBeInTheDocument()
+    expect(screen.getByRole("navigation", { name: "侧栏导航" })).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole("button", { name: "Preferences" }))
+    await userEvent.click(screen.getByRole("button", { name: "偏好设置" }))
 
-    expect(screen.getByRole("dialog", { name: "Preferences" })).toBeInTheDocument()
-    expect(screen.getByText("Navigation mode")).toBeInTheDocument()
+    expect(screen.getByRole("dialog", { name: "偏好设置" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "外观" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "布局" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "快捷键" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "通用" })).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: "拓展" })).not.toBeInTheDocument()
+    expect(screen.getByText("主题")).toBeInTheDocument()
+
+    expect(screen.getByRole("tablist")).toHaveClass("grid")
+    expect(screen.getByRole("tablist")).toHaveClass("sticky")
+    expect(screen.getByRole("tab", { name: "外观" }).closest("[data-slot='tabs']")).toHaveClass("data-[orientation=horizontal]:flex-col")
+    expect(screen.getByRole("tab", { name: "外观" })).toHaveAttribute("data-state", "active")
+    expect(screen.getByRole("tab", { name: "外观" })).toHaveClass("data-[state=active]:bg-background")
+    expect(screen.getByRole("button", { name: "深色" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "深色" })).toHaveAttribute("data-active", "true")
+    expect(screen.getByRole("button", { name: "主题 默认" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "主题 默认" })).toHaveAttribute("data-active", "true")
+    expect(screen.getByRole("button", { name: "圆角 0.5" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "圆角 0.5" })).toHaveClass("bg-primary")
+    expect(screen.getByRole("button", { name: "减小字号" })).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "增大字号" })).toBeInTheDocument()
+    expect(screen.getByText("色弱模式")).toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "复制偏好设置" })).toBeDisabled()
+
+    await userEvent.click(screen.getByRole("tab", { name: "布局" }))
+
+    expect(screen.getByRole("tab", { name: "布局" })).toHaveAttribute("data-state", "active")
+    expect(screen.getByRole("button", { name: "布局 垂直" })).toHaveAttribute("aria-pressed", "true")
+    expect(screen.getByRole("button", { name: "布局 双列菜单" })).toBeInTheDocument()
+    const preferencesDialog = screen.getByRole("dialog", { name: "偏好设置" })
+    expect(within(preferencesDialog).getByRole("heading", { name: "导航菜单" })).toBeInTheDocument()
+    expect(within(preferencesDialog).getByRole("heading", { name: "界面功能" })).toBeInTheDocument()
+    const sidebarToggleRow = within(preferencesDialog).getByText("显示侧栏").closest("div")
+    expect(sidebarToggleRow).toHaveClass("my-1")
+    const sidebarSwitch = within(sidebarToggleRow!).getByRole("switch")
+
+    expect(sidebarSwitch).toHaveAttribute("aria-checked", "true")
+    expect(sidebarSwitch).toHaveAttribute("data-state", "checked")
+    await userEvent.click(sidebarToggleRow!)
+    expect(sidebarSwitch).toHaveAttribute("aria-checked", "false")
+    expect(sidebarSwitch).toHaveAttribute("data-state", "unchecked")
+    await userEvent.click(sidebarSwitch)
+    expect(sidebarSwitch).toHaveAttribute("aria-checked", "true")
+    expect(sidebarSwitch).toHaveAttribute("data-state", "checked")
+    expect(within(preferencesDialog).getByText("侧栏按钮")).toBeInTheDocument()
+    expect(within(preferencesDialog).queryByText("折叠双列子栏")).not.toBeInTheDocument()
+    expect(within(preferencesDialog).queryByText("内容宽度")).not.toBeInTheDocument()
+    expect(within(preferencesDialog).queryByText("内容边距")).not.toBeInTheDocument()
+    expect(within(preferencesDialog).queryByText("顶部栏高度")).not.toBeInTheDocument()
+    expect(within(preferencesDialog).queryByText("双列主栏宽度")).not.toBeInTheDocument()
+    expect(within(preferencesDialog).queryByText("标签栏高度")).not.toBeInTheDocument()
+    expect(within(preferencesDialog).getByText("持久化标签页")).toBeInTheDocument()
+    expect(within(preferencesDialog).getByText("滚轮切换标签")).toBeInTheDocument()
+    expect(within(preferencesDialog).getByText("中键关闭标签")).toBeInTheDocument()
+    expect(within(preferencesDialog).getByText("偏好设置按钮位置")).toBeInTheDocument()
+    expect(within(preferencesDialog).getByText("公司链接")).toBeInTheDocument()
+    expect(within(preferencesDialog).getByText("ICP备案号")).toBeInTheDocument()
+  })
+
+  it("opens the sidebar menu from the mobile header trigger", async () => {
+    preferenceStore.getState().resetPreferences()
+    resizeViewport(500)
+    render(<App />)
+
+    await userEvent.click(screen.getByRole("button", { name: "打开菜单" }))
+
+    const sidebarDialog = await screen.findByRole("dialog", { name: "侧边栏" })
+    const sidebarNavigation = within(sidebarDialog).getByRole("navigation", { name: "侧栏导航" })
+
+    expect(within(sidebarNavigation).getByRole("link", { name: /仪表盘/ })).toBeInTheDocument()
+  })
+
+  it("opens a fallback mobile menu for mixed sidebar layouts", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "sidebar-mixed-nav" })
+    resizeViewport(500)
+    render(<App />)
+
+    await userEvent.click(screen.getByRole("button", { name: "打开菜单" }))
+
+    const sidebarDialog = await screen.findByRole("dialog", { name: "侧边栏" })
+    const sidebarNavigation = within(sidebarDialog).getByRole("navigation", { name: "侧栏导航" })
+
+    expect(within(sidebarNavigation).getByRole("button", { name: /系统管理/ })).toBeInTheDocument()
+  })
+
+  it("downgrades desktop header and mixed layouts on mobile", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "header-mixed-nav" })
+    resizeViewport(500)
+    render(<App />)
+
+    expect(screen.queryByRole("navigation", { name: "顶部导航" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: "面包屑" })).not.toBeInTheDocument()
+    expect(screen.getByRole("button", { name: "偏好设置" })).toHaveAttribute(
+      "data-preferences-position",
+      "fixed",
+    )
+    expect(screen.queryByRole("button", { name: /浅色模式|深色模式/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "语言" })).not.toBeInTheDocument()
+    expect(screen.queryByRole("button", { name: "时区" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "打开菜单" }))
+
+    const sidebarDialog = await screen.findByRole("dialog", { name: "侧边栏" })
+    const sidebarNavigation = within(sidebarDialog).getByRole("navigation", { name: "侧栏导航" })
+
+    expect(within(sidebarNavigation).getByRole("link", { name: /仪表盘/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).getByRole("button", { name: /系统管理/ })).toBeInTheDocument()
+  })
+
+  it("renders vben-like shortcut and general preference controls", async () => {
+    preferenceStore.getState().resetPreferences()
+    render(<App />)
+
+    await userEvent.click(screen.getByRole("button", { name: "偏好设置" }))
+    await userEvent.click(screen.getByRole("tab", { name: "快捷键" }))
+
+    expect(screen.getByText("启用快捷键")).toBeInTheDocument()
+    expect(screen.getByText("Ctrl / ⌘ K")).toBeInTheDocument()
+    expect(screen.getByText("Alt L")).toBeInTheDocument()
+    expect(screen.getByText("Esc")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("tab", { name: "通用" }))
+
+    expect(screen.getByText("语言")).toBeInTheDocument()
+    expect(screen.getByText("时区")).toBeInTheDocument()
+    expect(screen.getByText("动态标题")).toBeInTheDocument()
+    expect(screen.getByText("页面切换动画")).toBeInTheDocument()
+    const activeTransitionButton = screen.getByRole("button", { name: /fade-slide/ })
+
+    expect(activeTransitionButton).toHaveAttribute("aria-pressed", "true")
+    expect(activeTransitionButton).toHaveAttribute("data-active", "true")
+    expect(activeTransitionButton).toHaveClass("vben-outline-box-active")
   })
 
   it("renders menu records in the header when header layout is selected", () => {
@@ -35,12 +193,455 @@ describe("admin app shell", () => {
     render(<App />)
 
     const headerNavigation = screen.getByRole("navigation", {
-      name: "Header navigation",
+      name: "顶部导航",
     })
 
     expect(headerNavigation).toBeInTheDocument()
-    expect(headerNavigation).toHaveTextContent("Dashboard")
-    expect(headerNavigation).toHaveTextContent("System")
-    expect(screen.queryByText("Admin suite")).not.toBeInTheDocument()
+    expect(headerNavigation).toHaveTextContent("仪表盘")
+    expect(headerNavigation).toHaveTextContent("系统管理")
+    expect(screen.queryByText("管理套件")).not.toBeInTheDocument()
+  })
+
+  it("renders header widgets in vben order", () => {
+    preferenceStore.getState().resetPreferences()
+
+    render(<App />)
+
+    const labels = within(screen.getByRole("banner"))
+      .getAllByRole("button")
+      .map((button) => button.getAttribute("aria-label") ?? button.textContent)
+
+    expect(labels).toEqual([
+      "刷新",
+      "搜索",
+      "偏好设置",
+      "浅色模式",
+      "语言",
+      "时区",
+      "全屏",
+      "通知",
+      "用户菜单",
+    ])
+    expect(screen.getByRole("button", { name: "切换侧边栏" })).toBeInTheDocument()
+    expect(screen.queryByText("查询状态：缓存已预热")).not.toBeInTheDocument()
+  })
+
+  it("updates locale timezone and lock screen from header controls", async () => {
+    preferenceStore.getState().resetPreferences()
+    render(<App />)
+
+    await userEvent.click(screen.getByRole("button", { name: "语言" }))
+    await userEvent.click(await screen.findByRole("menuitemradio", { name: "English" }))
+    expect(preferenceStore.getState().preferences.appLocale).toBe("en-US")
+    expect(await screen.findByRole("link", { name: /Dashboard/ })).toBeInTheDocument()
+    expect(await screen.findByRole("tab", { name: "Dashboard" })).toBeInTheDocument()
+    await waitFor(() => {
+      expect(document.title).toBe("Dashboard - React Admin")
+    })
+
+    await userEvent.click(screen.getByRole("button", { name: "Timezone" }))
+    const timezoneDialog = await screen.findByRole("dialog", { name: "Set timezone" })
+    await userEvent.click(within(timezoneDialog).getByRole("radio", { name: "UTC" }))
+    await userEvent.click(within(timezoneDialog).getByRole("button", { name: "Confirm" }))
+    expect(preferenceStore.getState().preferences.appTimezone).toBe("UTC")
+
+    await userEvent.click(screen.getByRole("button", { name: "User menu" }))
+    await userEvent.click(await screen.findByRole("menuitem", { name: "Lock screen" }))
+    const lockSetupDialog = await screen.findByRole("dialog", { name: "Lock screen" })
+    await userEvent.type(within(lockSetupDialog).getByLabelText("Lock password"), "123456")
+    await userEvent.click(within(lockSetupDialog).getByRole("button", { name: "Lock screen" }))
+
+    const lockScreen = await screen.findByRole("dialog", { name: "Lock screen" })
+    await userEvent.click(within(lockScreen).getByRole("button", { name: "Unlock" }))
+    const unlockPassword = within(lockScreen).getByLabelText("Lock password")
+
+    await userEvent.type(unlockPassword, "wrong")
+    await userEvent.click(within(lockScreen).getByRole("button", { name: "Enter system" }))
+    expect(within(lockScreen).getByText("Incorrect password. Please try again.")).toBeInTheDocument()
+
+    await userEvent.clear(unlockPassword)
+    await userEvent.type(unlockPassword, "123456")
+    await userEvent.click(within(lockScreen).getByRole("button", { name: "Enter system" }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Lock screen" })).not.toBeInTheDocument()
+    })
+  })
+
+  it("formats audit timestamps with the selected timezone", async () => {
+    preferenceStore.getState().resetPreferences()
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", { name: "侧栏导航" })
+    await openSystemMenu(sidebarNavigation)
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /审计日志/ }))
+
+    expect(screen.getByText("2026-06-06 20:30")).toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "时区" }))
+    const timezoneDialog = await screen.findByRole("dialog", { name: "设置时区" })
+    await userEvent.click(within(timezoneDialog).getByRole("radio", { name: "UTC" }))
+    await userEvent.click(within(timezoneDialog).getByRole("button", { name: "确定" }))
+
+    expect(screen.getByText("2026-06-06 12:30")).toBeInTheDocument()
+  })
+
+  it("renders sidebar menu groups as collapsible branches", async () => {
+    preferenceStore.getState().resetPreferences()
+
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+    const systemTrigger = within(sidebarNavigation).getByRole("button", {
+      name: /系统管理/,
+    })
+
+    expect(systemTrigger).toHaveAttribute("aria-expanded", "false")
+    expect(within(sidebarNavigation).queryByRole("link", { name: /用户管理/ })).not.toBeInTheDocument()
+
+    await userEvent.click(systemTrigger)
+
+    expect(systemTrigger).toHaveAttribute("aria-expanded", "true")
+    expect(within(sidebarNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument()
+  })
+
+  it("keeps one root menu branch open when navigation accordion is enabled", async () => {
+    preferenceStore.getState().resetPreferences()
+
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+
+    await userEvent.click(within(sidebarNavigation).getByRole("button", { name: /系统管理/ }))
+    expect(within(sidebarNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument()
+
+    await userEvent.click(within(sidebarNavigation).getByRole("button", { name: /交互能力/ }))
+
+    expect(within(sidebarNavigation).getByRole("link", { name: /弹窗与抽屉/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).queryByRole("link", { name: /用户管理/ })).not.toBeInTheDocument()
+  })
+
+  it("only marks the current sidebar route as active", () => {
+    preferenceStore.getState().resetPreferences()
+
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+
+    const activeLink = within(sidebarNavigation).getByRole("link", { name: /仪表盘/ })
+
+    expect(activeLink).toHaveAttribute("data-active", "true")
+    expect(activeLink.className).not.toContain("font-medium")
+    expect(activeLink.className).not.toContain("shadow-[inset_3px")
+    expect(within(sidebarNavigation).getByRole("link", { name: /工作台/ })).not.toHaveAttribute("data-active")
+  })
+
+  it("temporarily expands a collapsed sidebar on hover when it is not fixed", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({
+      sidebarCollapsed: true,
+      sidebarExpandOnHover: false,
+    })
+
+    render(<App />)
+
+    const sidebar = document.querySelector<HTMLElement>("[data-slot='sidebar']")
+
+    expect(sidebar).toHaveAttribute("data-state", "collapsed")
+
+    await userEvent.hover(sidebar!)
+
+    await waitFor(() => {
+      expect(sidebar).toHaveAttribute("data-hover-expanded", "true")
+      expect(sidebar).toHaveAttribute("data-state", "expanded")
+    })
+
+    await userEvent.unhover(sidebar!)
+
+    await waitFor(() => {
+      expect(sidebar).toHaveAttribute("data-state", "collapsed")
+    })
+  })
+
+  it("widens the collapsed sidebar rail when collapsed titles are enabled", () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({
+      sidebarCollapsed: true,
+      sidebarCollapsedShowTitle: true,
+    })
+
+    render(<App />)
+
+    const wrapper = document.querySelector<HTMLElement>("[data-slot='sidebar-wrapper']")
+
+    expect(wrapper).toHaveClass("admin-sidebar-collapsed-show-title")
+    expect(wrapper).toHaveStyle("--sidebar-width-icon: 4.25rem")
+  })
+
+  it("splits mixed layout into header roots and sidebar children", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "mixed-nav" })
+
+    render(<App />)
+
+    const headerNavigation = screen.getByRole("navigation", {
+      name: "顶部导航",
+    })
+    const headerBrand = document.querySelector("[data-slot='admin-header-inline-brand']")
+
+    expect(headerBrand).toHaveTextContent("React Admin")
+    await userEvent.click(within(headerNavigation).getByRole("button", { name: /系统管理/ }))
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+
+    expect(within(headerNavigation).queryByRole("link", { name: /用户管理/ })).not.toBeInTheDocument()
+    expect(within(sidebarNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).queryByRole("link", { name: /仪表盘/ })).not.toBeInTheDocument()
+
+    await userEvent.click(within(headerNavigation).getByRole("button", { name: /工作台/ }))
+
+    expect(within(sidebarNavigation).queryByRole("link", { name: /用户管理/ })).not.toBeInTheDocument()
+    expect(within(sidebarNavigation).queryByRole("link", { name: /工作台/ })).not.toBeInTheDocument()
+  })
+
+  it("renders sidebar mixed layout with a rail and secondary menu", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "sidebar-mixed-nav" })
+
+    render(<App />)
+
+    const rootNavigation = screen.getByRole("navigation", {
+      name: "混合主导航",
+    })
+
+    await userEvent.click(within(rootNavigation).getByRole("button", { name: /系统管理/ }))
+
+    const secondaryNavigation = screen.getByRole("navigation", {
+      name: "混合次级导航",
+    })
+
+    expect(within(rootNavigation).getByRole("button", { name: /仪表盘/ })).toBeInTheDocument()
+    expect(within(rootNavigation).getByRole("button", { name: /系统管理/ })).toHaveAttribute("data-active", "true")
+    const extraTitle = document.querySelector("[data-slot='mixed-sidebar-extra-title']")
+    expect(extraTitle).toHaveTextContent("React Admin")
+    expect(extraTitle?.querySelector("svg")).not.toBeInTheDocument()
+    expect(within(secondaryNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: "用户管理" })).not.toBeInTheDocument()
+  })
+
+  it("keeps collapsed sidebar mixed secondary menu visible and clickable", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({
+      layout: "sidebar-mixed-nav",
+      sidebarExtraCollapsed: true,
+    })
+
+    render(<App />)
+
+    const rootNavigation = screen.getByRole("navigation", {
+      name: "混合主导航",
+    })
+
+    await userEvent.click(within(rootNavigation).getByRole("button", { name: /系统管理/ }))
+
+    const secondaryNavigation = screen.getByRole("navigation", {
+      name: "混合次级导航",
+    })
+    const usersButton = within(secondaryNavigation).getByRole("button", { name: "用户管理" })
+
+    expect(usersButton).toBeInTheDocument()
+    expect(within(secondaryNavigation).queryByRole("link", { name: /用户管理/ })).not.toBeInTheDocument()
+
+    await userEvent.click(usersButton)
+
+    expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument()
+  })
+
+  it("shows sidebar mixed extra menu on hover when it is not fixed", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({
+      layout: "sidebar-mixed-nav",
+      sidebarExpandOnHover: false,
+    })
+
+    render(<App />)
+
+    const rootNavigation = screen.getByRole("navigation", {
+      name: "混合主导航",
+    })
+
+    await userEvent.hover(within(rootNavigation).getByRole("button", { name: /系统管理/ }))
+
+    expect(document.querySelector("[data-extra-visible='true']")).toBeInTheDocument()
+
+    const secondaryNavigation = screen.getByRole("navigation", {
+      name: "混合次级导航",
+    })
+
+    expect(within(secondaryNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument()
+    expect(within(secondaryNavigation).queryByRole("link", { name: /仪表盘/ })).not.toBeInTheDocument()
+
+    await userEvent.unhover(within(rootNavigation).getByRole("button", { name: /系统管理/ }))
+
+    expect(document.querySelector("[data-extra-visible='true']")).not.toBeInTheDocument()
+  })
+
+  it("renders header mixed layout with header roots and a mixed secondary menu", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "header-mixed-nav" })
+
+    render(<App />)
+
+    const headerNavigation = screen.getByRole("navigation", {
+      name: "顶部导航",
+    })
+
+    expect(screen.queryByRole("navigation", { name: "混合侧栏导航" })).not.toBeInTheDocument()
+
+    await userEvent.click(within(headerNavigation).getByRole("button", { name: /系统管理/ }))
+
+    const mixedSidebarNavigation = screen.getByRole("navigation", {
+      name: "混合侧栏导航",
+    })
+
+    expect(within(mixedSidebarNavigation).getByRole("button", { name: /用户管理/ })).toBeInTheDocument()
+    expect(within(mixedSidebarNavigation).getByRole("button", { name: /角色管理/ })).toBeInTheDocument()
+    expect(within(mixedSidebarNavigation).queryByRole("button", { name: /仪表盘/ })).not.toBeInTheDocument()
+    expect(screen.queryByRole("navigation", { name: "混合次级导航" })).not.toBeInTheDocument()
+    expect(document.querySelector("[data-extra-visible='true']")).not.toBeInTheDocument()
+
+    await userEvent.click(within(mixedSidebarNavigation).getByRole("button", { name: /用户管理/ }))
+
+    expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument()
+  })
+
+  it("applies vben header-sidebar layout offset class", () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "header-sidebar-nav" })
+
+    render(<App />)
+
+    const header = document.querySelector("[data-slot='admin-header']")
+    const headerBrand = document.querySelector("[data-slot='admin-header-sidebar-brand']")
+    const sidebarNavigation = screen.getByRole("navigation", { name: "侧栏导航" })
+
+    expect(header).toHaveTextContent("React Admin")
+    expect(headerBrand).toHaveTextContent("React Admin")
+    expect(within(sidebarNavigation).queryByText("React Admin")).not.toBeInTheDocument()
+    expect(document.querySelector("[data-slot='sidebar-wrapper']")).toHaveClass(
+      "admin-layout-header-sidebar-nav",
+    )
+  })
+
+  it("limits visible tabs by vben tabbar max count preference", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ tabbarMaxCount: 2 })
+
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /工作台/ }))
+    const { usersLink } = await openSystemMenu(sidebarNavigation)
+
+    await userEvent.click(usersLink)
+
+    expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "工作台" })).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: "仪表盘" })).not.toBeInTheDocument()
+  })
+
+  it("keeps the active tab visible when vben tabbar max count trims old tabs", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ tabbarMaxCount: 2 })
+
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+
+    let systemLinks = await openSystemMenu(sidebarNavigation)
+    await userEvent.click(systemLinks.usersLink)
+    systemLinks = await openSystemMenu(sidebarNavigation)
+    await userEvent.click(systemLinks.rolesLink)
+    systemLinks = await openSystemMenu(sidebarNavigation)
+    await userEvent.click(systemLinks.usersLink)
+
+    expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument()
+    expect(screen.getByRole("tab", { name: "角色管理" })).toBeInTheDocument()
+    expect(screen.queryByRole("tab", { name: "仪表盘" })).not.toBeInTheDocument()
+  })
+
+  it("hides the native tabbar scrollbar and opens a vben-like tab context menu", async () => {
+    preferenceStore.getState().resetPreferences()
+    render(<App />)
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    })
+
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /工作台/ }))
+
+    expect(screen.getByRole("tablist")).toHaveClass("admin-tabs-scroll")
+
+    fireEvent.contextMenu(screen.getByRole("tab", { name: "工作台" }))
+
+    expect(await screen.findByRole("menuitem", { name: "关闭" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: "关闭左侧" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: "关闭右侧" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: "关闭其他" })).toBeInTheDocument()
+    expect(screen.getByRole("menuitem", { name: "复制路径" })).toBeInTheDocument()
+  })
+
+  it("renders full content layout without admin chrome", () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "full-content" })
+
+    render(<App />)
+
+    expect(screen.queryByRole("banner")).not.toBeInTheDocument()
+    expect(screen.queryByRole("tablist")).not.toBeInTheDocument()
+    expect(screen.queryByText("管理套件")).not.toBeInTheDocument()
+    expect(screen.getByText("运行概览")).toBeInTheDocument()
+  })
+
+  it("places the preferences button as a fixed action when auto mode has no header", () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({ layout: "full-content" })
+
+    render(<App />)
+
+    const preferencesButton = screen.getByRole("button", { name: "偏好设置" })
+
+    expect(preferencesButton).toHaveAttribute("data-preferences-position", "fixed")
+  })
+
+  it("places the preferences action inside the user dropdown when configured", async () => {
+    preferenceStore.getState().resetPreferences()
+    preferenceStore.getState().setPreferences({
+      appPreferencesButtonPosition: "user-dropdown",
+    } as never)
+
+    render(<App />)
+
+    expect(screen.queryByRole("button", { name: "偏好设置" })).not.toBeInTheDocument()
+
+    await userEvent.click(screen.getByRole("button", { name: "用户菜单" }))
+
+    expect(screen.getByRole("menuitem", { name: "偏好设置" })).toHaveAttribute(
+      "data-preferences-position",
+      "user-dropdown",
+    )
   })
 })

@@ -35,6 +35,9 @@ export interface VbenThemeOptions {
   fontSize: number
   mode: VbenThemeMode
   radius: string
+  semiDarkHeader?: boolean
+  semiDarkSidebar?: boolean
+  semiDarkSidebarSub?: boolean
 }
 
 export const BUILT_IN_THEME_PRESETS: BuiltinThemePreset[] = [
@@ -98,6 +101,7 @@ export function applyVbenTheme(options: VbenThemeOptions) {
   const colorVariables = {
     "--destructive": toHslCssVar(options.colorDestructive ?? "hsl(348 100% 61%)"),
     "--primary": toHslCssVar(primary),
+    ...resolveSurfaceVariables(dark, options),
     "--success": toHslCssVar(options.colorSuccess ?? "hsl(144 57% 58%)"),
     "--warning": toHslCssVar(options.colorWarning ?? "hsl(42 84% 61%)"),
   }
@@ -106,6 +110,66 @@ export function applyVbenTheme(options: VbenThemeOptions) {
     root.style.setProperty(name, value)
   })
   updateCSSVariables(colorVariables)
+}
+
+function resolveSurfaceVariables(dark: boolean, options: VbenThemeOptions) {
+  const headerDark = dark || options.semiDarkHeader
+  const sidebarDark = dark || options.semiDarkSidebar
+  const sidebarSubDark = dark || options.semiDarkSidebarSub
+  const sidebarVariables = sidebarDark ? darkSidebarVariables() : lightSidebarVariables()
+  const sidebarSubVariables = sidebarSubDark ? darkSidebarSubVariables() : lightSidebarSubVariables()
+
+  return {
+    "--header": headerDark ? "222.34deg 10.43% 12.27%" : "0 0% 100%",
+    "--header-foreground": headerDark ? "0 0% 95%" : "210 6% 21%",
+    "--menu": sidebarVariables["--sidebar"],
+    ...sidebarVariables,
+    ...sidebarSubVariables,
+  }
+}
+
+function darkSidebarVariables() {
+  return {
+    "--sidebar": "222.34deg 10.43% 12.27%",
+    "--sidebar-accent": "216 5% 19%",
+    "--sidebar-accent-foreground": "0 0% 98%",
+    "--sidebar-active": "216 5% 19%",
+    "--sidebar-active-foreground": "0 0% 95%",
+    "--sidebar-active-indicator": "0 0% 95%",
+    "--sidebar-border": "240 3.7% 22%",
+    "--sidebar-foreground": "0 0% 78%",
+    "--sidebar-hover": "216 5% 24%",
+    "--sidebar-hover-foreground": "0 0% 95%",
+  }
+}
+
+function lightSidebarVariables() {
+  return {
+    "--sidebar": "0 0% 100%",
+    "--sidebar-accent": "240 5% 96%",
+    "--sidebar-accent-foreground": "240 6% 10%",
+    "--sidebar-active": "var(--primary) / 15%",
+    "--sidebar-active-foreground": "var(--primary)",
+    "--sidebar-active-indicator": "var(--primary)",
+    "--sidebar-border": "240 5.9% 90%",
+    "--sidebar-foreground": "210 6% 21%",
+    "--sidebar-hover": "240 5% 96%",
+    "--sidebar-hover-foreground": "210 6% 21%",
+  }
+}
+
+function darkSidebarSubVariables() {
+  return {
+    "--sidebar-sub": "222.34deg 10.43% 12.27%",
+    "--sidebar-deep": "220deg 13.06% 9%",
+  }
+}
+
+function lightSidebarSubVariables() {
+  return {
+    "--sidebar-sub": "0 0% 100%",
+    "--sidebar-deep": "0 0% 100%",
+  }
 }
 
 function resolvePrimaryColor(options: VbenThemeOptions, dark: boolean) {

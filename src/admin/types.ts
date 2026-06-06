@@ -4,13 +4,18 @@ export type LayoutMode =
   | "full-content"
   | "header-mixed-nav"
   | "header-nav"
+  | "header-sidebar-nav"
   | "mixed-nav"
   | "sidebar-mixed-nav"
   | "sidebar-nav"
 
 export type ColorMode = "dark" | "light" | "system"
 export type ContentCompact = "compact" | "wide"
-export type ThemeMode = "dark" | "light"
+export type HeaderMenuAlign = "center" | "end" | "start"
+export type HeaderMode = "auto" | "auto-scroll" | "fixed" | "static"
+export type NavigationStyleType = "plain" | "rounded"
+export type PreferencesButtonPosition = "auto" | "fixed" | "header" | "user-dropdown"
+export type TransitionName = "fade" | "fade-down" | "fade-slide" | "fade-up"
 export type BuiltinThemeType =
   | "custom"
   | "deep-blue"
@@ -30,20 +35,72 @@ export type BuiltinThemeType =
 
 export interface AdminPreferences {
   animationEnable: boolean
+  appDynamicTitle: boolean
+  appEnableCheckUpdates: boolean
+  appEnableCopyPreferences: boolean
+  appEnableStickyPreferencesNavigationBar: boolean
+  appLocale: string
+  appPreferencesButtonPosition: PreferencesButtonPosition
+  appTimezone: string
+  appWatermark: boolean
+  appWatermarkContent: string
+  colorGrayMode: boolean
+  colorWeakMode: boolean
   breadcrumbEnable: boolean
+  breadcrumbHideOnlyOne: boolean
+  breadcrumbShowHome: boolean
+  breadcrumbShowIcon: boolean
+  breadcrumbStyleType: "background" | "normal"
   colorMode: ColorMode
   contentCompact: ContentCompact
   contentCompactWidth: number
   contentPadding: number
+  copyrightCompanyName: string
+  copyrightCompanySiteLink: string
+  copyrightDate: string
+  copyrightEnable: boolean
+  copyrightIcp: string
+  copyrightIcpLink: string
   footerEnable: boolean
+  footerFixed: boolean
   headerHeight: number
+  headerMenuAlign: HeaderMenuAlign
+  headerMode: HeaderMode
   headerVisible: boolean
   layout: LayoutMode
+  navigationAccordion: boolean
+  navigationSplit: boolean
+  navigationStyleType: NavigationStyleType
+  shortcutKeysEnable: boolean
+  shortcutKeysGlobalEscape: boolean
+  shortcutKeysGlobalLockScreen: boolean
+  shortcutKeysGlobalLogout: boolean
+  shortcutKeysGlobalSearch: boolean
+  sidebarAutoActivateChild: boolean
   sidebarCollapsed: boolean
-  sidebarTheme: ThemeMode
+  sidebarCollapsedButton: boolean
+  sidebarCollapsedShowTitle: boolean
+  sidebarDraggable: boolean
+  sidebarEnable: boolean
+  sidebarExtraCollapsed: boolean
+  sidebarExpandOnHover: boolean
+  sidebarFixedButton: boolean
+  sidebarHidden: boolean
+  sidebarMixedWidth: number
   sidebarWidth: number
   tabbarEnable: boolean
+  tabbarDraggable: boolean
   tabbarHeight: number
+  tabbarMaxCount: number
+  tabbarMiddleClickToClose: boolean
+  tabbarPersist: boolean
+  tabbarShowIcon: boolean
+  tabbarShowMaximize: boolean
+  tabbarShowMore: boolean
+  tabbarShowRefresh: boolean
+  tabbarStyleType: "brisk" | "card" | "chrome" | "plain"
+  tabbarVisitHistory: boolean
+  tabbarWheelable: boolean
   themeBuiltinType: BuiltinThemeType
   themeColorDestructive: string
   themeColorPrimary: string
@@ -51,6 +108,22 @@ export interface AdminPreferences {
   themeColorWarning: string
   themeFontSize: number
   themeRadius: string
+  themeSemiDarkHeader: boolean
+  themeSemiDarkSidebar: boolean
+  themeSemiDarkSidebarSub: boolean
+  transitionEnable: boolean
+  transitionLoading: boolean
+  transitionName: TransitionName
+  transitionProgress: boolean
+  widgetFullscreen: boolean
+  widgetGlobalSearch: boolean
+  widgetLanguageToggle: boolean
+  widgetLockScreen: boolean
+  widgetNotification: boolean
+  widgetRefresh: boolean
+  widgetSidebarToggle: boolean
+  widgetThemeToggle: boolean
+  widgetTimezone: boolean
 }
 
 export interface MenuRecord {

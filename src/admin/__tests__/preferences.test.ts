@@ -1,13 +1,19 @@
-import { describe, expect, it } from "vitest"
+import { afterEach, describe, expect, it } from "vitest"
 
 import { createPreferenceStore, DEFAULT_PREFERENCES } from "../preferences"
 
 describe("admin preferences", () => {
+  afterEach(() => {
+    window.localStorage.clear()
+  })
+
   it("starts with vben-like defaults and clamps numeric layout values", () => {
     const store = createPreferenceStore({
       contentPadding: -20,
       layout: "header-nav",
       sidebarWidth: 640,
+      tabbarMaxCount: -10,
+      themeFontSize: 100,
     })
 
     expect(store.getState().preferences).toEqual(
@@ -15,7 +21,9 @@ describe("admin preferences", () => {
         ...DEFAULT_PREFERENCES,
         contentPadding: 0,
         layout: "header-nav",
-        sidebarWidth: 360,
+        sidebarWidth: 320,
+        tabbarMaxCount: 0,
+        themeFontSize: 22,
       }),
     )
   })
@@ -40,5 +48,46 @@ describe("admin preferences", () => {
     store.getState().resetPreferences()
 
     expect(store.getState().preferences).toEqual(DEFAULT_PREFERENCES)
+  })
+
+  it("persists preferences to localStorage when enabled", () => {
+    window.localStorage.setItem(
+      "test-preferences",
+      JSON.stringify({
+        preferences: {
+          colorMode: "light",
+          sidebarWidth: 999,
+          themeBuiltinType: "green",
+        },
+      }),
+    )
+
+    const store = createPreferenceStore(undefined, {
+      persist: true,
+      storageKey: "test-preferences",
+    })
+
+    expect(store.getState().preferences).toEqual(
+      expect.objectContaining({
+        colorMode: "light",
+        sidebarWidth: 320,
+        themeBuiltinType: "green",
+      }),
+    )
+
+    store.getState().setPreferences({ colorMode: "dark", themeRadius: "1" })
+
+    expect(JSON.parse(window.localStorage.getItem("test-preferences") ?? "{}")).toEqual({
+      preferences: expect.objectContaining({
+        colorMode: "dark",
+        themeRadius: "1",
+      }),
+    })
+
+    store.getState().resetPreferences()
+
+    expect(JSON.parse(window.localStorage.getItem("test-preferences") ?? "{}")).toEqual({
+      preferences: DEFAULT_PREFERENCES,
+    })
   })
 })
