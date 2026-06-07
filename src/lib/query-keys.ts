@@ -1,15 +1,52 @@
 import type { QueryKey } from "@tanstack/react-query";
 
-// Query key 统一工厂：保持层级结构，便于精准失效、预取和复用。
-export const dashboardKeys = {
-  all: ["dashboard"] as const,
-  overviewStats: (locale: string) => [...dashboardKeys.all, "overview-stats", locale] as const,
+export const navigationKeys = {
+  all: ["navigation"] as const,
+  menu: () => [...navigationKeys.all, "menu"] as const,
+};
+
+export const overviewKeys = {
+  all: ["overview"] as const,
+  summary: () => [...overviewKeys.all, "summary"] as const,
+};
+
+export const systemKeys = {
+  all: ["system"] as const,
+  departments: () => [...systemKeys.all, "departments"] as const,
+  menus: () => [...systemKeys.all, "menus"] as const,
+  roles: () => [...systemKeys.all, "roles"] as const,
+  users: () => [...systemKeys.all, "users"] as const,
+};
+
+export const aboutKeys = {
+  all: ["about"] as const,
+  project: () => [...aboutKeys.all, "project"] as const,
 };
 
 // 当前页刷新只失效该路由实际拥有的查询，避免 invalidateQueries() 清空全局缓存。
-export function getRouteRefreshQueryKeys(path: string, locale: string): QueryKey[] {
-  if (path === "/dashboard") {
-    return [dashboardKeys.overviewStats(locale)];
+export function getRouteRefreshQueryKeys(path: string): QueryKey[] {
+  if (path === "/overview") {
+    return [overviewKeys.summary()];
+  }
+
+  if (path === "/system/users") {
+    return [systemKeys.users()];
+  }
+
+  if (path === "/system/roles") {
+    return [systemKeys.roles()];
+  }
+
+  if (path === "/system/menus") {
+    return [systemKeys.menus(), navigationKeys.menu()];
+  }
+
+  if (path === "/system/departments") {
+    return [systemKeys.departments()];
+  }
+
+  if (path === "/about") {
+    return [aboutKeys.project()];
   }
 
   return [];

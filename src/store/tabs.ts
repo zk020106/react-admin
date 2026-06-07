@@ -151,5 +151,5 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
 }
 
 export const tabsStore = createTabsStore([
-  { affix: true, key: "/dashboard", path: "/dashboard", title: "Dashboard" },
+  { affix: true, key: "/overview", path: "/overview", title: "概览" },
 ]);

@@ -7,8 +7,6 @@ import {
 
 import { BaseLayout } from "@/layouts";
 
-import { adminRoutePaths } from "./app-data";
-
 const rootRoute = createRootRoute({
   component: BaseLayout,
 });
@@ -18,19 +16,12 @@ const indexRoute = createRoute({
   path: "/",
 });
 
-const adminRoutes = adminRoutePaths.map((path) =>
-  createRoute({
-    getParentRoute: () => rootRoute,
-    path,
-  }),
-);
-
 const fallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "$",
 });
 
-const routeTree = rootRoute.addChildren([indexRoute, ...adminRoutes, fallbackRoute]);
+const routeTree = rootRoute.addChildren([indexRoute, fallbackRoute]);
 
 // 函数：createAppRouter。创建应用路由实例并绑定浏览器历史。
 export function createAppRouter() {

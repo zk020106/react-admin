@@ -56,7 +56,7 @@ describe("admin app shell", () => {
 
     expect(screen.getByRole("heading", { name: "React Admin" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "偏好设置" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "仪表盘" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "概览" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "侧栏导航" })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "偏好设置" }));
@@ -150,7 +150,7 @@ describe("admin app shell", () => {
     const sidebarDialog = await screen.findByRole("dialog", { name: "侧边栏" });
     const sidebarNavigation = within(sidebarDialog).getByRole("navigation", { name: "侧栏导航" });
 
-    expect(within(sidebarNavigation).getByRole("link", { name: /仪表盘/ })).toBeInTheDocument();
+    expect(within(sidebarNavigation).getByRole("link", { name: /概览/ })).toBeInTheDocument();
   });
 
   it("opens a fallback mobile menu for mixed sidebar layouts", async () => {
@@ -188,7 +188,7 @@ describe("admin app shell", () => {
     const sidebarDialog = await screen.findByRole("dialog", { name: "侧边栏" });
     const sidebarNavigation = within(sidebarDialog).getByRole("navigation", { name: "侧栏导航" });
 
-    expect(within(sidebarNavigation).getByRole("link", { name: /仪表盘/ })).toBeInTheDocument();
+    expect(within(sidebarNavigation).getByRole("link", { name: /概览/ })).toBeInTheDocument();
     expect(within(sidebarNavigation).getByRole("button", { name: /系统管理/ })).toBeInTheDocument();
   });
 
@@ -228,8 +228,9 @@ describe("admin app shell", () => {
     });
 
     expect(headerNavigation).toBeInTheDocument();
-    expect(headerNavigation).toHaveTextContent("仪表盘");
+    expect(headerNavigation).toHaveTextContent("概览");
     expect(headerNavigation).toHaveTextContent("系统管理");
+    expect(headerNavigation).toHaveTextContent("关于");
     expect(screen.queryByText("管理套件")).not.toBeInTheDocument();
   });
 
@@ -264,10 +265,10 @@ describe("admin app shell", () => {
     await userEvent.click(screen.getByRole("button", { name: "语言" }));
     await userEvent.click(await screen.findByRole("menuitemradio", { name: "English" }));
     expect(preferenceStore.getState().preferences.appLocale).toBe("en-US");
-    expect(await screen.findByRole("link", { name: /Dashboard/ })).toBeInTheDocument();
-    expect(await screen.findByRole("tab", { name: "Dashboard" })).toBeInTheDocument();
+    expect(await screen.findByRole("link", { name: /概览/ })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: "概览" })).toBeInTheDocument();
     await waitFor(() => {
-      expect(document.title).toBe("Dashboard - React Admin");
+      expect(document.title).toBe("概览 - React Admin");
     });
 
     await userEvent.click(screen.getByRole("button", { name: "Timezone" }));
@@ -301,22 +302,16 @@ describe("admin app shell", () => {
     });
   });
 
-  it("formats audit timestamps with the selected timezone", async () => {
+  it("renders about mock project information", async () => {
     preferenceStore.getState().resetPreferences();
     await renderApp();
 
     const sidebarNavigation = screen.getByRole("navigation", { name: "侧栏导航" });
-    await openSystemMenu(sidebarNavigation);
-    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /审计日志/ }));
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /关于/ }));
 
-    expect(await screen.findByText("2026-06-06 20:30")).toBeInTheDocument();
-
-    await userEvent.click(screen.getByRole("button", { name: "时区" }));
-    const timezoneDialog = await screen.findByRole("dialog", { name: "设置时区" });
-    await userEvent.click(within(timezoneDialog).getByRole("radio", { name: "UTC" }));
-    await userEvent.click(within(timezoneDialog).getByRole("button", { name: "确定" }));
-
-    expect(await screen.findByText("2026-06-06 12:30")).toBeInTheDocument();
+    expect(await screen.findByText("关于项目")).toBeInTheDocument();
+    expect(await screen.findByText("antd-react-admin")).toBeInTheDocument();
+    expect(await screen.findByText("@tanstack/react-query")).toBeInTheDocument();
   });
 
   it("renders sidebar menu groups as collapsible branches", async () => {
@@ -342,7 +337,7 @@ describe("admin app shell", () => {
     expect(within(sidebarNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument();
   });
 
-  it("keeps one root menu branch open when navigation accordion is enabled", async () => {
+  it("renders system management children from the mock menu", async () => {
     preferenceStore.getState().resetPreferences();
 
     await renderApp();
@@ -353,13 +348,9 @@ describe("admin app shell", () => {
 
     await userEvent.click(within(sidebarNavigation).getByRole("button", { name: /系统管理/ }));
     expect(within(sidebarNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument();
-
-    await userEvent.click(within(sidebarNavigation).getByRole("button", { name: /交互能力/ }));
-
-    expect(within(sidebarNavigation).getByRole("link", { name: /弹窗与抽屉/ })).toBeInTheDocument();
-    expect(
-      within(sidebarNavigation).queryByRole("link", { name: /用户管理/ }),
-    ).not.toBeInTheDocument();
+    expect(within(sidebarNavigation).getByRole("link", { name: /角色管理/ })).toBeInTheDocument();
+    expect(within(sidebarNavigation).getByRole("link", { name: /菜单管理/ })).toBeInTheDocument();
+    expect(within(sidebarNavigation).getByRole("link", { name: /部门管理/ })).toBeInTheDocument();
   });
 
   it("commits sidebar drag width only after release", async () => {
@@ -391,12 +382,12 @@ describe("admin app shell", () => {
       name: "侧栏导航",
     });
 
-    const activeLink = within(sidebarNavigation).getByRole("link", { name: /仪表盘/ });
+    const activeLink = within(sidebarNavigation).getByRole("link", { name: /概览/ });
 
     expect(activeLink).toHaveAttribute("data-active", "true");
     expect(activeLink.className).not.toContain("font-medium");
     expect(activeLink.className).not.toContain("shadow-[inset_3px");
-    expect(within(sidebarNavigation).getByRole("link", { name: /工作台/ })).not.toHaveAttribute(
+    expect(within(sidebarNavigation).getByRole("link", { name: /关于/ })).not.toHaveAttribute(
       "data-active",
     );
   });
@@ -465,18 +456,14 @@ describe("admin app shell", () => {
       within(headerNavigation).queryByRole("link", { name: /用户管理/ }),
     ).not.toBeInTheDocument();
     expect(within(sidebarNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument();
-    expect(
-      within(sidebarNavigation).queryByRole("link", { name: /仪表盘/ }),
-    ).not.toBeInTheDocument();
+    expect(within(sidebarNavigation).queryByRole("link", { name: /概览/ })).not.toBeInTheDocument();
 
-    await userEvent.click(within(headerNavigation).getByRole("button", { name: /工作台/ }));
+    await userEvent.click(within(headerNavigation).getByRole("button", { name: /关于/ }));
 
     expect(
       within(sidebarNavigation).queryByRole("link", { name: /用户管理/ }),
     ).not.toBeInTheDocument();
-    expect(
-      within(sidebarNavigation).queryByRole("link", { name: /工作台/ }),
-    ).not.toBeInTheDocument();
+    expect(within(sidebarNavigation).queryByRole("link", { name: /关于/ })).not.toBeInTheDocument();
   });
 
   it("renders sidebar mixed layout with a rail and secondary menu", async () => {
@@ -495,7 +482,7 @@ describe("admin app shell", () => {
       name: "混合次级导航",
     });
 
-    expect(within(rootNavigation).getByRole("button", { name: /仪表盘/ })).toBeInTheDocument();
+    expect(within(rootNavigation).getByRole("button", { name: /概览/ })).toBeInTheDocument();
     expect(within(rootNavigation).getByRole("button", { name: /系统管理/ })).toHaveAttribute(
       "data-active",
       "true",
@@ -560,7 +547,7 @@ describe("admin app shell", () => {
 
     expect(within(secondaryNavigation).getByRole("link", { name: /用户管理/ })).toBeInTheDocument();
     expect(
-      within(secondaryNavigation).queryByRole("link", { name: /仪表盘/ }),
+      within(secondaryNavigation).queryByRole("link", { name: /概览/ }),
     ).not.toBeInTheDocument();
 
     await userEvent.unhover(within(rootNavigation).getByRole("button", { name: /系统管理/ }));
@@ -593,7 +580,7 @@ describe("admin app shell", () => {
       within(mixedSidebarNavigation).getByRole("button", { name: /角色管理/ }),
     ).toBeInTheDocument();
     expect(
-      within(mixedSidebarNavigation).queryByRole("button", { name: /仪表盘/ }),
+      within(mixedSidebarNavigation).queryByRole("button", { name: /概览/ }),
     ).not.toBeInTheDocument();
     expect(screen.queryByRole("navigation", { name: "混合次级导航" })).not.toBeInTheDocument();
     expect(document.querySelector("[data-extra-visible='true']")).not.toBeInTheDocument();
@@ -672,14 +659,14 @@ describe("admin app shell", () => {
       name: "侧栏导航",
     });
 
-    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /工作台/ }));
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /关于/ }));
     const { usersLink } = await openSystemMenu(sidebarNavigation);
 
     await userEvent.click(usersLink);
 
     expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument();
-    expect(screen.getByRole("tab", { name: "工作台" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "仪表盘" })).not.toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "关于" })).toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "概览" })).not.toBeInTheDocument();
   });
 
   it("keeps the active tab visible when vben tabbar max count trims old tabs", async () => {
@@ -701,7 +688,7 @@ describe("admin app shell", () => {
 
     expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "角色管理" })).toBeInTheDocument();
-    expect(screen.queryByRole("tab", { name: "仪表盘" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("tab", { name: "概览" })).not.toBeInTheDocument();
   });
 
   it("hides the native tabbar scrollbar and opens a vben-like tab context menu", async () => {
@@ -712,11 +699,11 @@ describe("admin app shell", () => {
       name: "侧栏导航",
     });
 
-    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /工作台/ }));
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /关于/ }));
 
     expect(screen.getByRole("tablist")).toHaveClass("admin-tabs-scroll");
 
-    fireEvent.contextMenu(screen.getByRole("tab", { name: "工作台" }));
+    fireEvent.contextMenu(screen.getByRole("tab", { name: "关于" }));
 
     expect(await screen.findByRole("menuitem", { name: "关闭" })).toBeInTheDocument();
     expect(screen.getByRole("menuitem", { name: "关闭左侧" })).toBeInTheDocument();

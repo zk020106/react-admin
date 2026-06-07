@@ -1,11 +1,10 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { TinyColor } from "@ctrl/tinycolor";
 import { useBoolean, useDebounce, useKeyPress } from "ahooks";
 import NProgress from "nprogress";
 import {
   Bell,
-  BriefcaseBusiness,
   ArrowLeftToLine,
   ArrowRightLeft,
   ArrowRightToLine,
@@ -19,9 +18,9 @@ import {
   Clock3,
   Copy,
   ExternalLink,
-  FileClock,
   FoldHorizontal,
   Globe2,
+  Info,
   LayoutGrid,
   LayoutDashboard,
   LockKeyhole,
@@ -67,12 +66,10 @@ import {
 } from "@/i18n/admin-i18n";
 import { getRouteRefreshQueryKeys } from "@/lib/query-keys";
 import {
+  ADMIN_DEFAULT_PATH,
   affixTabs,
-  adminMenu,
   getDefaultMenuPath,
   getMenuTitle,
-  localizeMenu,
-  localizeTabs,
   normalizeAdminPath,
 } from "@/router/app-data";
 import { createPreferenceStore, DEFAULT_PREFERENCES, preferenceStore } from "@/store/preferences";
@@ -159,12 +156,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import { navigationQueries } from "@/pages/admin-queries";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
 
-// 组件：DashboardPage。用于展示仪表盘统计、概览和待办状态。
-const DashboardPage = lazy(() => import("@/pages/dashboard-page"));
-// 组件：WorkplacePage。用于展示工作台任务和统计卡片。
-const WorkplacePage = lazy(() => import("@/pages/workplace-page"));
+// 组件：OverviewPage。用于展示首页概览。
+const OverviewPage = lazy(() => import("@/pages/overview-page"));
 // 组件：UsersPage。用于展示用户列表和状态信息。
 const UsersPage = lazy(() =>
   import("@/pages/system-pages").then((module) => ({ default: module.UsersPage })),
@@ -173,39 +169,30 @@ const UsersPage = lazy(() =>
 const RolesPage = lazy(() =>
   import("@/pages/system-pages").then((module) => ({ default: module.RolesPage })),
 );
-// 组件：AuditPage。用于展示审计日志并按偏好时区格式化时间。
-const AuditPage = lazy(() =>
-  import("@/pages/system-pages").then((module) => ({ default: module.AuditPage })),
+// 组件：MenusPage。用于展示菜单配置。
+const MenusPage = lazy(() =>
+  import("@/pages/system-pages").then((module) => ({ default: module.MenusPage })),
 );
-// 组件：PopupLab。用于演示模态弹窗和抽屉 API 的交互能力。
-const PopupLab = lazy(() =>
-  import("@/pages/effects-pages").then((module) => ({ default: module.PopupLab })),
+// 组件：DepartmentsPage。用于展示部门列表。
+const DepartmentsPage = lazy(() =>
+  import("@/pages/system-pages").then((module) => ({ default: module.DepartmentsPage })),
 );
-// 组件：SchemaFormPanel。用于演示 schema 表单配置和统一提交能力。
-const SchemaFormPanel = lazy(() =>
-  import("@/pages/effects-pages").then((module) => ({ default: module.SchemaFormPanel })),
-);
-// 组件：IframePanel。用于展示内嵌页面能力的占位面板。
-const IframePanel = lazy(() =>
-  import("@/pages/effects-pages").then((module) => ({ default: module.IframePanel })),
-);
+// 组件：AboutPage。用于展示项目信息和依赖版本。
+const AboutPage = lazy(() => import("@/pages/about-page"));
 
 const iconMap: Record<string, LucideIcon> = {
-  BriefcaseBusiness,
+  Info,
   LayoutDashboard,
-  PanelsTopLeft,
   Shield,
 };
 
 const pageIconMap: Record<string, LucideIcon> = {
-  "/dashboard": LayoutDashboard,
-  "/effects/form": PanelsTopLeft,
-  "/effects/iframe": PanelsTopLeft,
-  "/effects/modal": PanelsTopLeft,
-  "/system/audit": FileClock,
+  "/about": Info,
+  "/overview": LayoutDashboard,
+  "/system/departments": Users,
+  "/system/menus": SquareMenu,
   "/system/roles": Shield,
   "/system/users": Users,
-  "/workplace": BriefcaseBusiness,
 };
 
 const colorModeIcons: Record<AdminPreferences["colorMode"], LucideIcon> = {
@@ -215,6 +202,7 @@ const colorModeIcons: Record<AdminPreferences["colorMode"], LucideIcon> = {
 };
 
 const radiusOptions = ["0", "0.25", "0.5", "0.75", "1"];
+const emptyMenu: MenuRecord[] = [];
 
 const timezoneOptions = [
   { label: "Asia/Shanghai", value: "Asia/Shanghai" },
@@ -237,10 +225,10 @@ type PreferencesButtonPlacement = {
 };
 
 // 函数：resolveTab。把路由路径转换成标签页记录。
-function resolveTab(path: string, locale = "zh-CN"): TabRecord {
-  const title = getMenuTitle(path, locale);
+function resolveTab(path: string, menu: MenuRecord[]): TabRecord {
+  const title = getMenuTitle(path, menu);
   return {
-    affix: path === "/dashboard",
+    affix: path === ADMIN_DEFAULT_PATH,
     icon: pageIconMap[path] ? path : undefined,
     key: path,
     path,
@@ -249,7 +237,7 @@ function resolveTab(path: string, locale = "zh-CN"): TabRecord {
 }
 
 // 函数：getRootMenu。获取当前路径所在的一级菜单。
-function getRootMenu(path: string, menu: MenuRecord[] = adminMenu) {
+function getRootMenu(path: string, menu: MenuRecord[]) {
   return findMenuTrail(menu, path)?.[0] ?? menu.find((item) => item.path === path) ?? menu[0];
 }
 
@@ -418,13 +406,19 @@ function resolvePreferencesButtonPlacement({
 // 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
 function AdminWorkspace() {
   const queryClient = useQueryClient();
+  const menuQuery = useQuery(navigationQueries.menu());
   const preferences = useStore(preferenceStore, (state) => state.preferences);
   const setPreferences = useStore(preferenceStore, (state) => state.setPreferences);
   const tabs = useStore(tabsStore, (state) => state.tabs);
   const routePathname = useLocation({ select: (location) => location.pathname });
   const routerNavigate = useNavigate();
-  const activePath = useMemo(() => normalizeAdminPath(routePathname), [routePathname]);
+  const navigationMenu = menuQuery.data ?? emptyMenu;
+  const activePath = useMemo(
+    () => normalizeAdminPath(routePathname, navigationMenu),
+    [navigationMenu, routePathname],
+  );
   const lastActiveByRootRef = useRef<Record<string, string>>({});
+  const tabsInitializedRef = useRef(false);
   const [manualHeaderMixedSideRoot, setManualHeaderMixedSideRoot] = useState<{
     anchorPath: string;
     path: string;
@@ -441,12 +435,8 @@ function AdminWorkspace() {
   const [screenLocked, setScreenLocked] = useState(false);
   const [lockScreenPassword, setLockScreenPassword] = useState("");
   const isMobile = useIsMobile();
-  const initialLocaleRef = useRef(preferences.appLocale);
   const messages = useMemo(() => getAdminMessages(preferences.appLocale), [preferences.appLocale]);
-  const localizedMenu = useMemo(
-    () => localizeMenu(adminMenu, preferences.appLocale),
-    [preferences.appLocale],
-  );
+  const activeMenu = navigationMenu;
   const effectiveLayout: AdminPreferences["layout"] =
     isMobile && preferences.layout !== "full-content" ? "sidebar-nav" : preferences.layout;
   const headerHidden =
@@ -528,15 +518,22 @@ function AdminWorkspace() {
   );
 
   useEffect(() => {
-    const initialLocale = initialLocaleRef.current;
-    const localizedAffixTabs = localizeTabs(affixTabs, initialLocale);
+    if (tabsInitializedRef.current || activeMenu.length === 0) {
+      return;
+    }
+
+    const initialTabs = affixTabs.map((tab) => ({
+      ...resolveTab(tab.path, activeMenu),
+      affix: tab.affix,
+    }));
 
     tabsStore.setState({
-      activeKey: localizedAffixTabs[0]?.key,
-      tabs: localizedAffixTabs,
+      activeKey: initialTabs[0]?.key,
+      tabs: initialTabs,
     });
-    tabsStore.getState().openTab(resolveTab("/dashboard", initialLocale));
-  }, []);
+    tabsStore.getState().openTab(resolveTab(ADMIN_DEFAULT_PATH, activeMenu));
+    tabsInitializedRef.current = true;
+  }, [activeMenu]);
 
   useEffect(() => {
     const current = tabsStore.getState();
@@ -544,10 +541,10 @@ function AdminWorkspace() {
     tabsStore.setState({
       tabs: current.tabs.map((tab) => ({
         ...tab,
-        title: getMenuTitle(tab.path, preferences.appLocale),
+        title: getMenuTitle(tab.path, activeMenu),
       })),
     });
-  }, [preferences.appLocale]);
+  }, [activeMenu]);
 
   useEffect(() => {
     applyVbenTheme({
@@ -593,9 +590,9 @@ function AdminWorkspace() {
 
   useEffect(() => {
     document.title = preferences.appDynamicTitle
-      ? `${getMenuTitle(activePath, preferences.appLocale)} - ${messages.common.systemName}`
+      ? `${getMenuTitle(activePath, activeMenu)} - ${messages.common.systemName}`
       : messages.common.systemName;
-  }, [activePath, messages.common.systemName, preferences.appDynamicTitle, preferences.appLocale]);
+  }, [activeMenu, activePath, messages.common.systemName, preferences.appDynamicTitle]);
 
   useEffect(() => {
     if (
@@ -632,7 +629,7 @@ function AdminWorkspace() {
   }, [activePath, routePathname, routerNavigate]);
 
   useEffect(() => {
-    const nextRootMenu = getRootMenu(activePath);
+    const nextRootMenu = getRootMenu(activePath, activeMenu);
 
     if (nextRootMenu.path !== activePath) {
       lastActiveByRootRef.current = {
@@ -640,17 +637,17 @@ function AdminWorkspace() {
         [nextRootMenu.path]: activePath,
       };
     }
-  }, [activePath]);
+  }, [activeMenu, activePath]);
 
   useEffect(() => {
-    tabsStore.getState().openTab(resolveTab(activePath, preferences.appLocale));
-  }, [activePath, preferences.appLocale]);
+    tabsStore.getState().openTab(resolveTab(activePath, activeMenu));
+  }, [activeMenu, activePath]);
 
   // 函数：navigate。统一规整管理端路径后触发路由跳转。
   function navigate(path: string, options?: { replace?: boolean }) {
     void routerNavigate({
       replace: options?.replace,
-      to: normalizeAdminPath(path),
+      to: normalizeAdminPath(path, activeMenu),
     });
   }
 
@@ -700,7 +697,7 @@ function AdminWorkspace() {
 
   // 函数：refreshActiveTab。刷新当前页面关联的查询缓存。
   function refreshActiveTab() {
-    const refreshKeys = getRouteRefreshQueryKeys(activePath, preferences.appLocale);
+    const refreshKeys = getRouteRefreshQueryKeys(activePath);
 
     void Promise.all(
       refreshKeys.map((queryKey) =>
@@ -724,7 +721,7 @@ function AdminWorkspace() {
     setLockScreenPassword("");
   }
 
-  const rootMenu = getRootMenu(activePath, localizedMenu);
+  const rootMenu = getRootMenu(activePath, activeMenu);
   const manualMixedRootPath =
     manualMixedRoot?.anchorPath === activePath ? manualMixedRoot.path : undefined;
   const manualHeaderMixedSideRootPath =
@@ -734,7 +731,7 @@ function AdminWorkspace() {
   const mixedRootPath = manualMixedRootPath ?? rootMenu.path;
 
   // 混合布局可临时覆盖可见根菜单，但不改变当前激活路由。
-  const displayedMixedRoot = localizedMenu.find((item) => item.path === mixedRootPath) ?? rootMenu;
+  const displayedMixedRoot = activeMenu.find((item) => item.path === mixedRootPath) ?? rootMenu;
   const headerMixedRoot = effectiveLayout === "header-mixed-nav" ? displayedMixedRoot : rootMenu;
   const headerMixedSideMenu = headerMixedRoot.children ?? [];
   const activeHeaderMixedSideRoot = findRootMenuInScope(headerMixedSideMenu, activePath);
@@ -765,7 +762,7 @@ function AdminWorkspace() {
   const sidebarMenu =
     effectiveLayout === "mixed-nav" && preferences.navigationSplit
       ? (displayedMixedRoot.children ?? [])
-      : localizedMenu;
+      : activeMenu;
   const preferencesButtonPlacement = resolvePreferencesButtonPlacement({
     headerEnabled,
     isMobile,
@@ -852,7 +849,7 @@ function AdminWorkspace() {
               ? messages.navigation.headerMixedSidebar
               : messages.navigation.mixedMain
           }
-          rootMenus={effectiveLayout === "header-mixed-nav" ? headerMixedSideMenu : localizedMenu}
+          rootMenus={effectiveLayout === "header-mixed-nav" ? headerMixedSideMenu : activeMenu}
           selectedRoot={
             effectiveLayout === "header-mixed-nav"
               ? selectedHeaderMixedSideRoot
@@ -877,7 +874,7 @@ function AdminWorkspace() {
             activeRootPath={displayedMixedRoot.path}
             isMobile={isMobile}
             layout={effectiveLayout}
-            menu={localizedMenu}
+            menu={activeMenu}
             navigate={navigate}
             openLock={lockActions.setTrue}
             openPreferences={preferencesActions.setTrue}
@@ -935,12 +932,7 @@ function AdminWorkspace() {
               </div>
             </div>
           )}
-          <PageSurface
-            activePath={activePath}
-            key={activePath}
-            locale={preferences.appLocale}
-            preferences={preferences}
-          />
+          <PageSurface activePath={activePath} key={activePath} preferences={preferences} />
         </main>
         {preferences.layout !== "full-content" && preferences.footerEnable && (
           <footer
@@ -977,7 +969,7 @@ function AdminWorkspace() {
       )}
       <GlobalSearchDialog
         locale={preferences.appLocale}
-        menu={localizedMenu}
+        menu={activeMenu}
         navigate={navigate}
         onOpenChange={searchActions.set}
         open={searchOpen}
@@ -1174,7 +1166,7 @@ function MixedSidebarFrame({
   onSelectRoot,
   preferences,
   rootAriaLabel,
-  rootMenus = adminMenu,
+  rootMenus = [],
   selectedRoot,
   setPreferences,
 }: {
@@ -1724,12 +1716,12 @@ function AdminHeader({
   const messages = getAdminMessages(preferences.appLocale);
   const [browserFullscreen, setBrowserFullscreen] = useState(false);
   const rawTrail = findMenuTrail(menu, activePath) ?? [
-    { key: activePath, path: activePath, title: getMenuTitle(activePath, preferences.appLocale) },
+    { key: activePath, path: activePath, title: getMenuTitle(activePath, menu) },
   ];
   const homeTrail = preferences.breadcrumbShowHome
     ? [
-        { key: "__home", path: "/dashboard", title: messages.common.home },
-        ...rawTrail.filter((item) => item.path !== "/dashboard"),
+        { key: "__home", path: ADMIN_DEFAULT_PATH, title: messages.common.home },
+        ...rawTrail.filter((item) => item.path !== ADMIN_DEFAULT_PATH),
       ]
     : rawTrail;
   const trail = preferences.breadcrumbHideOnlyOne && homeTrail.length <= 1 ? [] : homeTrail;
@@ -2646,15 +2638,11 @@ function PageTransitionLoading({ routeKey }: { routeKey: string }) {
 // 组件：PageSurface。用于承载当前路由页面并应用内容宽度约束。
 function PageSurface({
   activePath,
-  locale,
   preferences,
 }: {
   activePath: string;
-  locale: string;
   preferences: AdminPreferences;
 }) {
-  const messages = getAdminMessages(locale);
-
   return (
     <div
       className="mx-auto flex w-full flex-col gap-4"
@@ -2665,16 +2653,12 @@ function PageSurface({
       }}
     >
       <Suspense fallback={<PageSurfaceFallback />}>
-        {activePath === "/dashboard" && <DashboardPage locale={locale} />}
-        {activePath === "/workplace" && <WorkplacePage messages={messages} />}
-        {activePath === "/system/users" && <UsersPage messages={messages} />}
-        {activePath === "/system/roles" && <RolesPage messages={messages} />}
-        {activePath === "/system/audit" && (
-          <AuditPage messages={messages} preferences={preferences} />
-        )}
-        {activePath === "/effects/modal" && <PopupLab messages={messages} />}
-        {activePath === "/effects/form" && <SchemaFormPanel messages={messages} />}
-        {activePath === "/effects/iframe" && <IframePanel messages={messages} />}
+        {activePath === "/overview" && <OverviewPage />}
+        {activePath === "/system/users" && <UsersPage />}
+        {activePath === "/system/roles" && <RolesPage />}
+        {activePath === "/system/menus" && <MenusPage />}
+        {activePath === "/system/departments" && <DepartmentsPage />}
+        {activePath === "/about" && <AboutPage />}
       </Suspense>
     </div>
   );
@@ -4302,7 +4286,7 @@ function GlobalSearchDialog({
   const messages = getAdminMessages(locale);
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, { wait: 120 });
-  const defaultSearchTerm = getMenuTitle("/dashboard", locale);
+  const defaultSearchTerm = getMenuTitle(ADMIN_DEFAULT_PATH, menu);
   const results = debouncedQuery
     ? searchMenu(menu, debouncedQuery)
     : searchMenu(menu, defaultSearchTerm);
