@@ -65,6 +65,7 @@ import {
   getTabbarStyleOptions,
   getThemePresetLabel,
 } from "@/i18n/admin-i18n";
+import { getRouteRefreshQueryKeys } from "@/lib/query-keys";
 import {
   affixTabs,
   adminMenu,
@@ -699,7 +700,15 @@ function AdminWorkspace() {
 
   // 函数：refreshActiveTab。刷新当前页面关联的查询缓存。
   function refreshActiveTab() {
-    void queryClient.invalidateQueries();
+    const refreshKeys = getRouteRefreshQueryKeys(activePath, preferences.appLocale);
+
+    void Promise.all(
+      refreshKeys.map((queryKey) =>
+        queryClient.invalidateQueries({
+          queryKey,
+        }),
+      ),
+    );
   }
 
   // 函数：lockScreen。保存锁屏密码并进入锁屏状态。
