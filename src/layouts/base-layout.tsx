@@ -250,6 +250,115 @@ function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function uniqueHtmlElements(elements: Array<Element | null | undefined>) {
+  return Array.from(
+    new Set(elements.filter((element): element is HTMLElement => element instanceof HTMLElement)),
+  );
+}
+
+function startDeferredSidebarResize({
+  event,
+  max = 320,
+  min = 160,
+  onCommit,
+  startWidth,
+  targets,
+}: {
+  event: React.PointerEvent<HTMLDivElement>;
+  max?: number;
+  min?: number;
+  onCommit: (width: number) => void;
+  startWidth: number;
+  targets: HTMLElement[];
+}) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const dragHandle = event.currentTarget;
+  const startX = event.clientX;
+  const handleTransition = dragHandle.style.transition;
+  const handleTransform = dragHandle.style.transform;
+  const handleBackground = dragHandle.style.backgroundColor;
+  const targetTransitions = targets.map((target) => [target, target.style.transition] as const);
+  const overlay = document.createElement("div");
+  let cleanupDone = false;
+
+  dragHandle.style.transition = "none";
+  targetTransitions.forEach(([target]) => {
+    target.style.transition = "none";
+  });
+
+  overlay.style.position = "fixed";
+  overlay.style.inset = "0";
+  overlay.style.zIndex = "9999";
+  overlay.style.cursor = "col-resize";
+  overlay.style.userSelect = "none";
+  overlay.style.background = "rgba(0, 0, 0, 0)";
+  overlay.style.outline = "none";
+  overlay.tabIndex = -1;
+  document.body.append(overlay);
+
+  function resolveWidth(clientX: number) {
+    const rawWidth = startWidth + clientX - startX;
+    return {
+      outOfBounds: rawWidth < min || rawWidth > max,
+      width: clampNumber(rawWidth, min, max),
+    };
+  }
+
+  function restoreTargets() {
+    targetTransitions.forEach(([target, transition]) => {
+      target.style.transition = transition;
+    });
+  }
+
+  function cleanup({ deferTargetRestore = false }: { deferTargetRestore?: boolean } = {}) {
+    if (cleanupDone) {
+      return;
+    }
+
+    cleanupDone = true;
+    window.removeEventListener("pointermove", handlePointerMove);
+    window.removeEventListener("pointerup", handlePointerUp);
+    window.removeEventListener("pointercancel", handlePointerCancel);
+    dragHandle.style.transition = handleTransition;
+    dragHandle.style.transform = handleTransform;
+    dragHandle.style.backgroundColor = handleBackground;
+    overlay.remove();
+
+    if (deferTargetRestore && typeof window.requestAnimationFrame === "function") {
+      window.requestAnimationFrame(restoreTargets);
+    } else {
+      restoreTargets();
+    }
+  }
+
+  function handlePointerMove(pointerEvent: PointerEvent) {
+    const { outOfBounds, width } = resolveWidth(pointerEvent.clientX);
+
+    dragHandle.style.transform = `translateX(${width - startWidth}px)`;
+    dragHandle.style.backgroundColor = outOfBounds
+      ? "hsl(var(--primary) / 0.3)"
+      : "hsl(var(--primary))";
+    overlay.style.cursor = outOfBounds ? "not-allowed" : "col-resize";
+  }
+
+  function handlePointerUp(pointerEvent: PointerEvent) {
+    const { width } = resolveWidth(pointerEvent.clientX);
+
+    onCommit(Math.round(width));
+    cleanup({ deferTargetRestore: true });
+  }
+
+  function handlePointerCancel() {
+    cleanup();
+  }
+
+  window.addEventListener("pointermove", handlePointerMove);
+  window.addEventListener("pointerup", handlePointerUp);
+  window.addEventListener("pointercancel", handlePointerCancel);
+}
+
 function resolvePreferencesButtonPlacement({
   headerEnabled,
   isMobile,
@@ -668,6 +777,9 @@ function AdminWorkspace() {
           "--admin-sidebar-offset": preferences.sidebarCollapsed
             ? "3rem"
             : `${preferences.sidebarWidth}px`,
+          ...(effectiveLayout === "header-sidebar-nav"
+            ? { "--admin-header-brand-width": `${preferences.sidebarWidth}px` }
+            : {}),
           "--sidebar-width-icon": preferences.sidebarCollapsedShowTitle ? "4.25rem" : "3rem",
           "--sidebar-width": `${preferences.sidebarWidth}px`,
         } as React.CSSProperties
@@ -899,26 +1011,18 @@ function AdminSidebar({
       return;
     }
 
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = preferences.sidebarWidth;
+    const sidebar = event.currentTarget.closest("[data-slot='sidebar']");
+    const targets = uniqueHtmlElements([
+      sidebar?.querySelector("[data-slot='sidebar-gap']"),
+      sidebar?.querySelector("[data-slot='sidebar-container']"),
+    ]);
 
-    function handlePointerMove(pointerEvent: PointerEvent) {
-      const nextWidth = clampNumber(startWidth + pointerEvent.clientX - startX, 160, 320);
-      setPreferences({ sidebarWidth: nextWidth });
-    }
-
-    function handlePointerUp() {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    }
-
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
+    startDeferredSidebarResize({
+      event,
+      onCommit: (sidebarWidth) => setPreferences({ sidebarWidth }),
+      startWidth: preferences.sidebarWidth,
+      targets,
+    });
   }
 
   function navigateFromSidebar(path: string) {
@@ -1058,26 +1162,19 @@ function MixedSidebarFrame({
       return;
     }
 
-    event.preventDefault();
-    const startX = event.clientX;
-    const startWidth = preferences.sidebarWidth;
+    const sidebar = event.currentTarget.closest("[data-slot='mixed-sidebar']");
+    const targets = uniqueHtmlElements([
+      sidebar?.querySelector("[data-slot='mixed-sidebar-gap']"),
+      sidebar?.querySelector("[data-slot='mixed-sidebar-container']"),
+      event.currentTarget.parentElement,
+    ]);
 
-    function handlePointerMove(pointerEvent: PointerEvent) {
-      const nextWidth = clampNumber(startWidth + pointerEvent.clientX - startX, 160, 320);
-      setPreferences({ sidebarWidth: nextWidth });
-    }
-
-    function handlePointerUp() {
-      window.removeEventListener("pointermove", handlePointerMove);
-      window.removeEventListener("pointerup", handlePointerUp);
-      document.body.style.cursor = "";
-      document.body.style.userSelect = "";
-    }
-
-    document.body.style.cursor = "col-resize";
-    document.body.style.userSelect = "none";
-    window.addEventListener("pointermove", handlePointerMove);
-    window.addEventListener("pointerup", handlePointerUp);
+    startDeferredSidebarResize({
+      event,
+      onCommit: (sidebarWidth) => setPreferences({ sidebarWidth }),
+      startWidth: preferences.sidebarWidth,
+      targets,
+    });
   }
 
   return (
@@ -1095,9 +1192,11 @@ function MixedSidebarFrame({
       <div
         aria-hidden="true"
         className="relative w-(--mixed-sidebar-frame-width) bg-transparent transition-[width] duration-150 ease-linear"
+        data-slot="mixed-sidebar-gap"
       />
       <aside
         className="fixed inset-y-0 left-0 z-20 flex h-svh w-(--mixed-sidebar-frame-width) bg-sidebar-deep transition-[width] duration-150 ease-linear"
+        data-slot="mixed-sidebar-container"
         onMouseLeave={handleMouseLeave}
       >
         <div className="flex h-full w-(--mixed-sidebar-width) shrink-0 flex-col border-r border-sidebar-border bg-sidebar-deep">
@@ -1578,9 +1677,13 @@ function AdminHeader({
     !isMobile &&
     (layout === "header-mixed-nav" || (layout === "mixed-nav" && preferences.navigationSplit));
   const headerFullWidth = layout === "header-sidebar-nav";
-  const headerSidebarBrandVisible = !isMobile && layout === "header-sidebar-nav";
   const headerInlineBrandVisible =
-    !isMobile && ["header-mixed-nav", "header-nav", "mixed-nav"].includes(layout);
+    !isMobile &&
+    ["header-mixed-nav", "header-nav", "header-sidebar-nav", "mixed-nav"].includes(layout);
+  const headerInlineBrandStyle =
+    layout === "header-sidebar-nav"
+      ? ({ minWidth: "var(--admin-header-brand-width)" } as React.CSSProperties)
+      : undefined;
   const mobileHeaderLogoVisible = isMobile;
   const headerJustifyClass =
     preferences.headerMenuAlign === "center"
@@ -1640,26 +1743,12 @@ function AdminHeader({
       {mobileSidebarTriggerVisible && (
         <SidebarTrigger aria-label={messages.header.openMenu} className="md:hidden" />
       )}
-      {headerSidebarBrandVisible && (
-        <>
-          <div
-            className="hidden h-full shrink-0 items-center gap-2 border-r pr-3 md:flex"
-            data-slot="admin-header-sidebar-brand"
-          >
-            <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <PanelsTopLeft className="size-4" />
-            </div>
-            <div className="grid min-w-0 leading-tight">
-              <span className="truncate text-sm font-semibold">{messages.common.systemName}</span>
-            </div>
-          </div>
-        </>
-      )}
       {headerInlineBrandVisible && (
         <>
           <div
             className="hidden shrink-0 items-center gap-2 md:flex"
             data-slot="admin-header-inline-brand"
+            style={headerInlineBrandStyle}
           >
             <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
               <PanelsTopLeft className="size-4" />

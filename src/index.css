@@ -515,12 +515,6 @@
   padding-left: 0.75rem;
 }
 
-.admin-layout-header-sidebar-nav [data-slot="admin-header-sidebar-brand"] {
-  width: var(--admin-sidebar-offset);
-  margin-left: -0.75rem;
-  padding-left: 0.75rem;
-}
-
 .admin-header-icon-button:hover svg,
 .admin-tabbar-tool:hover svg {
   animation: shrink 0.3s ease-in-out;

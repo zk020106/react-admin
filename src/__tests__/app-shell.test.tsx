@@ -362,6 +362,26 @@ describe("admin app shell", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("commits sidebar drag width only after release", async () => {
+    preferenceStore.getState().resetPreferences();
+
+    await renderApp();
+
+    const dragHandle = document.querySelector(".cursor-col-resize");
+
+    expect(dragHandle).toBeInTheDocument();
+    expect(preferenceStore.getState().preferences.sidebarWidth).toBe(224);
+
+    fireEvent.pointerDown(dragHandle!, { clientX: 224 });
+    fireEvent.pointerMove(window, { clientX: 280 });
+
+    expect(preferenceStore.getState().preferences.sidebarWidth).toBe(224);
+
+    fireEvent.pointerUp(window, { clientX: 280 });
+
+    expect(preferenceStore.getState().preferences.sidebarWidth).toBe(280);
+  });
+
   it("only marks the current sidebar route as active", async () => {
     preferenceStore.getState().resetPreferences();
 
@@ -590,15 +610,56 @@ describe("admin app shell", () => {
     await renderApp();
 
     const header = document.querySelector("[data-slot='admin-header']");
-    const headerBrand = document.querySelector("[data-slot='admin-header-sidebar-brand']");
+    const headerBrand = document.querySelector("[data-slot='admin-header-inline-brand']");
     const sidebarNavigation = screen.getByRole("navigation", { name: "侧栏导航" });
 
     expect(header).toHaveTextContent("React Admin");
     expect(headerBrand).toHaveTextContent("React Admin");
+    expect(
+      document.querySelector("[data-slot='admin-header-sidebar-brand']"),
+    ).not.toBeInTheDocument();
     expect(within(sidebarNavigation).queryByText("React Admin")).not.toBeInTheDocument();
     expect(document.querySelector("[data-slot='sidebar-wrapper']")).toHaveClass(
       "admin-layout-header-sidebar-nav",
     );
+  });
+
+  it("links header brand minimum width to sidebar width in header-sidebar layout", async () => {
+    preferenceStore.getState().resetPreferences();
+    preferenceStore.getState().setPreferences({
+      layout: "header-sidebar-nav",
+      sidebarCollapsed: true,
+      sidebarWidth: 260,
+    });
+
+    await renderApp();
+
+    const wrapper = document.querySelector<HTMLElement>("[data-slot='sidebar-wrapper']");
+    const headerBrand = document.querySelector("[data-slot='admin-header-inline-brand']");
+
+    expect(wrapper).toHaveStyle("--admin-sidebar-offset: 3rem");
+    expect(wrapper).toHaveStyle("--admin-header-brand-width: 260px");
+    expect(headerBrand).toHaveStyle("min-width: var(--admin-header-brand-width)");
+    expect(headerBrand).toHaveTextContent("React Admin");
+    expect(
+      document.querySelector("[data-slot='admin-header-sidebar-brand']"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("does not apply sidebar brand width to header-only navigation", async () => {
+    preferenceStore.getState().resetPreferences();
+    preferenceStore.getState().setPreferences({ layout: "header-nav", sidebarWidth: 260 });
+
+    await renderApp();
+
+    const wrapper = document.querySelector<HTMLElement>("[data-slot='sidebar-wrapper']");
+    const headerBrand = document.querySelector<HTMLElement>(
+      "[data-slot='admin-header-inline-brand']",
+    );
+
+    expect(wrapper?.style.getPropertyValue("--admin-header-brand-width")).toBe("");
+    expect(headerBrand?.style.minWidth).toBe("");
+    expect(headerBrand).toHaveTextContent("React Admin");
   });
 
   it("limits visible tabs by vben tabbar max count preference", async () => {
