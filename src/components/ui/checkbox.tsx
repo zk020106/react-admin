@@ -6,6 +6,7 @@ import { Checkbox as CheckboxPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { CheckIcon } from "lucide-react";
 
+// 组件：Checkbox。用于渲染可选中和取消的复选框。
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
   return (
     <CheckboxPrimitive.Root

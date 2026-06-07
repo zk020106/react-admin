@@ -3,6 +3,7 @@ import { RadioGroup as RadioGroupPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：RadioGroup。用于提供单选组根容器。
 function RadioGroup({
   className,
   ...props
@@ -16,6 +17,7 @@ function RadioGroup({
   );
 }
 
+// 组件：RadioGroupItem。用于渲染单个单选项。
 function RadioGroupItem({
   className,
   ...props

@@ -818,14 +818,17 @@ export const adminMessages = {
 
 export type AdminMessages = (typeof adminMessages)[AdminLocale];
 
+// 函数：getAdminLocale。把外部语言标识规整为系统支持的语言。
 export function getAdminLocale(locale?: string): AdminLocale {
   return locale === "en-US" ? "en-US" : "zh-CN";
 }
 
+// 函数：getAdminMessages。获取当前语言对应的完整文案集合。
 export function getAdminMessages(locale?: string): AdminMessages {
   return adminMessages[getAdminLocale(locale)];
 }
 
+// 函数：getLayoutOptions。生成布局模式选项及说明。
 export function getLayoutOptions(locale?: string) {
   const options = getAdminMessages(locale).options.layout;
 
@@ -836,6 +839,7 @@ export function getLayoutOptions(locale?: string) {
   }));
 }
 
+// 函数：getColorModeOptions。生成颜色模式选项。
 export function getColorModeOptions(locale?: string) {
   const options = getAdminMessages(locale).options.colorMode;
 
@@ -845,6 +849,7 @@ export function getColorModeOptions(locale?: string) {
   }));
 }
 
+// 函数：getContentOptions。生成内容宽度模式选项。
 export function getContentOptions(locale?: string) {
   const options = getAdminMessages(locale).options.content;
 
@@ -854,6 +859,7 @@ export function getContentOptions(locale?: string) {
   }));
 }
 
+// 函数：getNavigationStyleOptions。生成导航样式选项。
 export function getNavigationStyleOptions(locale?: string) {
   const options = getAdminMessages(locale).options.navigationStyle;
 
@@ -863,6 +869,7 @@ export function getNavigationStyleOptions(locale?: string) {
   }));
 }
 
+// 函数：getHeaderModeOptions。生成顶栏显示模式选项。
 export function getHeaderModeOptions(locale?: string) {
   const options = getAdminMessages(locale).options.headerMode;
 
@@ -872,6 +879,7 @@ export function getHeaderModeOptions(locale?: string) {
   }));
 }
 
+// 函数：getHeaderAlignOptions。生成顶栏对齐方式选项。
 export function getHeaderAlignOptions(locale?: string) {
   const options = getAdminMessages(locale).options.headerAlign;
 
@@ -881,6 +889,7 @@ export function getHeaderAlignOptions(locale?: string) {
   }));
 }
 
+// 函数：getTabbarStyleOptions。生成标签栏样式选项。
 export function getTabbarStyleOptions(locale?: string) {
   const options = getAdminMessages(locale).options.tabbarStyle;
 
@@ -890,6 +899,7 @@ export function getTabbarStyleOptions(locale?: string) {
   }));
 }
 
+// 函数：getLocaleOptions。生成语言切换选项。
 export function getLocaleOptions(locale?: string) {
   const options = getAdminMessages(locale).options.locale;
 
@@ -899,6 +909,7 @@ export function getLocaleOptions(locale?: string) {
   ];
 }
 
+// 函数：getPreferenceButtonPositionOptions。生成偏好设置入口位置选项。
 export function getPreferenceButtonPositionOptions(locale?: string) {
   const options = getAdminMessages(locale).options.preferenceButtonPosition;
 
@@ -908,6 +919,7 @@ export function getPreferenceButtonPositionOptions(locale?: string) {
   }));
 }
 
+// 函数：getPreferenceTabs。生成偏好面板的页签选项。
 export function getPreferenceTabs(locale?: string) {
   const options = getAdminMessages(locale).options.preferenceTab;
 
@@ -917,10 +929,12 @@ export function getPreferenceTabs(locale?: string) {
   }));
 }
 
+// 函数：getThemePresetLabel。获取主题预设在当前语言下的显示名称。
 export function getThemePresetLabel(type: AdminPreferences["themeBuiltinType"], locale?: string) {
   return getAdminMessages(locale).options.themePreset[type] ?? type;
 }
 
+// 函数：getPreferenceStepAria。生成数值步进按钮的无障碍文本。
 export function getPreferenceStepAria(
   locale: string | undefined,
   action: "decrease" | "increase",

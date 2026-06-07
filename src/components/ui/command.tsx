@@ -14,6 +14,7 @@ import {
 import { InputGroup, InputGroupAddon } from "@/components/ui/input-group";
 import { SearchIcon, CheckIcon } from "lucide-react";
 
+// 组件：Command。用于提供命令面板根容器。
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
     <CommandPrimitive
@@ -27,6 +28,7 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
   );
 }
 
+// 组件：CommandDialog。用于在弹窗中展示命令面板。
 function CommandDialog({
   title = "Command Palette",
   description = "Search for a command to run...",
@@ -56,6 +58,7 @@ function CommandDialog({
   );
 }
 
+// 组件：CommandInput。用于渲染命令搜索输入框。
 function CommandInput({
   className,
   ...props
@@ -79,6 +82,7 @@ function CommandInput({
   );
 }
 
+// 组件：CommandList。用于渲染命令结果列表。
 function CommandList({ className, ...props }: React.ComponentProps<typeof CommandPrimitive.List>) {
   return (
     <CommandPrimitive.List
@@ -92,6 +96,7 @@ function CommandList({ className, ...props }: React.ComponentProps<typeof Comman
   );
 }
 
+// 组件：CommandEmpty。用于渲染命令面板的空结果状态。
 function CommandEmpty({
   className,
   ...props
@@ -105,6 +110,7 @@ function CommandEmpty({
   );
 }
 
+// 组件：CommandGroup。用于分组展示命令项。
 function CommandGroup({
   className,
   ...props
@@ -121,6 +127,7 @@ function CommandGroup({
   );
 }
 
+// 组件：CommandSeparator。用于分隔命令分组。
 function CommandSeparator({
   className,
   ...props
@@ -134,6 +141,7 @@ function CommandSeparator({
   );
 }
 
+// 组件：CommandItem。用于渲染单个可选择命令项。
 function CommandItem({
   className,
   children,
@@ -154,6 +162,7 @@ function CommandItem({
   );
 }
 
+// 组件：CommandShortcut。用于展示命令项快捷键提示。
 function CommandShortcut({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span

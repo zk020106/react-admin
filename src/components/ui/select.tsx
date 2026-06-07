@@ -6,10 +6,12 @@ import { Select as SelectPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
+// 组件：Select。用于提供下拉选择根容器。
 function Select({ ...props }: React.ComponentProps<typeof SelectPrimitive.Root>) {
   return <SelectPrimitive.Root data-slot="select" {...props} />;
 }
 
+// 组件：SelectGroup。用于分组下拉选择项。
 function SelectGroup({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Group>) {
   return (
     <SelectPrimitive.Group
@@ -20,10 +22,12 @@ function SelectGroup({ className, ...props }: React.ComponentProps<typeof Select
   );
 }
 
+// 组件：SelectValue。用于渲染下拉选择当前值。
 function SelectValue({ ...props }: React.ComponentProps<typeof SelectPrimitive.Value>) {
   return <SelectPrimitive.Value data-slot="select-value" {...props} />;
 }
 
+// 组件：SelectTrigger。用于渲染下拉选择触发按钮。
 function SelectTrigger({
   className,
   size = "default",
@@ -50,6 +54,7 @@ function SelectTrigger({
   );
 }
 
+// 组件：SelectContent。用于渲染下拉选择浮层内容。
 function SelectContent({
   className,
   children,
@@ -88,6 +93,7 @@ function SelectContent({
   );
 }
 
+// 组件：SelectLabel。用于渲染下拉选择分组标题。
 function SelectLabel({ className, ...props }: React.ComponentProps<typeof SelectPrimitive.Label>) {
   return (
     <SelectPrimitive.Label
@@ -98,6 +104,7 @@ function SelectLabel({ className, ...props }: React.ComponentProps<typeof Select
   );
 }
 
+// 组件：SelectItem。用于渲染单个下拉选择项。
 function SelectItem({
   className,
   children,
@@ -129,6 +136,7 @@ function SelectItem({
   );
 }
 
+// 组件：SelectSeparator。用于分隔下拉选择内容。
 function SelectSeparator({
   className,
   ...props
@@ -142,6 +150,7 @@ function SelectSeparator({
   );
 }
 
+// 组件：SelectScrollUpButton。用于渲染下拉列表向上滚动按钮。
 function SelectScrollUpButton({
   className,
   ...props
@@ -160,6 +169,7 @@ function SelectScrollUpButton({
   );
 }
 
+// 组件：SelectScrollDownButton。用于渲染下拉列表向下滚动按钮。
 function SelectScrollDownButton({
   className,
   ...props

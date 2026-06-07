@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+// 组件：InputGroup。用于组合输入框和前后附加内容。
 function InputGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -41,6 +42,7 @@ const inputGroupAddonVariants = cva(
   },
 );
 
+// 组件：InputGroupAddon。用于渲染输入组的附加区域。
 function InputGroupAddon({
   className,
   align = "inline-start",
@@ -77,6 +79,7 @@ const inputGroupButtonVariants = cva("flex items-center gap-2 text-sm shadow-non
   },
 });
 
+// 组件：InputGroupButton。用于渲染输入组内的操作按钮。
 function InputGroupButton({
   className,
   type = "button",
@@ -96,6 +99,7 @@ function InputGroupButton({
   );
 }
 
+// 组件：InputGroupText。用于渲染输入组内的说明文本。
 function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -108,6 +112,7 @@ function InputGroupText({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+// 组件：InputGroupInput。用于渲染输入组内的单行输入框。
 function InputGroupInput({ className, ...props }: React.ComponentProps<"input">) {
   return (
     <Input
@@ -121,6 +126,7 @@ function InputGroupInput({ className, ...props }: React.ComponentProps<"input">)
   );
 }
 
+// 组件：InputGroupTextarea。用于渲染输入组内的多行输入框。
 function InputGroupTextarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <Textarea

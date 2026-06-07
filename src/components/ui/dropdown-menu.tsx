@@ -6,22 +6,26 @@ import { DropdownMenu as DropdownMenuPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { CheckIcon, ChevronRightIcon } from "lucide-react";
 
+// 组件：DropdownMenu。用于提供下拉菜单根容器。
 function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
   return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />;
 }
 
+// 组件：DropdownMenuPortal。用于把下拉菜单内容挂载到 Portal。
 function DropdownMenuPortal({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Portal>) {
   return <DropdownMenuPrimitive.Portal data-slot="dropdown-menu-portal" {...props} />;
 }
 
+// 组件：DropdownMenuTrigger。用于绑定下拉菜单触发器。
 function DropdownMenuTrigger({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.Trigger>) {
   return <DropdownMenuPrimitive.Trigger data-slot="dropdown-menu-trigger" {...props} />;
 }
 
+// 组件：DropdownMenuContent。用于渲染下拉菜单浮层内容。
 function DropdownMenuContent({
   className,
   align = "start",
@@ -44,10 +48,12 @@ function DropdownMenuContent({
   );
 }
 
+// 组件：DropdownMenuGroup。用于分组下拉菜单项。
 function DropdownMenuGroup({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Group>) {
   return <DropdownMenuPrimitive.Group data-slot="dropdown-menu-group" {...props} />;
 }
 
+// 组件：DropdownMenuItem。用于渲染普通下拉菜单项。
 function DropdownMenuItem({
   className,
   inset,
@@ -71,6 +77,7 @@ function DropdownMenuItem({
   );
 }
 
+// 组件：DropdownMenuCheckboxItem。用于渲染带选中状态的下拉菜单项。
 function DropdownMenuCheckboxItem({
   className,
   children,
@@ -104,12 +111,14 @@ function DropdownMenuCheckboxItem({
   );
 }
 
+// 组件：DropdownMenuRadioGroup。用于组织互斥选择的下拉菜单项。
 function DropdownMenuRadioGroup({
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>) {
   return <DropdownMenuPrimitive.RadioGroup data-slot="dropdown-menu-radio-group" {...props} />;
 }
 
+// 组件：DropdownMenuRadioItem。用于渲染单选下拉菜单项。
 function DropdownMenuRadioItem({
   className,
   children,
@@ -141,6 +150,7 @@ function DropdownMenuRadioItem({
   );
 }
 
+// 组件：DropdownMenuLabel。用于渲染下拉菜单分组标题。
 function DropdownMenuLabel({
   className,
   inset,
@@ -161,6 +171,7 @@ function DropdownMenuLabel({
   );
 }
 
+// 组件：DropdownMenuSeparator。用于分隔下拉菜单内容。
 function DropdownMenuSeparator({
   className,
   ...props
@@ -174,6 +185,7 @@ function DropdownMenuSeparator({
   );
 }
 
+// 组件：DropdownMenuShortcut。用于展示下拉菜单快捷键提示。
 function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -187,10 +199,12 @@ function DropdownMenuShortcut({ className, ...props }: React.ComponentProps<"spa
   );
 }
 
+// 组件：DropdownMenuSub。用于提供下拉子菜单结构。
 function DropdownMenuSub({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Sub>) {
   return <DropdownMenuPrimitive.Sub data-slot="dropdown-menu-sub" {...props} />;
 }
 
+// 组件：DropdownMenuSubTrigger。用于触发下拉子菜单展开。
 function DropdownMenuSubTrigger({
   className,
   inset,
@@ -215,6 +229,7 @@ function DropdownMenuSubTrigger({
   );
 }
 
+// 组件：DropdownMenuSubContent。用于渲染下拉子菜单内容。
 function DropdownMenuSubContent({
   className,
   ...props

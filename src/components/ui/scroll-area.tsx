@@ -3,6 +3,7 @@ import { ScrollArea as ScrollAreaPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：ScrollArea。用于渲染自定义滚动区域。
 function ScrollArea({
   className,
   children,
@@ -26,6 +27,7 @@ function ScrollArea({
   );
 }
 
+// 组件：ScrollBar。用于渲染自定义滚动条。
 function ScrollBar({
   className,
   orientation = "vertical",

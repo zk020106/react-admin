@@ -78,6 +78,7 @@ export const BUILT_IN_THEME_PRESETS: BuiltinThemePreset[] = [
   { color: "", type: "custom" },
 ];
 
+// 函数：isDarkTheme。根据主题模式判断当前是否应使用暗色主题。
 export function isDarkTheme(mode: VbenThemeMode) {
   if (mode === "auto") {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
@@ -86,10 +87,12 @@ export function isDarkTheme(mode: VbenThemeMode) {
   return mode === "dark";
 }
 
+// 函数：applyVbenTheme。把主题配置同步到根节点 class、data-theme 和 CSS 变量。
 export function applyVbenTheme(options: VbenThemeOptions) {
   const root = document.documentElement;
   const dark = isDarkTheme(options.mode);
 
+  // 同步 class、data-theme 和 CSS 变量，确保 Tailwind 与自定义样式一致。
   root.classList.toggle("dark", dark);
   root.classList.toggle("light", !dark);
   root.dataset.theme = options.builtinType;
@@ -112,7 +115,9 @@ export function applyVbenTheme(options: VbenThemeOptions) {
   updateCSSVariables(colorVariables);
 }
 
+// 函数：resolveSurfaceVariables。根据暗色和半深色配置生成表面变量。
 function resolveSurfaceVariables(dark: boolean, options: VbenThemeOptions) {
+  // 半深色开关允许顶栏/侧栏独立使用深色表面，内容区保持浅色。
   const headerDark = dark || options.semiDarkHeader;
   const sidebarDark = dark || options.semiDarkSidebar;
   const sidebarSubDark = dark || options.semiDarkSidebarSub;
@@ -130,6 +135,7 @@ function resolveSurfaceVariables(dark: boolean, options: VbenThemeOptions) {
   };
 }
 
+// 函数：darkSidebarVariables。返回暗色侧边栏的 CSS 变量。
 function darkSidebarVariables() {
   return {
     "--sidebar": "222.34deg 10.43% 12.27%",
@@ -145,6 +151,7 @@ function darkSidebarVariables() {
   };
 }
 
+// 函数：lightSidebarVariables。返回亮色侧边栏的 CSS 变量。
 function lightSidebarVariables() {
   return {
     "--sidebar": "0 0% 100%",
@@ -160,6 +167,7 @@ function lightSidebarVariables() {
   };
 }
 
+// 函数：darkSidebarSubVariables。返回暗色二级侧边栏的 CSS 变量。
 function darkSidebarSubVariables() {
   return {
     "--sidebar-sub": "222.34deg 10.43% 12.27%",
@@ -167,6 +175,7 @@ function darkSidebarSubVariables() {
   };
 }
 
+// 函数：lightSidebarSubVariables。返回亮色二级侧边栏的 CSS 变量。
 function lightSidebarSubVariables() {
   return {
     "--sidebar-sub": "0 0% 100%",
@@ -174,6 +183,7 @@ function lightSidebarSubVariables() {
   };
 }
 
+// 函数：resolvePrimaryColor。根据内置主题和明暗模式选择主色。
 function resolvePrimaryColor(options: VbenThemeOptions, dark: boolean) {
   if (options.builtinType === "custom") {
     return options.colorPrimary ?? "hsl(212 100% 45%)";
@@ -188,6 +198,7 @@ function resolvePrimaryColor(options: VbenThemeOptions, dark: boolean) {
   return (dark ? preset.darkPrimaryColor : preset.primaryColor) || preset.color;
 }
 
+// 函数：toHslCssVar。把颜色值转换成 CSS 变量使用的 HSL 通道。
 function toHslCssVar(color: string) {
   const hslMatch = color.match(/^hsl\((.*)\)$/);
 
@@ -195,17 +206,20 @@ function toHslCssVar(color: string) {
     return hslMatch[1].trim();
   }
 
+  // 主题变量只存储 HSL 通道，存在透明度时再追加 alpha。
   const { a, h, l, s } = new TinyColor(color).toHsl();
   const hsl = `${Math.round(h)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
 
   return a < 1 ? `${hsl} / ${a}` : hsl;
 }
 
+// 函数：updateCSSVariables。生成样式标签，暴露可被读取的 CSS 变量规则。
 function updateCSSVariables(
   variables: Record<string, string>,
   id = "__vben-styles__",
   selector = ":root",
 ) {
+  // 样式标签同步内联变量，供读取样式规则的消费方使用。
   const styleElement =
     document.querySelector<HTMLStyleElement>(`#${id}`) ?? document.createElement("style");
 

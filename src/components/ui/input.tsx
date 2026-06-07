@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Input。用于渲染统一样式的文本输入框。
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input

@@ -4,6 +4,7 @@ import { Tabs as TabsPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Tabs。用于提供标签页根容器。
 function Tabs({
   className,
   orientation = "horizontal",
@@ -38,6 +39,7 @@ const tabsListVariants = cva(
   },
 );
 
+// 组件：TabsList。用于排列标签页触发器列表。
 function TabsList({
   className,
   variant = "default",
@@ -53,6 +55,7 @@ function TabsList({
   );
 }
 
+// 组件：TabsTrigger。用于渲染标签页切换按钮。
 function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Trigger>) {
   return (
     <TabsPrimitive.Trigger
@@ -69,6 +72,7 @@ function TabsTrigger({ className, ...props }: React.ComponentProps<typeof TabsPr
   );
 }
 
+// 组件：TabsContent。用于渲染标签页对应内容。
 function TabsContent({ className, ...props }: React.ComponentProps<typeof TabsPrimitive.Content>) {
   return (
     <TabsPrimitive.Content

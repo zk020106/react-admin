@@ -49,10 +49,12 @@ export const affixTabs: TabRecord[] = [
 
 export const ADMIN_DEFAULT_PATH = "/dashboard";
 
+// 函数：flattenMenuRecords。展开管理菜单树，供路由和标签计算复用。
 function flattenMenuRecords(menu: MenuRecord[]): MenuRecord[] {
   return menu.flatMap((item) => [item, ...flattenMenuRecords(item.children ?? [])]);
 }
 
+// 函数：normalizePathname。去除查询、哈希和尾部斜杠，得到稳定路径。
 function normalizePathname(pathname: string) {
   const [path = ""] = pathname.split(/[?#]/);
   const normalized = path.startsWith("/") ? path : `/${path}`;
@@ -60,6 +62,7 @@ function normalizePathname(pathname: string) {
   return normalized.length > 1 ? normalized.replace(/\/+$/, "") : normalized;
 }
 
+// 函数：getDefaultMenuPath。获取菜单节点可进入的默认叶子路径。
 export function getDefaultMenuPath(item: MenuRecord): string {
   return item.children?.[0] ? getDefaultMenuPath(item.children[0]) : item.path;
 }
@@ -70,6 +73,7 @@ export const adminPagePaths = flattenMenuRecords(adminMenu)
   .filter((item) => !item.children?.length)
   .map((item) => item.path);
 
+// 函数：normalizeAdminPath。把任意路径规整到管理端可访问页面。
 export function normalizeAdminPath(pathname: string) {
   const path = normalizePathname(pathname);
 
@@ -125,10 +129,12 @@ export const menuTitleMessages: Record<string, Record<string, string>> = {
   },
 };
 
+// 函数：translateMenuTitle。按语言环境获取菜单标题。
 export function translateMenuTitle(path: string, locale = "zh-CN") {
   return menuTitleMessages[path]?.[locale] ?? menuTitleMessages[path]?.["zh-CN"] ?? path;
 }
 
+// 函数：localizeMenu。递归替换菜单树的本地化标题。
 export function localizeMenu(menu: MenuRecord[], locale = "zh-CN"): MenuRecord[] {
   return menu.map((item) => ({
     ...item,
@@ -137,6 +143,7 @@ export function localizeMenu(menu: MenuRecord[], locale = "zh-CN"): MenuRecord[]
   }));
 }
 
+// 函数：localizeTabs。替换标签页标题为当前语言。
 export function localizeTabs(tabs: TabRecord[], locale = "zh-CN"): TabRecord[] {
   return tabs.map((tab) => ({
     ...tab,
@@ -157,6 +164,7 @@ export const userRows = [
   { email: "audit@example.com", role: "审计员", status: "复核中", team: "风控组" },
 ];
 
+// 函数：getMenuTitle。获取路径对应标题，未知路径回退到仪表盘标题。
 export function getMenuTitle(path: string, locale = "zh-CN") {
   const all = flattenMenuRecords(adminMenu);
 

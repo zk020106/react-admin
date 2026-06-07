@@ -3,6 +3,7 @@ import { Avatar as AvatarPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Avatar。用于渲染用户头像根节点。
 function Avatar({
   className,
   size = "default",
@@ -23,6 +24,7 @@ function Avatar({
   );
 }
 
+// 组件：AvatarImage。用于渲染头像图片。
 function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
   return (
     <AvatarPrimitive.Image
@@ -33,6 +35,7 @@ function AvatarImage({ className, ...props }: React.ComponentProps<typeof Avatar
   );
 }
 
+// 组件：AvatarFallback。用于在头像图片不可用时渲染备用内容。
 function AvatarFallback({
   className,
   ...props
@@ -49,6 +52,7 @@ function AvatarFallback({
   );
 }
 
+// 组件：AvatarBadge。用于渲染头像角标状态。
 function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -65,6 +69,7 @@ function AvatarBadge({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+// 组件：AvatarGroup。用于排列一组重叠头像。
 function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -78,6 +83,7 @@ function AvatarGroup({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+// 组件：AvatarGroupCount。用于展示头像组中额外成员数量。
 function AvatarGroupCount({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div

@@ -29,6 +29,7 @@ import type { getAdminMessages } from "@/i18n/admin-i18n";
 
 type AdminMessages = ReturnType<typeof getAdminMessages>;
 
+// 钩子：usePopupState。订阅弹窗 API 状态并映射为 React 状态。
 function usePopupState(api: ModalApi | DrawerApi) {
   const [state, setState] = useState<PopupState>(api.getState());
 
@@ -37,6 +38,7 @@ function usePopupState(api: ModalApi | DrawerApi) {
   return state;
 }
 
+// 组件：PopupLab。用于演示模态弹窗和抽屉 API 的交互能力。
 export function PopupLab({ messages }: { messages: AdminMessages }) {
   const popup = messages.pages.popup;
   const modalApi = useMemo(() => new ModalApi({ title: popup.modalTitle }), [popup.modalTitle]);
@@ -113,6 +115,7 @@ const schemaForm = z.object({
   role: z.string().min(1),
 });
 
+// 组件：SchemaFormPanel。用于演示 schema 表单配置和统一提交能力。
 export function SchemaFormPanel({ messages }: { messages: AdminMessages }) {
   const schemaFormMessages = messages.pages.schemaForm;
   const [submitted, setSubmitted] = useState<Record<string, unknown>>({});
@@ -137,6 +140,7 @@ export function SchemaFormPanel({ messages }: { messages: AdminMessages }) {
     [schemaFormMessages.email, schemaFormMessages.name, schemaFormMessages.role],
   );
 
+  // 函数：submitForm。挂载表单能力并通过 FormApi 统一提交。
   async function submitForm() {
     api.mount({
       reset: form.reset,
@@ -184,6 +188,7 @@ export function SchemaFormPanel({ messages }: { messages: AdminMessages }) {
   );
 }
 
+// 组件：IframePanel。用于展示内嵌页面能力的占位面板。
 export function IframePanel({ messages }: { messages: AdminMessages }) {
   const iframe = messages.pages.iframe;
 

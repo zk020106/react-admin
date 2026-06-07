@@ -120,7 +120,9 @@ const PREFERENCES_BUTTON_POSITIONS = new Set<PreferencesButtonPosition>([
 
 export interface PreferenceStoreState {
   preferences: AdminPreferences;
+  // 方法：resetPreferences。把偏好设置恢复为默认值。
   resetPreferences: () => void;
+  // 方法：setPreferences。合并局部偏好设置并触发持久化。
   setPreferences: (
     updater:
       | ((preferences: AdminPreferences) => Partial<AdminPreferences>)
@@ -135,10 +137,12 @@ interface PreferenceStoreOptions {
 
 const PREFERENCES_STORAGE_KEY = "antd-react-admin:preferences";
 
+// 函数：clamp。把数值限制在给定范围内。
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+// 函数：getLocalStorage。安全获取浏览器 localStorage。
 function getLocalStorage() {
   if (typeof window === "undefined") {
     return undefined;
@@ -151,6 +155,7 @@ function getLocalStorage() {
   }
 }
 
+// 函数：readStoredPreferences。读取并兼容旧结构的偏好设置缓存。
 function readStoredPreferences(storageKey: string): Partial<AdminPreferences> | undefined {
   const storage = getLocalStorage();
 
@@ -181,6 +186,7 @@ function readStoredPreferences(storageKey: string): Partial<AdminPreferences> | 
   return undefined;
 }
 
+// 函数：writeStoredPreferences。把当前偏好设置写入本地存储。
 function writeStoredPreferences(storageKey: string, preferences: AdminPreferences) {
   const storage = getLocalStorage();
 
@@ -191,16 +197,18 @@ function writeStoredPreferences(storageKey: string, preferences: AdminPreference
   try {
     storage.setItem(storageKey, JSON.stringify({ preferences }));
   } catch {
-    // Ignore storage quota or privacy-mode failures; the in-memory store still works.
+    // 忽略存储配额或隐私模式失败，内存状态仍可继续工作。
   }
 }
 
+// 函数：normalizePreferences。合并并校正偏好设置，避免非法值进入布局。
 export function normalizePreferences(
   next: Partial<AdminPreferences> = {},
   base: AdminPreferences = DEFAULT_PREFERENCES,
 ): AdminPreferences {
   const merged = { ...base, ...next };
 
+  // 约束持久化或导入值，避免无效 localStorage 数据破坏布局。
   return {
     ...merged,
     contentCompactWidth: clamp(merged.contentCompactWidth, 960, 1680),
@@ -224,12 +232,14 @@ export function normalizePreferences(
   };
 }
 
+// 函数：createPreferenceStore。创建偏好设置仓库并按需接入本地持久化。
 export function createPreferenceStore(
   initial?: Partial<AdminPreferences>,
   options: PreferenceStoreOptions = {},
 ) {
   const storageKey = options.storageKey ?? PREFERENCES_STORAGE_KEY;
   const persisted = options.persist ? readStoredPreferences(storageKey) : undefined;
+  // 显式初始值优先于持久化状态，方便隔离测试和预览。
   const initialPreferences = normalizePreferences({ ...persisted, ...initial });
 
   return createStore<PreferenceStoreState>()((set, get) => ({

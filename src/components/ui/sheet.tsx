@@ -5,22 +5,27 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { XIcon } from "lucide-react";
 
+// 组件：Sheet。用于提供抽屉面板根容器。
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
   return <SheetPrimitive.Root data-slot="sheet" {...props} />;
 }
 
+// 组件：SheetTrigger。用于触发抽屉打开。
 function SheetTrigger({ ...props }: React.ComponentProps<typeof SheetPrimitive.Trigger>) {
   return <SheetPrimitive.Trigger data-slot="sheet-trigger" {...props} />;
 }
 
+// 组件：SheetClose。用于触发抽屉关闭。
 function SheetClose({ ...props }: React.ComponentProps<typeof SheetPrimitive.Close>) {
   return <SheetPrimitive.Close data-slot="sheet-close" {...props} />;
 }
 
+// 组件：SheetPortal。用于把抽屉内容挂载到 Portal。
 function SheetPortal({ ...props }: React.ComponentProps<typeof SheetPrimitive.Portal>) {
   return <SheetPrimitive.Portal data-slot="sheet-portal" {...props} />;
 }
 
+// 组件：SheetOverlay。用于渲染抽屉背后的遮罩层。
 function SheetOverlay({
   className,
   ...props
@@ -37,6 +42,7 @@ function SheetOverlay({
   );
 }
 
+// 组件：SheetContent。用于渲染抽屉主体内容和关闭按钮。
 function SheetContent({
   className,
   children,
@@ -73,6 +79,7 @@ function SheetContent({
   );
 }
 
+// 组件：SheetHeader。用于排列抽屉标题和说明区域。
 function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -83,6 +90,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+// 组件：SheetFooter。用于排列抽屉底部操作区。
 function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -93,6 +101,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+// 组件：SheetTitle。用于渲染抽屉标题。
 function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPrimitive.Title>) {
   return (
     <SheetPrimitive.Title
@@ -103,6 +112,7 @@ function SheetTitle({ className, ...props }: React.ComponentProps<typeof SheetPr
   );
 }
 
+// 组件：SheetDescription。用于渲染抽屉说明文本。
 function SheetDescription({
   className,
   ...props

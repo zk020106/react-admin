@@ -41,6 +41,7 @@ const buttonVariants = cva(
   },
 );
 
+// 组件：Button。用于渲染统一样式的按钮，并支持变体、尺寸和 asChild 组合。
 function Button({
   className,
   variant = "default",

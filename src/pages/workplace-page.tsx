@@ -5,6 +5,7 @@ type AdminMessages = ReturnType<typeof getAdminMessages>;
 
 const workplaceCounts = [18, 14, 9];
 
+// 组件：WorkplacePage。用于展示工作台任务和统计卡片。
 export default function WorkplacePage({ messages }: { messages: AdminMessages }) {
   const workplace = messages.pages.workplace;
 

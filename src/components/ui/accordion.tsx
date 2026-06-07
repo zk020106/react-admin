@@ -4,6 +4,7 @@ import { Accordion as AccordionPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 
+// 组件：Accordion。用于提供可折叠面板的根容器。
 function Accordion({ className, ...props }: React.ComponentProps<typeof AccordionPrimitive.Root>) {
   return (
     <AccordionPrimitive.Root
@@ -14,6 +15,7 @@ function Accordion({ className, ...props }: React.ComponentProps<typeof Accordio
   );
 }
 
+// 组件：AccordionItem。用于承载单个折叠面板项的状态和结构。
 function AccordionItem({
   className,
   ...props
@@ -27,6 +29,7 @@ function AccordionItem({
   );
 }
 
+// 组件：AccordionTrigger。用于渲染折叠面板的展开和收起触发器。
 function AccordionTrigger({
   className,
   children,
@@ -56,6 +59,7 @@ function AccordionTrigger({
   );
 }
 
+// 组件：AccordionContent。用于渲染折叠面板展开后的内容区域。
 function AccordionContent({
   className,
   children,

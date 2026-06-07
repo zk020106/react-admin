@@ -21,6 +21,7 @@ const auditEvents = [
   { happenedAt: "2026-06-05T23:50:00.000Z" },
 ];
 
+// 函数：formatPreferenceDateTime。按偏好时区格式化审计时间。
 function formatPreferenceDateTime(value: string, timezone: string) {
   const parts = new Intl.DateTimeFormat("en-US", {
     day: "2-digit",
@@ -40,6 +41,7 @@ function formatPreferenceDateTime(value: string, timezone: string) {
   return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}`;
 }
 
+// 组件：UsersPage。用于展示用户列表和状态信息。
 export function UsersPage({ messages }: { messages: AdminMessages }) {
   const users = messages.pages.users;
 
@@ -79,6 +81,7 @@ export function UsersPage({ messages }: { messages: AdminMessages }) {
   );
 }
 
+// 组件：RolesPage。用于展示角色卡片列表。
 export function RolesPage({ messages }: { messages: AdminMessages }) {
   const roles = messages.pages.roles;
 
@@ -101,6 +104,7 @@ export function RolesPage({ messages }: { messages: AdminMessages }) {
   );
 }
 
+// 组件：AuditPage。用于展示审计日志并按偏好时区格式化时间。
 export function AuditPage({
   messages,
   preferences,

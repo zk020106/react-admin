@@ -24,6 +24,7 @@ const badgeVariants = cva(
   },
 );
 
+// 组件：Badge。用于渲染状态、数量或分类徽标。
 function Badge({
   className,
   variant = "default",

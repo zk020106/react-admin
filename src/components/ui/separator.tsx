@@ -3,6 +3,7 @@ import { Separator as SeparatorPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Separator。用于渲染水平或垂直分隔线。
 function Separator({
   className,
   orientation = "horizontal",

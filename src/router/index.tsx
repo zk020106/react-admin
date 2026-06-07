@@ -32,6 +32,7 @@ const fallbackRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([indexRoute, ...adminRoutes, fallbackRoute]);
 
+// 函数：createAppRouter。创建应用路由实例并绑定浏览器历史。
 export function createAppRouter() {
   return createRouter({
     history: createBrowserHistory(),

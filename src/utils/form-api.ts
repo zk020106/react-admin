@@ -15,6 +15,7 @@ interface ValidationResult {
   valid: boolean;
 }
 
+// 类型：MountedForm。描述 FormApi 需要宿主表单提供的最小能力。
 interface MountedForm {
   reset: () => void;
   setValue: (fieldName: string, value: unknown) => void;
@@ -30,10 +31,12 @@ export interface FormApiOptions {
   schema?: FormSchema[];
 }
 
+// 类：FormApi。封装表单挂载、校验、提交和字段转换能力。
 export class FormApi {
   private form?: MountedForm;
   private state: FormApiOptions;
 
+  // 方法：constructor。初始化表单 API 配置并填充默认数组字段。
   constructor(options: FormApiOptions = {}) {
     this.state = {
       arrayToStringFields: [],
@@ -43,14 +46,17 @@ export class FormApi {
     };
   }
 
+  // 方法：getState。读取当前表单 API 配置。
   getState() {
     return this.state;
   }
 
+  // 方法：getValues。获取表单值并按提交规则转换字段。
   async getValues() {
     const form = this.getMountedForm();
     const values = cloneDeep(form.values);
 
+    // 对齐上游提交流程：先归一化数组，再展开时间范围，最后执行字段格式化。
     this.applyArrayToString(values);
     this.applyFieldMappingTime(values);
     this.applyValueFormat(values);
@@ -58,14 +64,17 @@ export class FormApi {
     return values;
   }
 
+  // 方法：mount。绑定宿主表单实例，供后续提交和重置调用。
   mount(form: MountedForm) {
     this.form = form;
   }
 
+  // 方法：reset。调用宿主表单重置能力。
   reset() {
     this.getMountedForm().reset();
   }
 
+  // 方法：submit。校验通过后提交表单并返回转换后的值。
   async submit() {
     const form = this.getMountedForm();
     const validation = await form.validate();
@@ -81,6 +90,7 @@ export class FormApi {
     return values;
   }
 
+  // 方法：updateSchema。按 fieldName 更新已有 schema 项。
   updateSchema(updates: Partial<FormSchema>[]) {
     if (!updates.every((item) => item.fieldName)) {
       console.error(
@@ -98,6 +108,7 @@ export class FormApi {
     };
   }
 
+  // 方法：applyArrayToString。把指定数组字段转换成分隔字符串。
   private applyArrayToString(values: Record<string, unknown>) {
     const fields = this.state.arrayToStringFields ?? [];
 
@@ -112,12 +123,14 @@ export class FormApi {
     });
   }
 
+  // 方法：applyFieldMappingTime。把时间范围字段拆成开始和结束字段。
   private applyFieldMappingTime(values: Record<string, unknown>) {
     const fields = this.state.fieldMappingTime ?? [];
 
     fields.forEach(([fieldName, [startField, endField], formatter = "YYYY-MM-DD"]) => {
       const value = get(values, fieldName) as unknown[] | undefined;
 
+      // 即使值无效，也先移除范围字段，再写入后端友好的起止字段。
       unset(values, fieldName);
       if (!Array.isArray(value)) {
         return;
@@ -128,6 +141,7 @@ export class FormApi {
     });
   }
 
+  // 方法：applyValueFormat。执行 schema 中的自定义值格式化。
   private applyValueFormat(values: Record<string, unknown>) {
     const schema = this.state.schema ?? [];
 
@@ -141,6 +155,7 @@ export class FormApi {
 
       const formatted = field.valueFormat(
         value,
+        // 设置函数允许格式化器把一个界面字段拆成多个提交字段。
         (fieldName, nextValue) => set(values, fieldName, nextValue),
         values,
       );
@@ -151,6 +166,7 @@ export class FormApi {
     });
   }
 
+  // 方法：convertArrayField。把单个数组字段写回为字符串。
   private convertArrayField(values: Record<string, unknown>, fieldName: string, separator: string) {
     const value = get(values, fieldName);
 
@@ -159,6 +175,7 @@ export class FormApi {
     }
   }
 
+  // 方法：formatMappedValue。按时间映射配置格式化单个值。
   private formatMappedValue(value: unknown, fieldName: string, formatter: FieldMappingFormatter) {
     if (formatter === null) {
       return value;
@@ -179,6 +196,7 @@ export class FormApi {
     return value;
   }
 
+  // 方法：getMountedForm。获取已挂载表单，未挂载时抛出明确错误。
   private getMountedForm() {
     if (!this.form) {
       throw new Error("<VbenForm /> is not mounted");

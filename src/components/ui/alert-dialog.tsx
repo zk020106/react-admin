@@ -4,20 +4,24 @@ import { AlertDialog as AlertDialogPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
+// 组件：AlertDialog。用于提供需要用户确认的警告弹窗根容器。
 function AlertDialog({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Root>) {
   return <AlertDialogPrimitive.Root data-slot="alert-dialog" {...props} />;
 }
 
+// 组件：AlertDialogTrigger。用于触发警告弹窗打开。
 function AlertDialogTrigger({
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Trigger>) {
   return <AlertDialogPrimitive.Trigger data-slot="alert-dialog-trigger" {...props} />;
 }
 
+// 组件：AlertDialogPortal。用于把警告弹窗内容挂载到 Portal。
 function AlertDialogPortal({ ...props }: React.ComponentProps<typeof AlertDialogPrimitive.Portal>) {
   return <AlertDialogPrimitive.Portal data-slot="alert-dialog-portal" {...props} />;
 }
 
+// 组件：AlertDialogOverlay。用于渲染警告弹窗背后的遮罩层。
 function AlertDialogOverlay({
   className,
   ...props
@@ -34,6 +38,7 @@ function AlertDialogOverlay({
   );
 }
 
+// 组件：AlertDialogContent。用于渲染警告弹窗的主体内容和关闭按钮。
 function AlertDialogContent({
   className,
   size = "default",
@@ -57,6 +62,7 @@ function AlertDialogContent({
   );
 }
 
+// 组件：AlertDialogHeader。用于排列警告弹窗标题和说明区域。
 function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -70,6 +76,7 @@ function AlertDialogHeader({ className, ...props }: React.ComponentProps<"div">)
   );
 }
 
+// 组件：AlertDialogFooter。用于排列警告弹窗底部操作区。
 function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -83,6 +90,7 @@ function AlertDialogFooter({ className, ...props }: React.ComponentProps<"div">)
   );
 }
 
+// 组件：AlertDialogMedia。用于渲染警告弹窗中的媒体或图标区域。
 function AlertDialogMedia({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -96,6 +104,7 @@ function AlertDialogMedia({ className, ...props }: React.ComponentProps<"div">) 
   );
 }
 
+// 组件：AlertDialogTitle。用于渲染警告弹窗标题。
 function AlertDialogTitle({
   className,
   ...props
@@ -112,6 +121,7 @@ function AlertDialogTitle({
   );
 }
 
+// 组件：AlertDialogDescription。用于渲染警告弹窗的说明文本。
 function AlertDialogDescription({
   className,
   ...props
@@ -128,6 +138,7 @@ function AlertDialogDescription({
   );
 }
 
+// 组件：AlertDialogAction。用于渲染警告弹窗的确认操作按钮。
 function AlertDialogAction({
   className,
   variant = "default",
@@ -146,6 +157,7 @@ function AlertDialogAction({
   );
 }
 
+// 组件：AlertDialogCancel。用于渲染警告弹窗的取消操作按钮。
 function AlertDialogCancel({
   className,
   variant = "outline",

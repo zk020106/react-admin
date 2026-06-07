@@ -160,23 +160,31 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
 
+// 组件：DashboardPage。用于展示仪表盘统计、概览和待办状态。
 const DashboardPage = lazy(() => import("@/pages/dashboard-page"));
+// 组件：WorkplacePage。用于展示工作台任务和统计卡片。
 const WorkplacePage = lazy(() => import("@/pages/workplace-page"));
+// 组件：UsersPage。用于展示用户列表和状态信息。
 const UsersPage = lazy(() =>
   import("@/pages/system-pages").then((module) => ({ default: module.UsersPage })),
 );
+// 组件：RolesPage。用于展示角色卡片列表。
 const RolesPage = lazy(() =>
   import("@/pages/system-pages").then((module) => ({ default: module.RolesPage })),
 );
+// 组件：AuditPage。用于展示审计日志并按偏好时区格式化时间。
 const AuditPage = lazy(() =>
   import("@/pages/system-pages").then((module) => ({ default: module.AuditPage })),
 );
+// 组件：PopupLab。用于演示模态弹窗和抽屉 API 的交互能力。
 const PopupLab = lazy(() =>
   import("@/pages/effects-pages").then((module) => ({ default: module.PopupLab })),
 );
+// 组件：SchemaFormPanel。用于演示 schema 表单配置和统一提交能力。
 const SchemaFormPanel = lazy(() =>
   import("@/pages/effects-pages").then((module) => ({ default: module.SchemaFormPanel })),
 );
+// 组件：IframePanel。用于展示内嵌页面能力的占位面板。
 const IframePanel = lazy(() =>
   import("@/pages/effects-pages").then((module) => ({ default: module.IframePanel })),
 );
@@ -227,6 +235,7 @@ type PreferencesButtonPlacement = {
   userDropdown: boolean;
 };
 
+// 函数：resolveTab。把路由路径转换成标签页记录。
 function resolveTab(path: string, locale = "zh-CN"): TabRecord {
   const title = getMenuTitle(path, locale);
   return {
@@ -238,24 +247,29 @@ function resolveTab(path: string, locale = "zh-CN"): TabRecord {
   };
 }
 
+// 函数：getRootMenu。获取当前路径所在的一级菜单。
 function getRootMenu(path: string, menu: MenuRecord[] = adminMenu) {
   return findMenuTrail(menu, path)?.[0] ?? menu.find((item) => item.path === path) ?? menu[0];
 }
 
+// 函数：findRootMenuInScope。仅在给定菜单范围内查找激活的根菜单。
 function findRootMenuInScope(menu: MenuRecord[], path: string) {
   return menu.find((item) => isMenuRecordActive(item, path));
 }
 
+// 函数：clampNumber。把数值约束在最小值和最大值之间。
 function clampNumber(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+// 函数：uniqueHtmlElements。过滤空值并去重 DOM 元素。
 function uniqueHtmlElements(elements: Array<Element | null | undefined>) {
   return Array.from(
     new Set(elements.filter((element): element is HTMLElement => element instanceof HTMLElement)),
   );
 }
 
+// 函数：startDeferredSidebarResize。处理侧边栏拖拽预览，并在释放时提交宽度。
 function startDeferredSidebarResize({
   event,
   max = 320,
@@ -271,6 +285,7 @@ function startDeferredSidebarResize({
   startWidth: number;
   targets: HTMLElement[];
 }) {
+  // 拖拽过程中保持布局状态稳定，只在释放时提交最终宽度。
   event.preventDefault();
   event.stopPropagation();
 
@@ -288,6 +303,7 @@ function startDeferredSidebarResize({
     target.style.transition = "none";
   });
 
+  // 透明遮罩用于接管指针事件，避免拖出手柄后丢失拖拽状态。
   overlay.style.position = "fixed";
   overlay.style.inset = "0";
   overlay.style.zIndex = "9999";
@@ -298,6 +314,7 @@ function startDeferredSidebarResize({
   overlay.tabIndex = -1;
   document.body.append(overlay);
 
+  // 函数：resolveWidth。根据指针位置计算约束后的宽度和越界状态。
   function resolveWidth(clientX: number) {
     const rawWidth = startWidth + clientX - startX;
     return {
@@ -306,12 +323,14 @@ function startDeferredSidebarResize({
     };
   }
 
+  // 函数：restoreTargets。恢复参与拖拽的目标元素过渡样式。
   function restoreTargets() {
     targetTransitions.forEach(([target, transition]) => {
       target.style.transition = transition;
     });
   }
 
+  // 函数：cleanup。移除拖拽监听、遮罩和临时样式。
   function cleanup({ deferTargetRestore = false }: { deferTargetRestore?: boolean } = {}) {
     if (cleanupDone) {
       return;
@@ -333,6 +352,7 @@ function startDeferredSidebarResize({
     }
   }
 
+  // 函数：handlePointerMove。拖拽时更新手柄位移和越界反馈。
   function handlePointerMove(pointerEvent: PointerEvent) {
     const { outOfBounds, width } = resolveWidth(pointerEvent.clientX);
 
@@ -343,6 +363,7 @@ function startDeferredSidebarResize({
     overlay.style.cursor = outOfBounds ? "not-allowed" : "col-resize";
   }
 
+  // 函数：handlePointerUp。释放指针时提交最终侧边栏宽度。
   function handlePointerUp(pointerEvent: PointerEvent) {
     const { width } = resolveWidth(pointerEvent.clientX);
 
@@ -350,6 +371,7 @@ function startDeferredSidebarResize({
     cleanup({ deferTargetRestore: true });
   }
 
+  // 函数：handlePointerCancel。指针取消时回滚临时拖拽状态。
   function handlePointerCancel() {
     cleanup();
   }
@@ -359,6 +381,7 @@ function startDeferredSidebarResize({
   window.addEventListener("pointercancel", handlePointerCancel);
 }
 
+// 函数：resolvePreferencesButtonPlacement。根据布局和设备决定偏好按钮位置。
 function resolvePreferencesButtonPlacement({
   headerEnabled,
   isMobile,
@@ -391,6 +414,7 @@ function resolvePreferencesButtonPlacement({
   };
 }
 
+// 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
 function AdminWorkspace() {
   const queryClient = useQueryClient();
   const preferences = useStore(preferenceStore, (state) => state.preferences);
@@ -582,6 +606,7 @@ function AdminWorkspace() {
 
     let lastScrollY = window.scrollY;
 
+    // 函数：handleScroll。根据滚动方向和高度更新顶栏隐藏状态。
     function handleScroll() {
       const nextScrollY = window.scrollY;
 
@@ -620,6 +645,7 @@ function AdminWorkspace() {
     tabsStore.getState().openTab(resolveTab(activePath, preferences.appLocale));
   }, [activePath, preferences.appLocale]);
 
+  // 函数：navigate。统一规整管理端路径后触发路由跳转。
   function navigate(path: string, options?: { replace?: boolean }) {
     void routerNavigate({
       replace: options?.replace,
@@ -627,11 +653,13 @@ function AdminWorkspace() {
     });
   }
 
+  // 函数：closeTab。关闭指定标签并同步激活路由。
   function closeTab(key: string) {
     tabsStore.getState().closeTab(key);
     syncActiveTab();
   }
 
+  // 函数：syncActiveTab。把标签仓库中的激活项同步到路由。
   function syncActiveTab() {
     const nextActive = tabsStore.getState().activeKey;
 
@@ -640,40 +668,48 @@ function AdminWorkspace() {
     }
   }
 
+  // 函数：closeLeftTabs。关闭指定标签左侧标签并同步路由。
   function closeLeftTabs(key: string) {
     tabsStore.getState().closeLeft(key);
     syncActiveTab();
   }
 
+  // 函数：closeRightTabs。关闭指定标签右侧标签并同步路由。
   function closeRightTabs(key: string) {
     tabsStore.getState().closeRight(key);
     syncActiveTab();
   }
 
+  // 函数：closeOtherTabs。关闭其它标签并同步路由。
   function closeOtherTabs(key: string) {
     tabsStore.getState().closeOthers(key);
     syncActiveTab();
   }
 
+  // 函数：closeAllTabs。关闭全部可关闭标签并同步路由。
   function closeAllTabs() {
     tabsStore.getState().closeAll();
     syncActiveTab();
   }
 
+  // 函数：toggleTabPin。切换标签固定状态。
   function toggleTabPin(key: string) {
     tabsStore.getState().toggleAffix(key);
   }
 
+  // 函数：refreshActiveTab。刷新当前页面关联的查询缓存。
   function refreshActiveTab() {
     void queryClient.invalidateQueries();
   }
 
+  // 函数：lockScreen。保存锁屏密码并进入锁屏状态。
   function lockScreen(password: string) {
     setLockScreenPassword(password);
     setScreenLocked(true);
     lockActions.setFalse();
   }
 
+  // 函数：unlockScreen。退出锁屏并清除锁屏密码。
   function unlockScreen() {
     setScreenLocked(false);
     setLockScreenPassword("");
@@ -688,6 +724,7 @@ function AdminWorkspace() {
       : undefined;
   const mixedRootPath = manualMixedRootPath ?? rootMenu.path;
 
+  // 混合布局可临时覆盖可见根菜单，但不改变当前激活路由。
   const displayedMixedRoot = localizedMenu.find((item) => item.path === mixedRootPath) ?? rootMenu;
   const headerMixedRoot = effectiveLayout === "header-mixed-nav" ? displayedMixedRoot : rootMenu;
   const headerMixedSideMenu = headerMixedRoot.children ?? [];
@@ -697,6 +734,7 @@ function AdminWorkspace() {
     activeHeaderMixedSideRoot ??
     headerMixedSideMenu[0] ??
     headerMixedRoot;
+  // 这些开关先统一判定布局区域是否可用，再进入具体渲染分支。
   const sidebarEnabled =
     !contentMaximized &&
     preferences.sidebarEnable &&
@@ -726,6 +764,7 @@ function AdminWorkspace() {
     sidebarEnabled,
   });
 
+  // 函数：selectMixedRoot。选择混合导航根菜单并按配置激活子页面。
   function selectMixedRoot(item: MenuRecord) {
     const children = item.children ?? [];
 
@@ -748,6 +787,7 @@ function AdminWorkspace() {
     }
   }
 
+  // 函数：selectHeaderMixedSideRoot。选择顶栏混合布局的侧栏根节点。
   function selectHeaderMixedSideRoot(item: MenuRecord) {
     const children = item.children ?? [];
 
@@ -951,6 +991,7 @@ function AdminWorkspace() {
   );
 }
 
+// 组件：AdminSidebar。用于渲染主侧边导航，并处理折叠、悬停展开和宽度拖拽。
 function AdminSidebar({
   activePath,
   ariaLabel,
@@ -984,6 +1025,7 @@ function AdminSidebar({
     preferences.layout !== "mixed-nav" &&
     preferences.layout !== "sidebar-mixed-nav";
 
+  // 函数：handleSidebarMouseEnter。悬停时临时展开已折叠的主侧边栏。
   function handleSidebarMouseEnter() {
     if (
       variant !== "primary" ||
@@ -997,6 +1039,7 @@ function AdminSidebar({
     setPreferences({ sidebarCollapsed: false });
   }
 
+  // 函数：handleSidebarMouseLeave。离开侧边栏时恢复悬停展开前的折叠状态。
   function handleSidebarMouseLeave() {
     if (!hoverExpanded) {
       return;
@@ -1006,6 +1049,7 @@ function AdminSidebar({
     setPreferences({ sidebarCollapsed: true });
   }
 
+  // 函数：startResize。启动主侧边栏宽度拖拽。
   function startResize(event: React.PointerEvent<HTMLDivElement>) {
     if (!preferences.sidebarDraggable || variant !== "primary") {
       return;
@@ -1025,6 +1069,7 @@ function AdminSidebar({
     });
   }
 
+  // 函数：navigateFromSidebar。侧边栏导航后在移动端自动收起抽屉。
   function navigateFromSidebar(path: string) {
     navigate(path);
 
@@ -1112,6 +1157,7 @@ function AdminSidebar({
   );
 }
 
+// 组件：MixedSidebarFrame。用于组织混合侧栏的根菜单和二级菜单区域。
 function MixedSidebarFrame({
   activePath,
   activeRootPath,
@@ -1150,6 +1196,7 @@ function MixedSidebarFrame({
   const extraTitle = messages.common.systemName;
   const resolvedRootAriaLabel = rootAriaLabel ?? messages.navigation.mixedMain;
 
+  // 函数：handleMouseLeave。离开混合侧栏时清理临时展开的二级栏。
   function handleMouseLeave() {
     if (!fixedExtra) {
       setHoveredRoot(null);
@@ -1157,6 +1204,7 @@ function MixedSidebarFrame({
     }
   }
 
+  // 函数：startExtraResize。启动混合侧栏二级栏宽度拖拽。
   function startExtraResize(event: React.PointerEvent<HTMLDivElement>) {
     if (!preferences.sidebarDraggable || extraCollapsed) {
       return;
@@ -1348,6 +1396,7 @@ function MixedSidebarFrame({
   );
 }
 
+// 组件：MixedRootMenuItem。用于渲染混合导航的一级根菜单项。
 function MixedRootMenuItem({
   activePath,
   activeRootPath,
@@ -1395,6 +1444,7 @@ function MixedRootMenuItem({
   );
 }
 
+// 组件：CollapsedExtraMenuItem。用于渲染混合侧栏折叠后的二级菜单入口。
 function CollapsedExtraMenuItem({
   activePath,
   item,
@@ -1436,6 +1486,7 @@ function CollapsedExtraMenuItem({
   );
 }
 
+// 组件：MenuNode。用于渲染侧边导航中的单个菜单节点。
 function MenuNode({
   activePath,
   accordion,
@@ -1503,6 +1554,7 @@ function MenuNode({
   );
 }
 
+// 组件：CollapsibleMenuNode。用于渲染可展开的侧边导航父节点。
 function CollapsibleMenuNode({
   accordion,
   accordionOpenKey,
@@ -1580,6 +1632,7 @@ function CollapsibleMenuNode({
   );
 }
 
+// 组件：SidebarMenuSubNode。用于渲染侧边栏二级菜单节点。
 function SidebarMenuSubNode({
   activePath,
   item,
@@ -1619,6 +1672,7 @@ function SidebarMenuSubNode({
   );
 }
 
+// 组件：AdminHeader。用于渲染后台顶栏、面包屑、导航和工具按钮。
 function AdminHeader({
   activePath,
   hidden,
@@ -1680,6 +1734,7 @@ function AdminHeader({
   const headerInlineBrandVisible =
     !isMobile &&
     ["header-mixed-nav", "header-nav", "header-sidebar-nav", "mixed-nav"].includes(layout);
+  // 上游布局使用最小宽度保留侧栏空间，同时避免内容被强制裁切。
   const headerInlineBrandStyle =
     layout === "header-sidebar-nav"
       ? ({ minWidth: "var(--admin-header-brand-width)" } as React.CSSProperties)
@@ -1700,6 +1755,7 @@ function AdminHeader({
     layout !== "full-content";
 
   useEffect(() => {
+    // 函数：handleFullscreenChange。同步浏览器全屏状态到顶栏按钮。
     function handleFullscreenChange() {
       setBrowserFullscreen(!!document.fullscreenElement);
     }
@@ -1710,6 +1766,7 @@ function AdminHeader({
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // 函数：toggleBrowserFullscreen。切换浏览器全屏模式。
   function toggleBrowserFullscreen() {
     if (document.fullscreenElement) {
       void document.exitFullscreen?.();
@@ -1857,6 +1914,7 @@ function AdminHeader({
   );
 }
 
+// 组件：HeaderNavigation。用于渲染顶栏导航列表和品牌区域。
 function HeaderNavigation({
   activePath,
   activeRootPath,
@@ -1913,6 +1971,7 @@ function HeaderNavigation({
   );
 }
 
+// 组件：HeaderNavigationItem。用于渲染单个顶栏导航项及其子菜单。
 function HeaderNavigationItem({
   activePath,
   activeRootPath,
@@ -2005,6 +2064,7 @@ function HeaderNavigationItem({
   return null;
 }
 
+// 函数：isMenuRecordActive。判断菜单节点或任意子节点是否匹配当前路径。
 function isMenuRecordActive(item: MenuRecord, activePath: string): boolean {
   return (
     item.path === activePath ||
@@ -2012,6 +2072,7 @@ function isMenuRecordActive(item: MenuRecord, activePath: string): boolean {
   );
 }
 
+// 组件：HeaderIconButton。用于渲染顶栏图标按钮并附带悬浮提示。
 function HeaderIconButton({
   children,
   dataPreferencesPosition,
@@ -2042,6 +2103,7 @@ function HeaderIconButton({
   );
 }
 
+// 组件：LanguageDropdown。用于渲染语言切换下拉菜单。
 function LanguageDropdown({
   locale,
   setLocale,
@@ -2079,6 +2141,7 @@ function LanguageDropdown({
   );
 }
 
+// 组件：TimezoneDialogButton。用于打开时区选择弹窗并保存时区。
 function TimezoneDialogButton({
   locale,
   setTimezone,
@@ -2092,11 +2155,13 @@ function TimezoneDialogButton({
   const [open, setOpen] = useState(false);
   const [draftTimezone, setDraftTimezone] = useState(timezone);
 
+  // 函数：confirmTimezone。确认并保存时区选择。
   function confirmTimezone() {
     setTimezone(draftTimezone);
     setOpen(false);
   }
 
+  // 函数：openTimezoneDialog。打开时区弹窗并同步当前值到草稿。
   function openTimezoneDialog() {
     setDraftTimezone(timezone);
     setOpen(true);
@@ -2153,6 +2218,7 @@ function TimezoneDialogButton({
   );
 }
 
+// 组件：NotificationsMenu。用于渲染顶栏通知入口和通知列表。
 function NotificationsMenu({ locale }: { locale: string }) {
   const messages = getAdminMessages(locale);
 
@@ -2183,6 +2249,7 @@ function NotificationsMenu({ locale }: { locale: string }) {
   );
 }
 
+// 组件：UserMenu。用于渲染用户下拉菜单及偏好和锁屏入口。
 function UserMenu({
   locale,
   lockScreenEnabled,
@@ -2238,6 +2305,7 @@ function UserMenu({
   );
 }
 
+// 组件：Tabbar。用于渲染页面标签栏及其右键菜单操作。
 function Tabbar({
   activePath,
   closeAllTabs,
@@ -2279,6 +2347,7 @@ function Tabbar({
   const visibleTabs = getVisibleTabs(tabs, activePath, preferences.tabbarMaxCount);
   const activeTab = tabs.find((tab) => tab.key === activePath);
 
+  // 函数：handleWheel。把纵向滚轮转换为标签栏横向滚动。
   function handleWheel(event: React.WheelEvent<HTMLDivElement>) {
     if (!preferences.tabbarWheelable || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
       return;
@@ -2288,10 +2357,12 @@ function Tabbar({
     event.currentTarget.scrollLeft += event.deltaY;
   }
 
+  // 函数：copyTabPath。复制标签页路径到剪贴板。
   function copyTabPath(tab: TabRecord) {
     void navigator.clipboard?.writeText(tab.path);
   }
 
+  // 函数：openTabInNewWindow。在新窗口打开标签页路径。
   function openTabInNewWindow(tab: TabRecord) {
     window.open(tab.path, "_blank", "noopener,noreferrer");
   }
@@ -2502,6 +2573,7 @@ function Tabbar({
   );
 }
 
+// 函数：getVisibleTabs。按最大显示数量裁剪标签并保留当前激活标签。
 function getVisibleTabs(tabs: TabRecord[], activePath: string, maxCount: number) {
   if (maxCount <= 0 || tabs.length <= maxCount) {
     return tabs;
@@ -2522,6 +2594,7 @@ function getVisibleTabs(tabs: TabRecord[], activePath: string, maxCount: number)
   return [...latestTabs.slice(1), activeTab];
 }
 
+// 组件：PageTransitionProgress。用于驱动页面切换时的顶部进度条。
 function PageTransitionProgress({ routeKey }: { routeKey: string }) {
   useEffect(() => {
     NProgress.configure({ showSpinner: false, trickleSpeed: 80 });
@@ -2547,6 +2620,7 @@ function PageTransitionProgress({ routeKey }: { routeKey: string }) {
   );
 }
 
+// 组件：PageTransitionLoading。用于渲染页面切换时的 loading 动画。
 function PageTransitionLoading({ routeKey }: { routeKey: string }) {
   return (
     <div
@@ -2560,6 +2634,7 @@ function PageTransitionLoading({ routeKey }: { routeKey: string }) {
   );
 }
 
+// 组件：PageSurface。用于承载当前路由页面并应用内容宽度约束。
 function PageSurface({
   activePath,
   locale,
@@ -2596,6 +2671,7 @@ function PageSurface({
   );
 }
 
+// 组件：PageSurfaceFallback。用于渲染页面懒加载期间的骨架占位。
 function PageSurfaceFallback() {
   return (
     <div className="grid gap-4" data-slot="page-surface-fallback">
@@ -2605,6 +2681,7 @@ function PageSurfaceFallback() {
   );
 }
 
+// 函数：getPreferenceDiff。提取与默认偏好不同的配置项。
 function getPreferenceDiff(preferences: AdminPreferences) {
   const diff: Partial<AdminPreferences> = {};
 
@@ -2617,6 +2694,7 @@ function getPreferenceDiff(preferences: AdminPreferences) {
   return diff;
 }
 
+// 组件：PreferencesSheet。用于渲染偏好设置抽屉和全部配置面板。
 function PreferencesSheet({
   onOpenChange,
   open,
@@ -2648,6 +2726,7 @@ function PreferencesSheet({
   const preferenceDiff = useMemo(() => getPreferenceDiff(preferences), [preferences]);
   const hasPreferenceDiff = Object.keys(preferenceDiff).length > 0;
 
+  // 函数：copyPreferences。复制当前与默认值不同的偏好配置。
   async function copyPreferences() {
     if (!hasPreferenceDiff) {
       return;
@@ -3354,6 +3433,7 @@ function PreferencesSheet({
   );
 }
 
+// 组件：ThemeModePicker。用于切换亮色、暗色和系统主题模式。
 function ThemeModePicker({
   locale,
   mode,
@@ -3386,6 +3466,7 @@ function ThemeModePicker({
   );
 }
 
+// 组件：LayoutModePicker。用于切换后台整体布局模式。
 function LayoutModePicker({
   locale,
   layout,
@@ -3416,6 +3497,7 @@ function LayoutModePicker({
   );
 }
 
+// 组件：ContentModePicker。用于切换内容区域宽度模式。
 function ContentModePicker({
   locale,
   mode,
@@ -3445,6 +3527,7 @@ function ContentModePicker({
   );
 }
 
+// 组件：BuiltinThemeGrid。用于渲染内置主题预设的选择网格。
 function BuiltinThemeGrid({
   activeType,
   colorPrimary,
@@ -3496,6 +3579,7 @@ function BuiltinThemeGrid({
   );
 }
 
+// 组件：RadiusPicker。用于调节全局圆角半径。
 function RadiusPicker({
   radius,
   setRadius,
@@ -3530,6 +3614,7 @@ function RadiusPicker({
   );
 }
 
+// 组件：FontSizeStepper。用于通过步进按钮调节基础字号。
 function FontSizeStepper({
   fontSize,
   locale,
@@ -3582,6 +3667,7 @@ function FontSizeStepper({
   );
 }
 
+// 函数：toColorInputValue。把任意主题色转换为颜色输入框可识别的 HEX。
 function toColorInputValue(color: string) {
   if (/^#[0-9a-f]{6}$/i.test(color)) {
     return color;
@@ -3596,6 +3682,7 @@ function toColorInputValue(color: string) {
   return "#0072e5";
 }
 
+// 组件：PreferenceChoice。用于渲染偏好设置中的图文选择项。
 function PreferenceChoice({
   active,
   ariaLabel,
@@ -3640,6 +3727,7 @@ function PreferenceChoice({
   );
 }
 
+// 组件：LayoutPreview。用于预览布局模式的结构效果。
 function LayoutPreview({ layout }: { layout: AdminPreferences["layout"] }) {
   const hasHeader = layout !== "full-content" && layout !== "sidebar-nav";
   const headerPrimary = ["header-nav", "header-mixed-nav", "mixed-nav"].includes(layout);
@@ -3808,6 +3896,7 @@ function LayoutPreview({ layout }: { layout: AdminPreferences["layout"] }) {
   );
 }
 
+// 组件：ContentPreview。用于预览内容宽度模式的布局效果。
 function ContentPreview({ mode }: { mode: AdminPreferences["contentCompact"] }) {
   return (
     <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
@@ -3847,6 +3936,7 @@ function ContentPreview({ mode }: { mode: AdminPreferences["contentCompact"] }) 
   );
 }
 
+// 组件：PreferenceBlock。用于渲染偏好设置中的分组区块标题和内容。
 function PreferenceBlock({ children, title }: { children: React.ReactNode; title: string }) {
   return (
     <section className="flex flex-col border-b py-4 last:border-b-0">
@@ -3856,6 +3946,7 @@ function PreferenceBlock({ children, title }: { children: React.ReactNode; title
   );
 }
 
+// 组件：PreferenceNumber。用于渲染偏好设置中的数值步进控件。
 function PreferenceNumber({
   disabled = false,
   label,
@@ -3875,6 +3966,7 @@ function PreferenceNumber({
   step?: number;
   value: number;
 }) {
+  // 函数：setNext。约束数值步进后的结果并回传。
   const setNext = (next: number) => onValueChange(Math.min(Math.max(next, min), max));
 
   return (
@@ -3924,6 +4016,7 @@ function PreferenceNumber({
   );
 }
 
+// 组件：PreferenceText。用于渲染偏好设置中的文本输入项。
 function PreferenceText({
   disabled = false,
   label,
@@ -3953,6 +4046,8 @@ function PreferenceText({
   );
 }
 
+// 组件：PreferenceSegmented。用于渲染偏好设置中的分段单选控件。
+// 类型参数：TValue 表示单选项 value 的字符串字面量类型。
 function PreferenceSegmented<TValue extends string>({
   disabled = false,
   items,
@@ -4002,6 +4097,8 @@ function PreferenceSegmented<TValue extends string>({
   );
 }
 
+// 组件：PreferenceCheckboxGroup。用于渲染偏好设置中的多选按钮组。
+// 类型参数：TValue 表示多选项 value 的字符串字面量类型。
 function PreferenceCheckboxGroup<TValue extends string>({
   disabled = false,
   items,
@@ -4015,6 +4112,7 @@ function PreferenceCheckboxGroup<TValue extends string>({
   onValuesChange: (values: TValue[]) => void;
   values: TValue[];
 }) {
+  // 函数：toggleValue。根据当前选中状态添加或移除多选值。
   function toggleValue(value: TValue) {
     if (values.includes(value)) {
       onValuesChange(values.filter((item) => item !== value));
@@ -4060,6 +4158,8 @@ function PreferenceCheckboxGroup<TValue extends string>({
   );
 }
 
+// 组件：PreferenceSelect。用于渲染偏好设置中的下拉选择控件。
+// 类型参数：TValue 表示下拉选项 value 的字符串字面量类型。
 function PreferenceSelect<TValue extends string>({
   disabled = false,
   items,
@@ -4101,6 +4201,7 @@ function PreferenceSelect<TValue extends string>({
   );
 }
 
+// 组件：PreferenceToggle。用于渲染偏好设置中的开关项。
 function PreferenceToggle({
   checked,
   disabled = false,
@@ -4134,6 +4235,7 @@ function PreferenceToggle({
   );
 }
 
+// 组件：TransitionPresetPicker。用于选择页面切换动效预设。
 function TransitionPresetPicker({
   activeName,
   locale,
@@ -4174,6 +4276,7 @@ function TransitionPresetPicker({
   );
 }
 
+// 组件：GlobalSearchDialog。用于提供菜单路由的全局搜索弹窗。
 function GlobalSearchDialog({
   locale,
   menu,
@@ -4225,6 +4328,7 @@ function GlobalSearchDialog({
   );
 }
 
+// 组件：LockScreenSetupDialog。用于设置本次会话的锁屏密码。
 function LockScreenSetupDialog({
   locale,
   onOpenChange,
@@ -4239,6 +4343,7 @@ function LockScreenSetupDialog({
   const messages = getAdminMessages(locale);
   const [password, setPassword] = useState("");
 
+  // 函数：handleOpenChange。同步锁屏设置弹窗显隐并在关闭时清空密码。
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen);
 
@@ -4247,6 +4352,7 @@ function LockScreenSetupDialog({
     }
   }
 
+  // 函数：handleSubmit。提交锁屏密码并重置输入框。
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -4296,6 +4402,7 @@ function LockScreenSetupDialog({
   );
 }
 
+// 组件：LockScreenOverlay。用于渲染锁屏界面并处理解锁表单。
 function LockScreenOverlay({
   locale,
   onUnlock,
@@ -4350,17 +4457,20 @@ function LockScreenOverlay({
     year: "numeric",
   }).format(now);
 
+  // 函数：openUnlockForm。进入锁屏解锁表单。
   function openUnlockForm() {
     setError("");
     setShowUnlockForm(true);
   }
 
+  // 函数：closeUnlockForm。关闭解锁表单并清理输入状态。
   function closeUnlockForm() {
     setError("");
     setUnlockPassword("");
     setShowUnlockForm(false);
   }
 
+  // 函数：handleUnlock。校验锁屏密码并在通过后解锁。
   function handleUnlock(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -4450,6 +4560,7 @@ function LockScreenOverlay({
   );
 }
 
+// 组件：BaseLayout。用于提供管理端基础布局入口和全局提示上下文。
 export function BaseLayout() {
   return (
     <TooltipProvider>

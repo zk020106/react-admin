@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Textarea。用于渲染多行文本输入框。
 function Textarea({ className, ...props }: React.ComponentProps<"textarea">) {
   return (
     <textarea

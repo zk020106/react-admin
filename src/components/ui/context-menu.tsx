@@ -4,10 +4,12 @@ import { ContextMenu as ContextMenuPrimitive } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { ChevronRightIcon, CheckIcon } from "lucide-react";
 
+// 组件：ContextMenu。用于提供右键菜单根容器。
 function ContextMenu({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Root>) {
   return <ContextMenuPrimitive.Root data-slot="context-menu" {...props} />;
 }
 
+// 组件：ContextMenuTrigger。用于绑定右键菜单触发区域。
 function ContextMenuTrigger({
   className,
   ...props
@@ -21,24 +23,29 @@ function ContextMenuTrigger({
   );
 }
 
+// 组件：ContextMenuGroup。用于分组右键菜单项。
 function ContextMenuGroup({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Group>) {
   return <ContextMenuPrimitive.Group data-slot="context-menu-group" {...props} />;
 }
 
+// 组件：ContextMenuPortal。用于把右键菜单内容挂载到 Portal。
 function ContextMenuPortal({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Portal>) {
   return <ContextMenuPrimitive.Portal data-slot="context-menu-portal" {...props} />;
 }
 
+// 组件：ContextMenuSub。用于提供右键菜单子菜单结构。
 function ContextMenuSub({ ...props }: React.ComponentProps<typeof ContextMenuPrimitive.Sub>) {
   return <ContextMenuPrimitive.Sub data-slot="context-menu-sub" {...props} />;
 }
 
+// 组件：ContextMenuRadioGroup。用于组织互斥选择的右键菜单项。
 function ContextMenuRadioGroup({
   ...props
 }: React.ComponentProps<typeof ContextMenuPrimitive.RadioGroup>) {
   return <ContextMenuPrimitive.RadioGroup data-slot="context-menu-radio-group" {...props} />;
 }
 
+// 组件：ContextMenuContent。用于渲染右键菜单浮层内容。
 function ContextMenuContent({
   className,
   ...props
@@ -59,6 +66,7 @@ function ContextMenuContent({
   );
 }
 
+// 组件：ContextMenuItem。用于渲染普通右键菜单项。
 function ContextMenuItem({
   className,
   inset,
@@ -82,6 +90,7 @@ function ContextMenuItem({
   );
 }
 
+// 组件：ContextMenuSubTrigger。用于触发右键子菜单展开。
 function ContextMenuSubTrigger({
   className,
   inset,
@@ -106,6 +115,7 @@ function ContextMenuSubTrigger({
   );
 }
 
+// 组件：ContextMenuSubContent。用于渲染右键子菜单内容。
 function ContextMenuSubContent({
   className,
   ...props
@@ -122,6 +132,7 @@ function ContextMenuSubContent({
   );
 }
 
+// 组件：ContextMenuCheckboxItem。用于渲染带选中状态的右键菜单项。
 function ContextMenuCheckboxItem({
   className,
   children,
@@ -152,6 +163,7 @@ function ContextMenuCheckboxItem({
   );
 }
 
+// 组件：ContextMenuRadioItem。用于渲染单选右键菜单项。
 function ContextMenuRadioItem({
   className,
   children,
@@ -180,6 +192,7 @@ function ContextMenuRadioItem({
   );
 }
 
+// 组件：ContextMenuLabel。用于渲染右键菜单分组标题。
 function ContextMenuLabel({
   className,
   inset,
@@ -200,6 +213,7 @@ function ContextMenuLabel({
   );
 }
 
+// 组件：ContextMenuSeparator。用于分隔右键菜单内容。
 function ContextMenuSeparator({
   className,
   ...props
@@ -213,6 +227,7 @@ function ContextMenuSeparator({
   );
 }
 
+// 组件：ContextMenuShortcut。用于展示右键菜单快捷键提示。
 function ContextMenuShortcut({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span

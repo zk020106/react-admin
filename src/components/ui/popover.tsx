@@ -5,14 +5,17 @@ import { Popover as PopoverPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Popover。用于提供弹出浮层根容器。
 function Popover({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Root>) {
   return <PopoverPrimitive.Root data-slot="popover" {...props} />;
 }
 
+// 组件：PopoverTrigger。用于绑定弹出浮层触发器。
 function PopoverTrigger({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Trigger>) {
   return <PopoverPrimitive.Trigger data-slot="popover-trigger" {...props} />;
 }
 
+// 组件：PopoverContent。用于渲染弹出浮层内容。
 function PopoverContent({
   className,
   align = "center",
@@ -35,10 +38,12 @@ function PopoverContent({
   );
 }
 
+// 组件：PopoverAnchor。用于指定弹出浮层定位锚点。
 function PopoverAnchor({ ...props }: React.ComponentProps<typeof PopoverPrimitive.Anchor>) {
   return <PopoverPrimitive.Anchor data-slot="popover-anchor" {...props} />;
 }
 
+// 组件：PopoverHeader。用于排列弹出浮层标题和说明。
 function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
@@ -49,10 +54,12 @@ function PopoverHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
+// 组件：PopoverTitle。用于渲染弹出浮层标题。
 function PopoverTitle({ className, ...props }: React.ComponentProps<"h2">) {
   return <div data-slot="popover-title" className={cn("font-medium", className)} {...props} />;
 }
 
+// 组件：PopoverDescription。用于渲染弹出浮层说明文本。
 function PopoverDescription({ className, ...props }: React.ComponentProps<"p">) {
   return (
     <p

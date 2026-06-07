@@ -5,6 +5,7 @@ import { Switch as SwitchPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Switch。用于渲染布尔开关控件。
 function Switch({
   className,
   size = "default",

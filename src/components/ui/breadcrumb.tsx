@@ -4,12 +4,14 @@ import { Slot } from "radix-ui";
 import { cn } from "@/lib/utils";
 import { ChevronRightIcon, MoreHorizontalIcon } from "lucide-react";
 
+// 组件：Breadcrumb。用于提供面包屑导航根容器。
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return (
     <nav aria-label="breadcrumb" data-slot="breadcrumb" className={cn(className)} {...props} />
   );
 }
 
+// 组件：BreadcrumbList。用于排列面包屑列表结构。
 function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
   return (
     <ol
@@ -23,6 +25,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
   );
 }
 
+// 组件：BreadcrumbItem。用于承载单个面包屑项。
 function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
@@ -33,6 +36,7 @@ function BreadcrumbItem({ className, ...props }: React.ComponentProps<"li">) {
   );
 }
 
+// 组件：BreadcrumbLink。用于渲染可点击的面包屑链接。
 function BreadcrumbLink({
   asChild,
   className,
@@ -51,6 +55,7 @@ function BreadcrumbLink({
   );
 }
 
+// 组件：BreadcrumbPage。用于标记当前页面的面包屑项。
 function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span
@@ -64,6 +69,7 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<"span">) {
   );
 }
 
+// 组件：BreadcrumbSeparator。用于渲染面包屑分隔符。
 function BreadcrumbSeparator({ children, className, ...props }: React.ComponentProps<"li">) {
   return (
     <li
@@ -78,6 +84,7 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
   );
 }
 
+// 组件：BreadcrumbEllipsis。用于渲染面包屑折叠省略入口。
 function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<"span">) {
   return (
     <span

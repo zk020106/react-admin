@@ -6,6 +6,7 @@ import { createAppRouter } from "./router";
 
 const queryClient = new QueryClient();
 
+// 组件：App。用于创建路由实例并挂载应用路由上下文。
 export default function App() {
   const [router] = useState(() => createAppRouter());
 

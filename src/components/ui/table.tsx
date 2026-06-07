@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
+// 组件：Table。用于渲染表格根容器。
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
     <div data-slot="table-container" className="relative w-full overflow-x-auto">
@@ -14,10 +15,12 @@ function Table({ className, ...props }: React.ComponentProps<"table">) {
   );
 }
 
+// 组件：TableHeader。用于渲染表格头部区域。
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return <thead data-slot="table-header" className={cn("[&_tr]:border-b", className)} {...props} />;
 }
 
+// 组件：TableBody。用于渲染表格主体。
 function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
@@ -28,6 +31,7 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   );
 }
 
+// 组件：TableFooter。用于渲染表格底部汇总区域。
 function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   return (
     <tfoot
@@ -38,6 +42,7 @@ function TableFooter({ className, ...props }: React.ComponentProps<"tfoot">) {
   );
 }
 
+// 组件：TableRow。用于渲染表格行。
 function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   return (
     <tr
@@ -51,6 +56,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
   );
 }
 
+// 组件：TableHead。用于渲染表格头部单元格。
 function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
@@ -64,6 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   );
 }
 
+// 组件：TableCell。用于渲染表格普通单元格。
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   return (
     <td
@@ -74,6 +81,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
   );
 }
 
+// 组件：TableCaption。用于渲染表格说明标题。
 function TableCaption({ className, ...props }: React.ComponentProps<"caption">) {
   return (
     <caption

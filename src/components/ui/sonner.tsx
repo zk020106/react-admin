@@ -10,6 +10,7 @@ import {
   Loader2Icon,
 } from "lucide-react";
 
+// 组件：Toaster。用于配置全局 toast 提示组件的图标和样式。
 const Toaster = ({ ...props }: ToasterProps) => {
   const { theme = "system" } = useTheme();
 

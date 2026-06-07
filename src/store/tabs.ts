@@ -4,28 +4,42 @@ import type { TabRecord } from "@/types/admin";
 
 export interface TabsStoreState {
   activeKey?: string;
+  // 方法：closeAll。关闭所有可关闭标签并保留固定标签。
   closeAll: () => void;
+  // 方法：closeLeft。关闭指定标签左侧的可关闭标签。
   closeLeft: (key: string) => void;
+  // 方法：closeOthers。关闭指定标签之外的可关闭标签。
   closeOthers: (key: string) => void;
+  // 方法：closeRight。关闭指定标签右侧的可关闭标签。
   closeRight: (key: string) => void;
+  // 方法：closeTab。关闭单个非固定标签。
   closeTab: (key: string) => void;
+  // 方法：openTab。打开或刷新一个标签页。
   openTab: (tab: TabRecord) => void;
+  // 方法：reorderTabs。按拖拽位置重排标签页。
   reorderTabs: (fromIndex: number, toIndex: number) => void;
+  // 方法：setActiveKey。切换当前激活标签。
   setActiveKey: (key: string) => void;
   tabs: TabRecord[];
+  // 方法：toggleAffix。切换标签的固定状态。
   toggleAffix: (key: string) => void;
 }
 
+// 函数：uniqueTabs。移除重复标签并保留首次出现的顺序。
 function uniqueTabs(tabs: TabRecord[]) {
+  // 恢复数据存在重复标签时保留第一项，保证顺序稳定。
   return tabs.filter(
     (tab, index, source) => source.findIndex((item) => item.key === tab.key) === index,
   );
 }
 
+// 函数：nextActiveAfterClose。计算关闭标签后的下一个激活标签。
 function nextActiveAfterClose(tabs: TabRecord[], closedIndex: number) {
+  // 关闭标签后优先激活右侧标签，再回退到左侧，贴近浏览器行为。
   return tabs[closedIndex]?.key ?? tabs[closedIndex - 1]?.key ?? tabs[0]?.key;
 }
 
+// 函数：createTabsStore。创建标签页状态仓库并注入初始标签。
 export function createTabsStore(initialTabs: TabRecord[] = []) {
   const normalized = uniqueTabs(initialTabs);
 
@@ -33,6 +47,7 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
     activeKey: normalized[0]?.key,
     closeAll: () => {
       const affixTabs = get().tabs.filter((tab) => tab.affix);
+      // 至少保留一个标签，确保外壳始终有确定的激活路由。
       const tabs = affixTabs.length > 0 ? affixTabs : get().tabs.slice(0, 1);
       set({
         activeKey: tabs[0]?.key,
@@ -107,6 +122,7 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
     reorderTabs: (fromIndex, toIndex) => {
       const tabs = [...get().tabs];
 
+      // 固定标签是锚点，不允许其他标签移动到其位置破坏约束。
       if (
         fromIndex < 0 ||
         toIndex < 0 ||

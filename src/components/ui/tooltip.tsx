@@ -5,6 +5,7 @@ import { Tooltip as TooltipPrimitive } from "radix-ui";
 
 import { cn } from "@/lib/utils";
 
+// 组件：TooltipProvider。用于提供悬浮提示全局配置上下文。
 function TooltipProvider({
   delayDuration = 0,
   ...props
@@ -18,14 +19,17 @@ function TooltipProvider({
   );
 }
 
+// 组件：Tooltip。用于提供悬浮提示根容器。
 function Tooltip({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Root>) {
   return <TooltipPrimitive.Root data-slot="tooltip" {...props} />;
 }
 
+// 组件：TooltipTrigger。用于绑定悬浮提示触发器。
 function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimitive.Trigger>) {
   return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />;
 }
 
+// 组件：TooltipContent。用于渲染悬浮提示内容。
 function TooltipContent({
   className,
   sideOffset = 0,
