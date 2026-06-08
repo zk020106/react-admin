@@ -28,7 +28,9 @@ async function zip(folderPath: string, outputPath: string): Promise<void> {
   console.log(`ZIP file created: ${outputPath} (${archive.pointer()} total bytes)`)
 }
 
-export default function viteArchiverPlugin(options: ArchiverPluginOptions = {}): PluginOption {
+export default function createViteArchiverPlugin(
+  options: ArchiverPluginOptions = {}
+): PluginOption {
   const { name = 'dist', outputDir = '.' } = options
 
   return {
