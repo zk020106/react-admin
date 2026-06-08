@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "tw-animate-css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -54,8 +54,8 @@
 :root {
   --popup-z-index: 2000;
   --font-family:
-    -apple-system, blinkmacsystemfont, "Segoe UI", roboto, "Helvetica Neue", arial, "Noto Sans",
-    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+    -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue', arial, 'Noto Sans',
+    sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
   --background: 0 0% 100%;
   --background-deep: 216 20.11% 95.47%;
@@ -121,8 +121,8 @@
 }
 
 .light,
-.light[data-theme="custom"],
-.light[data-theme="default"] {
+.light[data-theme='custom'],
+.light[data-theme='default'] {
   --background: 0 0% 100%;
   --background-deep: 216 20.11% 95.47%;
   --foreground: 210 6% 21%;
@@ -172,8 +172,8 @@
 }
 
 .dark,
-.dark[data-theme="custom"],
-.dark[data-theme="default"] {
+.dark[data-theme='custom'],
+.dark[data-theme='default'] {
   --background: 222.34deg 10.43% 12.27%;
   --background-deep: 220deg 13.06% 9%;
   --foreground: 0 0% 95%;
@@ -225,8 +225,8 @@
   color-scheme: dark;
 }
 
-.light[data-theme="zinc"],
-[data-theme="zinc"] .light {
+.light[data-theme='zinc'],
+[data-theme='zinc'] .light {
   --foreground: 240 10% 3.9%;
   --card: 0 0% 100%;
   --card-foreground: 240 10% 3.9%;
@@ -244,8 +244,8 @@
   --ring: 240 5.9% 10%;
 }
 
-.dark[data-theme="zinc"],
-[data-theme="zinc"] .dark {
+.dark[data-theme='zinc'],
+[data-theme='zinc'] .dark {
   --background: 240 10% 3.9%;
   --background-deep: var(--background);
   --foreground: 0 0% 98%;
@@ -268,8 +268,8 @@
   --header: 240 10% 3.9%;
 }
 
-.light[data-theme="neutral"],
-[data-theme="neutral"] .light {
+.light[data-theme='neutral'],
+[data-theme='neutral'] .light {
   --foreground: 0 0% 3.9%;
   --card-foreground: 0 0% 3.9%;
   --popover-foreground: 0 0% 3.9%;
@@ -284,8 +284,8 @@
   --ring: 0 0% 3.9%;
 }
 
-.dark[data-theme="neutral"],
-[data-theme="neutral"] .dark {
+.dark[data-theme='neutral'],
+[data-theme='neutral'] .dark {
   --background: 0 0% 3.9%;
   --background-deep: var(--background);
   --foreground: 0 0% 98%;
@@ -475,19 +475,19 @@
   animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.side-content[data-side="top"] {
+.side-content[data-side='top'] {
   animation-name: slide-up;
 }
 
-.side-content[data-side="bottom"] {
+.side-content[data-side='bottom'] {
   animation-name: slide-down;
 }
 
-.side-content[data-side="left"] {
+.side-content[data-side='left'] {
   animation-name: slide-left;
 }
 
-.side-content[data-side="right"] {
+.side-content[data-side='right'] {
   animation-name: slide-right;
 }
 
@@ -495,13 +495,13 @@
   z-index: var(--popup-z-index);
 }
 
-.admin-layout-header-sidebar-nav [data-slot="sidebar"] [data-slot="sidebar-gap"],
-.admin-layout-header-sidebar-nav [data-slot="sidebar"] [data-slot="sidebar-container"] {
+.admin-layout-header-sidebar-nav [data-slot='sidebar'] [data-slot='sidebar-gap'],
+.admin-layout-header-sidebar-nav [data-slot='sidebar'] [data-slot='sidebar-container'] {
   top: var(--admin-header-height);
   height: calc(100svh - var(--admin-header-height));
 }
 
-.admin-layout-header-sidebar-nav [data-slot="sidebar"] [data-slot="sidebar-gap"] {
+.admin-layout-header-sidebar-nav [data-slot='sidebar'] [data-slot='sidebar-gap'] {
   margin-top: var(--admin-header-height);
 }
 
@@ -563,31 +563,31 @@
     color 0.18s ease;
 }
 
-[data-sidebar="menu-sub-button"]:hover .admin-sidebar-menu-count {
+[data-sidebar='menu-sub-button']:hover .admin-sidebar-menu-count {
   background-color: hsl(var(--sidebar-hover-foreground) / 10%);
   color: hsl(var(--sidebar-hover-foreground));
 }
 
-[data-sidebar="menu-sub-button"][data-active="true"] .admin-sidebar-menu-count,
-[data-sidebar="menu-sub-button"][data-current="true"] .admin-sidebar-menu-count {
+[data-sidebar='menu-sub-button'][data-active='true'] .admin-sidebar-menu-count,
+[data-sidebar='menu-sub-button'][data-current='true'] .admin-sidebar-menu-count {
   background-color: hsl(var(--sidebar-active-foreground) / 12%);
   color: hsl(var(--sidebar-active-foreground));
 }
 
-.admin-primary-sidebar [data-slot="sidebar-header"] {
+.admin-primary-sidebar [data-slot='sidebar-header'] {
   padding: 0.75rem 0.75rem 0.5rem;
 }
 
-.admin-primary-sidebar [data-slot="admin-sidebar-brand"] {
+.admin-primary-sidebar [data-slot='admin-sidebar-brand'] {
   height: 2.875rem;
   padding-inline: 0.625rem;
 }
 
-.admin-primary-sidebar [data-sidebar="group"] {
+.admin-primary-sidebar [data-sidebar='group'] {
   padding: 0.375rem 0.625rem 0.75rem;
 }
 
-.admin-primary-sidebar [data-sidebar="group-label"] {
+.admin-primary-sidebar [data-sidebar='group-label'] {
   height: 1.875rem;
   margin-bottom: 0.25rem;
   padding-inline: 0.625rem;
@@ -597,15 +597,15 @@
   letter-spacing: 0;
 }
 
-.admin-primary-sidebar [data-sidebar="menu"] {
+.admin-primary-sidebar [data-sidebar='menu'] {
   gap: 0.125rem;
 }
 
-.admin-primary-sidebar [data-sidebar="menu-item"] {
+.admin-primary-sidebar [data-sidebar='menu-item'] {
   margin-block: 0.0625rem;
 }
 
-.admin-primary-sidebar [data-sidebar="menu-button"] {
+.admin-primary-sidebar [data-sidebar='menu-button'] {
   min-height: 2.5rem;
   gap: 0.625rem;
   border-radius: 0.5rem;
@@ -614,29 +614,29 @@
   font-weight: 400;
 }
 
-.admin-primary-sidebar [data-sidebar="menu-button"]:hover,
-.admin-primary-sidebar [data-sidebar="menu-button"][data-open]:hover {
+.admin-primary-sidebar [data-sidebar='menu-button']:hover,
+.admin-primary-sidebar [data-sidebar='menu-button'][data-open]:hover {
   background-color: hsl(var(--sidebar-hover));
   color: hsl(var(--sidebar-hover-foreground));
 }
 
-.admin-primary-sidebar [data-sidebar="menu-button"][data-active="true"]:not([data-current="true"]) {
+.admin-primary-sidebar [data-sidebar='menu-button'][data-active='true']:not([data-current='true']) {
   background-color: transparent;
   color: hsl(var(--sidebar-active-foreground));
 }
 
-.admin-primary-sidebar [data-sidebar="menu-button"][data-current="true"] {
+.admin-primary-sidebar [data-sidebar='menu-button'][data-current='true'] {
   border-radius: 0.5rem;
   background-color: hsl(var(--sidebar-active));
   color: hsl(var(--sidebar-active-foreground));
 }
 
-.admin-primary-sidebar [data-sidebar="menu-button"] > svg {
+.admin-primary-sidebar [data-sidebar='menu-button'] > svg {
   width: 1rem;
   height: 1rem;
 }
 
-.admin-primary-sidebar [data-sidebar="menu-badge"] {
+.admin-primary-sidebar [data-sidebar='menu-badge'] {
   top: 50%;
   right: 0.75rem;
   min-width: 1.125rem;
@@ -651,7 +651,7 @@
   transform: translateY(-50%);
 }
 
-.admin-primary-sidebar [data-sidebar="menu-sub"] {
+.admin-primary-sidebar [data-sidebar='menu-sub'] {
   margin: 0.125rem 0.25rem 0.25rem;
   padding: 0.125rem 0 0.25rem;
   gap: 0.125rem;
@@ -659,7 +659,7 @@
   transform: none;
 }
 
-.admin-primary-sidebar [data-sidebar="menu-sub-button"] {
+.admin-primary-sidebar [data-sidebar='menu-sub-button'] {
   position: relative;
   min-height: 2.25rem;
   gap: 0.625rem;
@@ -669,29 +669,29 @@
   color: hsl(var(--sidebar-foreground) / 72%);
 }
 
-.admin-primary-sidebar [data-sidebar="menu-sub-button"]:hover {
+.admin-primary-sidebar [data-sidebar='menu-sub-button']:hover {
   background-color: hsl(var(--sidebar-hover));
   color: hsl(var(--sidebar-hover-foreground));
 }
 
-.admin-primary-sidebar [data-sidebar="menu-sub-button"][data-active="true"] {
+.admin-primary-sidebar [data-sidebar='menu-sub-button'][data-active='true'] {
   color: hsl(var(--sidebar-active-foreground));
 }
 
-.admin-primary-sidebar [data-sidebar="menu-sub-button"][data-current="true"] {
+.admin-primary-sidebar [data-sidebar='menu-sub-button'][data-current='true'] {
   border-radius: 0.5rem;
   background-color: hsl(var(--sidebar-active));
   color: hsl(var(--sidebar-active-foreground));
 }
 
-.admin-primary-sidebar [data-sidebar="menu-sub-button"] > svg {
+.admin-primary-sidebar [data-sidebar='menu-sub-button'] > svg {
   width: 1rem;
   height: 1rem;
 }
 
 .admin-sidebar-collapsed-show-title
-  [data-slot="sidebar"][data-collapsible="icon"]
-  [data-sidebar="menu-button"] {
+  [data-slot='sidebar'][data-collapsible='icon']
+  [data-sidebar='menu-button'] {
   width: 100% !important;
   height: 3.25rem !important;
   flex-direction: column;
@@ -701,8 +701,8 @@
 }
 
 .admin-sidebar-collapsed-show-title
-  [data-slot="sidebar"][data-collapsible="icon"]
-  [data-sidebar="menu-button"]
+  [data-slot='sidebar'][data-collapsible='icon']
+  [data-sidebar='menu-button']
   > span:last-child {
   display: block;
   max-width: 100%;
@@ -712,11 +712,11 @@
 }
 
 .admin-sidebar-collapsed-show-title
-  [data-slot="sidebar"][data-collapsible="icon"]
-  [data-sidebar="menu-sub"],
+  [data-slot='sidebar'][data-collapsible='icon']
+  [data-sidebar='menu-sub'],
 .admin-sidebar-collapsed-show-title
-  [data-slot="sidebar"][data-collapsible="icon"]
-  [data-sidebar="menu-badge"] {
+  [data-slot='sidebar'][data-collapsible='icon']
+  [data-sidebar='menu-badge'] {
   display: none;
 }
 
@@ -751,7 +751,7 @@
   right: 0;
   width: 0;
   height: 0;
-  content: "";
+  content: '';
   border-top: 24px solid hsl(var(--primary));
   border-left: 24px solid transparent;
 }
@@ -766,7 +766,7 @@
   color: hsl(var(--primary-foreground));
 }
 
-[data-slot="select-item"][data-state="checked"] [data-slot="select-item-radio"] {
+[data-slot='select-item'][data-state='checked'] [data-slot='select-item-radio'] {
   border-color: hsl(var(--primary));
 }
 
@@ -777,19 +777,19 @@
   color: hsl(var(--foreground));
 }
 
-.admin-transition-fade > [data-slot="page-surface"] {
+.admin-transition-fade > [data-slot='page-surface'] {
   animation: vben-fade 180ms ease-out;
 }
 
-.admin-transition-fade-slide > [data-slot="page-surface"] {
+.admin-transition-fade-slide > [data-slot='page-surface'] {
   animation: vben-fade-slide 180ms ease-out;
 }
 
-.admin-transition-fade-up > [data-slot="page-surface"] {
+.admin-transition-fade-up > [data-slot='page-surface'] {
   animation: vben-fade-up 180ms ease-out;
 }
 
-.admin-transition-fade-down > [data-slot="page-surface"] {
+.admin-transition-fade-down > [data-slot='page-surface'] {
   animation: vben-fade-down 180ms ease-out;
 }
 
