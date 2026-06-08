@@ -4,11 +4,6 @@
   "categories": {
     "correctness": "error"
   },
-  "settings": {
-    "react": {
-      "version": "19.2.6"
-    }
-  },
   "options": {
     "typeAware": true
   },
@@ -26,5 +21,5 @@
     "node": true,
     "vitest": true
   },
-  "ignorePatterns": ["dist", "dist-ssr", "node_modules"]
+  "ignorePatterns": ["node_modules", "dist"]
 }
