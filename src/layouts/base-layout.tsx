@@ -115,13 +115,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -148,7 +141,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -161,6 +153,15 @@ import {
   isMenuRecordActive,
 } from "@/layouts/navigation";
 import { PageSurface } from "@/layouts/page-surface";
+import {
+  PreferenceBlock,
+  PreferenceCheckboxGroup,
+  PreferenceNumber,
+  PreferenceSegmented,
+  PreferenceSelect,
+  PreferenceText,
+  PreferenceToggle,
+} from "@/layouts/preferences-controls";
 import {
   getPreferenceDiff,
   preferenceRadiusOptions,
@@ -3780,305 +3781,6 @@ function ContentPreview({ mode }: { mode: AdminPreferences["contentCompact"] }) 
         y="39"
       />
     </svg>
-  );
-}
-
-// 组件：PreferenceBlock。用于渲染偏好设置中的分组区块标题和内容。
-function PreferenceBlock({ children, title }: { children: React.ReactNode; title: string }) {
-  return (
-    <section className="flex flex-col border-b py-4 last:border-b-0">
-      <h3 className="mb-3 text-sm font-semibold leading-none tracking-normal">{title}</h3>
-      <div className="grid gap-1">{children}</div>
-    </section>
-  );
-}
-
-// 组件：PreferenceNumber。用于渲染偏好设置中的数值步进控件。
-function PreferenceNumber({
-  disabled = false,
-  label,
-  locale,
-  max,
-  min,
-  onValueChange,
-  step = 1,
-  value,
-}: {
-  disabled?: boolean;
-  label: string;
-  locale: string;
-  max: number;
-  min: number;
-  onValueChange: (value: number) => void;
-  step?: number;
-  value: number;
-}) {
-  // 函数：setNext。约束数值步进后的结果并回传。
-  const setNext = (next: number) => onValueChange(Math.min(Math.max(next, min), max));
-
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between rounded-md px-2 py-2.5 hover:bg-accent",
-        disabled && "pointer-events-none opacity-50",
-      )}
-    >
-      <Label>{label}</Label>
-      <div className="grid grid-cols-[1.9rem_4.25rem_1.9rem] items-center overflow-hidden rounded-md border bg-background">
-        <Button
-          aria-label={getPreferenceStepAria(locale, "decrease", label)}
-          className="rounded-none"
-          disabled={disabled}
-          onClick={() => setNext(value - step)}
-          size="icon-xs"
-          type="button"
-          variant="ghost"
-        >
-          <span className="text-base leading-none">-</span>
-        </Button>
-        <Input
-          aria-label={label}
-          className="h-7 rounded-none border-y-0 border-x px-1 text-center text-xs tabular-nums"
-          disabled={disabled}
-          max={max}
-          min={min}
-          onChange={(event) => setNext(Number(event.target.value))}
-          step={step}
-          type="number"
-          value={value}
-        />
-        <Button
-          aria-label={getPreferenceStepAria(locale, "increase", label)}
-          className="rounded-none"
-          disabled={disabled}
-          onClick={() => setNext(value + step)}
-          size="icon-xs"
-          type="button"
-          variant="ghost"
-        >
-          <Plus className="size-3.5" />
-        </Button>
-      </div>
-    </div>
-  );
-}
-
-// 组件：PreferenceText。用于渲染偏好设置中的文本输入项。
-function PreferenceText({
-  disabled = false,
-  label,
-  onValueChange,
-  value,
-}: {
-  disabled?: boolean;
-  label: string;
-  onValueChange: (value: string) => void;
-  value: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "grid gap-2 rounded-md px-2 py-2.5 hover:bg-accent",
-        disabled && "pointer-events-none opacity-50",
-      )}
-    >
-      <Label>{label}</Label>
-      <Input
-        aria-label={label}
-        disabled={disabled}
-        onChange={(event) => onValueChange(event.target.value)}
-        value={value}
-      />
-    </div>
-  );
-}
-
-// 组件：PreferenceSegmented。用于渲染偏好设置中的分段单选控件。
-// 类型参数：TValue 表示单选项 value 的字符串字面量类型。
-function PreferenceSegmented<TValue extends string>({
-  disabled = false,
-  items,
-  label,
-  onValueChange,
-  value,
-}: {
-  disabled?: boolean;
-  items: Array<{ label: string; value: TValue }>;
-  label: string;
-  onValueChange: (value: TValue) => void;
-  value: TValue;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 rounded-md px-2 py-2.5 hover:bg-accent",
-        disabled && "pointer-events-none opacity-50",
-      )}
-    >
-      <Label className="shrink-0">{label}</Label>
-      <div className="flex flex-wrap justify-end gap-2">
-        {items.map((item) => {
-          const active = value === item.value;
-
-          return (
-            <Button
-              aria-pressed={active}
-              data-active={active ? "true" : undefined}
-              className={cn(
-                "h-7 rounded-sm px-2 text-xs",
-                active &&
-                  "border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground",
-              )}
-              disabled={disabled}
-              key={item.value}
-              onClick={() => onValueChange(item.value)}
-              type="button"
-              variant="outline"
-            >
-              {item.label}
-            </Button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// 组件：PreferenceCheckboxGroup。用于渲染偏好设置中的多选按钮组。
-// 类型参数：TValue 表示多选项 value 的字符串字面量类型。
-function PreferenceCheckboxGroup<TValue extends string>({
-  disabled = false,
-  items,
-  label,
-  onValuesChange,
-  values,
-}: {
-  disabled?: boolean;
-  items: Array<{ label: string; value: TValue }>;
-  label: string;
-  onValuesChange: (values: TValue[]) => void;
-  values: TValue[];
-}) {
-  // 函数：toggleValue。根据当前选中状态添加或移除多选值。
-  function toggleValue(value: TValue) {
-    if (values.includes(value)) {
-      onValuesChange(values.filter((item) => item !== value));
-      return;
-    }
-
-    onValuesChange([...values, value]);
-  }
-
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 rounded-md px-2 py-2.5 hover:bg-accent",
-        disabled && "pointer-events-none opacity-50",
-      )}
-    >
-      <Label className="shrink-0">{label}</Label>
-      <div className="flex flex-wrap justify-end gap-2">
-        {items.map((item) => {
-          const active = values.includes(item.value);
-
-          return (
-            <Button
-              aria-pressed={active}
-              data-active={active ? "true" : undefined}
-              className={cn(
-                "h-7 rounded-sm px-2 text-xs",
-                active &&
-                  "border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground",
-              )}
-              disabled={disabled}
-              key={item.value}
-              onClick={() => toggleValue(item.value)}
-              type="button"
-              variant={active ? "default" : "outline"}
-            >
-              {item.label}
-            </Button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-// 组件：PreferenceSelect。用于渲染偏好设置中的下拉选择控件。
-// 类型参数：TValue 表示下拉选项 value 的字符串字面量类型。
-function PreferenceSelect<TValue extends string>({
-  disabled = false,
-  items,
-  label,
-  onValueChange,
-  value,
-}: {
-  disabled?: boolean;
-  items: Array<{ label: string; value: TValue }>;
-  label: string;
-  onValueChange: (value: TValue) => void;
-  value: TValue;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between gap-3 rounded-md px-2 py-2.5 hover:bg-accent",
-        disabled && "pointer-events-none opacity-50",
-      )}
-    >
-      <Label className="shrink-0">{label}</Label>
-      <Select
-        disabled={disabled}
-        onValueChange={onValueChange as (value: string) => void}
-        value={value}
-      >
-        <SelectTrigger aria-label={label} className="h-8 w-[165px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {items.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-// 组件：PreferenceToggle。用于渲染偏好设置中的开关项。
-function PreferenceToggle({
-  checked,
-  disabled = false,
-  label,
-  onCheckedChange,
-  shortcut,
-}: {
-  checked: boolean;
-  disabled?: boolean;
-  label: string;
-  onCheckedChange: (checked: boolean) => void;
-  shortcut?: string;
-}) {
-  return (
-    <div
-      className={cn(
-        "my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5 hover:bg-accent",
-        disabled && "pointer-events-none opacity-50",
-      )}
-      onClick={() => onCheckedChange(!checked)}
-    >
-      <Label className="min-w-0 flex-1 text-sm">{label}</Label>
-      {shortcut && <span className="mr-2 ml-auto shrink-0 text-xs opacity-60">{shortcut}</span>}
-      <Switch
-        checked={checked}
-        disabled={disabled}
-        onClick={(event) => event.stopPropagation()}
-        onCheckedChange={onCheckedChange}
-      />
-    </div>
   );
 }
 
