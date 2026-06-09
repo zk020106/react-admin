@@ -1,5 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { Shield, SquareMenu, Building2, Users } from "lucide-react";
+import { useMemo } from "react";
+import {
+  Building2,
+  FolderTree,
+  Route,
+  Shield,
+  SlidersHorizontal,
+  SquareMenu,
+  Users,
+} from "lucide-react";
 
 import { systemQueries } from "@/pages/admin-queries";
 import { Badge } from "@/components/ui/badge";
@@ -12,8 +21,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { MenuManagementRecord } from "@/mock/admin-mock";
 
-// 组件：UsersPage。展示 mock 用户列表。
+const emptyMenus: MenuManagementRecord[] = [];
+
+/**
+ * 展示用户账号、角色、部门和状态列表。
+ *
+ * @returns 用户管理页面。
+ */
 export function UsersPage() {
   const { data = [] } = useQuery(systemQueries.users());
 
@@ -55,7 +71,11 @@ export function UsersPage() {
   );
 }
 
-// 组件：RolesPage。展示 mock 角色列表。
+/**
+ * 展示角色编码、成员数量和权限说明。
+ *
+ * @returns 角色管理页面。
+ */
 export function RolesPage() {
   const { data = [] } = useQuery(systemQueries.roles());
 
@@ -81,52 +101,106 @@ export function RolesPage() {
   );
 }
 
-// 组件：MenusPage。展示 mock 菜单配置列表。
+/**
+ * 展示菜单配置、路由组件和权限编码。
+ *
+ * @returns 菜单管理页面。
+ */
 export function MenusPage() {
-  const { data = [] } = useQuery(systemQueries.menus());
+  const { data = emptyMenus } = useQuery(systemQueries.menus());
+  const menuSummary = useMemo(() => {
+    const visibleCount = data.filter((menu) => menu.status === "显示").length;
+    const directoryCount = data.filter((menu) => menu.type === "目录").length;
+
+    return [
+      { icon: Route, label: "路由记录", value: data.length },
+      { icon: FolderTree, label: "目录节点", value: directoryCount },
+      { icon: SlidersHorizontal, label: "可见菜单", value: visibleCount },
+    ];
+  }, [data]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>菜单管理</CardTitle>
-        <CardDescription>展示路由路径、组件标识和权限编码。</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>名称</TableHead>
-              <TableHead>路径</TableHead>
-              <TableHead>组件</TableHead>
-              <TableHead>权限</TableHead>
-              <TableHead>状态</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {data.map((menu) => (
-              <TableRow key={menu.path}>
-                <TableCell className="font-medium">
-                  <span className="inline-flex items-center gap-2">
-                    <SquareMenu className="size-4 text-primary" />
-                    {menu.name}
-                  </span>
-                </TableCell>
-                <TableCell>{menu.path}</TableCell>
-                <TableCell>{menu.component}</TableCell>
-                <TableCell>{menu.permission}</TableCell>
-                <TableCell>
-                  <Badge variant="secondary">{menu.status}</Badge>
-                </TableCell>
+    <>
+      <section className="grid gap-4 md:grid-cols-3">
+        {menuSummary.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Card key={item.label}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardDescription>{item.label}</CardDescription>
+                  <CardTitle>{item.value}</CardTitle>
+                </div>
+                <Icon className="size-5 text-primary" />
+              </CardHeader>
+            </Card>
+          );
+        })}
+      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>菜单管理</CardTitle>
+          <CardDescription>维护后台路由路径、页面组件、权限编码和层级关系。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>名称</TableHead>
+                <TableHead>类型</TableHead>
+                <TableHead>父级</TableHead>
+                <TableHead>路径</TableHead>
+                <TableHead>组件</TableHead>
+                <TableHead>权限</TableHead>
+                <TableHead>排序</TableHead>
+                <TableHead>状态</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {data.map((menu) => (
+                <TableRow key={menu.path}>
+                  <TableCell className="font-medium">
+                    <span className="inline-flex items-center gap-2">
+                      <SquareMenu className="size-4 text-primary" />
+                      {menu.name}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={menu.type === "目录" ? "outline" : "secondary"}>
+                      {menu.type}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{menu.parentName}</TableCell>
+                  <TableCell>{menu.path}</TableCell>
+                  <TableCell>{menu.component}</TableCell>
+                  <TableCell>{menu.permission}</TableCell>
+                  <TableCell>{menu.sort}</TableCell>
+                  <TableCell>
+                    <Badge variant={menu.status === "显示" ? "default" : "secondary"}>
+                      {menu.status}
+                    </Badge>
+                    {menu.childrenCount > 0 ? (
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        {menu.childrenCount} 个子项
+                      </span>
+                    ) : null}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
   );
 }
 
-// 组件：DepartmentsPage。展示 mock 部门列表。
+/**
+ * 展示组织部门、负责人和成员数量。
+ *
+ * @returns 部门管理页面。
+ */
 export function DepartmentsPage() {
   const { data = [] } = useQuery(systemQueries.departments());
 

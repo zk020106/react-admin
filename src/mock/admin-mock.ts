@@ -34,11 +34,15 @@ export interface RoleRecord {
 }
 
 export interface MenuManagementRecord {
+  childrenCount: number;
   component: string;
   name: string;
+  parentName: string;
   path: string;
   permission: string;
+  sort: number;
   status: string;
+  type: "目录" | "菜单";
 }
 
 export interface DepartmentRecord {
@@ -155,39 +159,92 @@ const roles: RoleRecord[] = [
 
 const menus: MenuManagementRecord[] = [
   {
+    childrenCount: 0,
     component: "OverviewPage",
     name: "概览",
+    parentName: "-",
     path: "/overview",
     permission: "overview:read",
+    sort: 10,
     status: "显示",
+    type: "菜单",
   },
   {
+    childrenCount: 0,
     component: "WorkplacePage",
     name: "工作台",
+    parentName: "-",
     path: "/workplace",
     permission: "workplace:read",
+    sort: 20,
     status: "显示",
+    type: "菜单",
   },
   {
+    childrenCount: 4,
+    component: "LayoutRoute",
+    name: "系统管理",
+    parentName: "-",
+    path: "/system",
+    permission: "system:read",
+    sort: 30,
+    status: "显示",
+    type: "目录",
+  },
+  {
+    childrenCount: 0,
     component: "UsersPage",
     name: "用户管理",
+    parentName: "系统管理",
     path: "/system/users",
     permission: "system:user:read",
+    sort: 31,
     status: "显示",
+    type: "菜单",
   },
   {
+    childrenCount: 0,
     component: "RolesPage",
     name: "角色管理",
+    parentName: "系统管理",
     path: "/system/roles",
     permission: "system:role:read",
+    sort: 32,
     status: "显示",
+    type: "菜单",
   },
   {
+    childrenCount: 0,
+    component: "MenusPage",
+    name: "菜单管理",
+    parentName: "系统管理",
+    path: "/system/menus",
+    permission: "system:menu:read",
+    sort: 33,
+    status: "显示",
+    type: "菜单",
+  },
+  {
+    childrenCount: 0,
+    component: "DepartmentsPage",
+    name: "部门管理",
+    parentName: "系统管理",
+    path: "/system/departments",
+    permission: "system:department:read",
+    sort: 34,
+    status: "显示",
+    type: "菜单",
+  },
+  {
+    childrenCount: 0,
     component: "AboutPage",
     name: "关于",
+    parentName: "-",
     path: "/about",
     permission: "about:read",
+    sort: 40,
     status: "显示",
+    type: "菜单",
   },
 ];
 

@@ -15,6 +15,7 @@ async function openSystemMenu(sidebarNavigation: HTMLElement) {
   }
 
   return {
+    menusLink: await within(sidebarNavigation).findByRole("link", { name: /菜单管理/ }),
     rolesLink: await within(sidebarNavigation).findByRole("link", { name: /角色管理/ }),
     systemTrigger,
     usersLink: await within(sidebarNavigation).findByRole("link", { name: /用户管理/ }),
@@ -264,6 +265,35 @@ describe("admin app shell", () => {
     await waitFor(() => {
       expect(document.title).toBe("工作台 - React Admin");
     });
+  });
+
+  it("opens the menu management page from the sidebar", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    });
+    const { menusLink } = await openSystemMenu(sidebarNavigation);
+
+    await userEvent.click(menusLink);
+
+    await waitFor(() => {
+      expect(
+        document.querySelector("[data-slot='page-surface'][data-route-key='/system/menus']"),
+      ).toBeInTheDocument();
+    });
+
+    const pageSurface = document.querySelector(
+      "[data-slot='page-surface'][data-route-key='/system/menus']",
+    ) as HTMLElement;
+
+    expect(await within(pageSurface).findByText("菜单管理")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("路由记录")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("目录节点")).toBeInTheDocument();
+    expect(await within(pageSurface).findByText("DepartmentsPage")).toBeInTheDocument();
+    expect(within(pageSurface).getAllByText("系统管理").length).toBeGreaterThan(0);
+    expect(within(pageSurface).getByText("system:department:read")).toBeInTheDocument();
   });
 
   it("renders header widgets in vben order", async () => {
