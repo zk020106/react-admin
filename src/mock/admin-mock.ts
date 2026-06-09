@@ -28,9 +28,12 @@ export interface UserRecord {
 
 export interface RoleRecord {
   code: string;
+  dataScope: string;
   description: string;
   memberCount: number;
   name: string;
+  permissions: string[];
+  status: string;
 }
 
 export interface MenuManagementRecord {
@@ -152,9 +155,41 @@ const users: UserRecord[] = [
 ];
 
 const roles: RoleRecord[] = [
-  { code: "owner", description: "拥有平台全部权限", memberCount: 3, name: "所有者" },
-  { code: "operator", description: "负责日常运营操作", memberCount: 16, name: "运营员" },
-  { code: "auditor", description: "只读审计与复核权限", memberCount: 5, name: "审计员" },
+  {
+    code: "owner",
+    dataScope: "全部数据",
+    description: "拥有平台全部权限",
+    memberCount: 3,
+    name: "所有者",
+    permissions: [
+      "overview:read",
+      "workplace:read",
+      "system:user:read",
+      "system:role:read",
+      "system:menu:read",
+      "system:department:read",
+      "about:read",
+    ],
+    status: "启用",
+  },
+  {
+    code: "operator",
+    dataScope: "本部门数据",
+    description: "负责日常运营操作",
+    memberCount: 16,
+    name: "运营员",
+    permissions: ["overview:read", "workplace:read", "system:user:read", "system:department:read"],
+    status: "启用",
+  },
+  {
+    code: "auditor",
+    dataScope: "只读审计数据",
+    description: "只读审计与复核权限",
+    memberCount: 5,
+    name: "审计员",
+    permissions: ["overview:read", "workplace:read", "system:role:read", "about:read"],
+    status: "复核中",
+  },
 ];
 
 const menus: MenuManagementRecord[] = [

@@ -296,6 +296,35 @@ describe("admin app shell", () => {
     expect(within(pageSurface).getByText("system:department:read")).toBeInTheDocument();
   });
 
+  it("opens the role management page from the sidebar", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    });
+    const { rolesLink } = await openSystemMenu(sidebarNavigation);
+
+    await userEvent.click(rolesLink);
+
+    await waitFor(() => {
+      expect(
+        document.querySelector("[data-slot='page-surface'][data-route-key='/system/roles']"),
+      ).toBeInTheDocument();
+    });
+
+    const pageSurface = document.querySelector(
+      "[data-slot='page-surface'][data-route-key='/system/roles']",
+    ) as HTMLElement;
+
+    expect(await within(pageSurface).findByText("权限矩阵")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("授权成员")).toBeInTheDocument();
+    expect(await within(pageSurface).findByText("全部数据")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("只读审计数据")).toBeInTheDocument();
+    expect(within(pageSurface).getAllByText("system:menu:read").length).toBeGreaterThan(0);
+    expect(within(pageSurface).getByText("auditor")).toBeInTheDocument();
+  });
+
   it("renders header widgets in vben order", async () => {
     preferenceStore.getState().resetPreferences();
 
