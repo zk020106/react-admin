@@ -77,6 +77,12 @@ export const mockAdminMenu: MenuRecord[] = [
     title: "概览",
   },
   {
+    icon: "BriefcaseBusiness",
+    key: "/workplace",
+    path: "/workplace",
+    title: "工作台",
+  },
+  {
     children: [
       { badge: "12", key: "/system/users", path: "/system/users", title: "用户管理" },
       { key: "/system/roles", path: "/system/roles", title: "角色管理" },
@@ -98,12 +104,13 @@ export const mockAdminMenu: MenuRecord[] = [
 
 const overviewSummary: OverviewSummary = {
   healthItems: [
-    { label: "路由记录", value: "7" },
+    { label: "路由记录", value: "8" },
     { label: "Mock 接口", value: "7" },
     { label: "查询键", value: "7" },
   ],
   operationItems: [
     { label: "菜单路由", status: "已从 mock 加载" },
+    { label: "工作台页面", status: "已接入" },
     { label: "用户数据", status: "已就绪" },
     { label: "角色数据", status: "已就绪" },
     { label: "部门数据", status: "已就绪" },
@@ -111,7 +118,7 @@ const overviewSummary: OverviewSummary = {
   stats: [
     { label: "活跃用户", trend: "+12.5%", value: "1,286" },
     { label: "角色组", trend: "+2", value: "8" },
-    { label: "菜单节点", trend: "+4", value: "32" },
+    { label: "菜单节点", trend: "+5", value: "33" },
     { label: "部门数量", trend: "+1", value: "12" },
   ],
 };
@@ -152,6 +159,13 @@ const menus: MenuManagementRecord[] = [
     name: "概览",
     path: "/overview",
     permission: "overview:read",
+    status: "显示",
+  },
+  {
+    component: "WorkplacePage",
+    name: "工作台",
+    path: "/workplace",
+    permission: "workplace:read",
     status: "显示",
   },
   {

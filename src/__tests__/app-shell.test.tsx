@@ -58,6 +58,7 @@ describe("admin app shell", () => {
     expect(screen.getByRole("button", { name: "偏好设置" })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "概览" })).toBeInTheDocument();
     expect(screen.getByRole("navigation", { name: "侧栏导航" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /工作台/ })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("button", { name: "偏好设置" }));
 
@@ -229,9 +230,40 @@ describe("admin app shell", () => {
 
     expect(headerNavigation).toBeInTheDocument();
     expect(headerNavigation).toHaveTextContent("概览");
+    expect(headerNavigation).toHaveTextContent("工作台");
     expect(headerNavigation).toHaveTextContent("系统管理");
     expect(headerNavigation).toHaveTextContent("关于");
     expect(screen.queryByText("管理套件")).not.toBeInTheDocument();
+  });
+
+  it("opens the workplace page from the sidebar", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    });
+
+    await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /工作台/ }));
+
+    await waitFor(() => {
+      expect(
+        document.querySelector("[data-slot='page-surface'][data-route-key='/workplace']"),
+      ).toBeInTheDocument();
+    });
+
+    const pageSurface = document.querySelector(
+      "[data-slot='page-surface'][data-route-key='/workplace']",
+    ) as HTMLElement;
+
+    expect(await within(pageSurface).findByText("工作台")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("面向高频后台操作的紧凑任务队列。")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("待审批")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "工作台" })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(document.title).toBe("工作台 - React Admin");
+    });
   });
 
   it("renders header widgets in vben order", async () => {

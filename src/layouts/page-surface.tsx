@@ -1,4 +1,12 @@
-import { Info, LayoutDashboard, Shield, SquareMenu, Users, type LucideIcon } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  Info,
+  LayoutDashboard,
+  Shield,
+  SquareMenu,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from "react";
 
 import type { AdminPreferences } from "@/types/admin";
@@ -9,6 +17,7 @@ type PageRegistryItem = {
 };
 
 const OverviewPage = lazy(() => import("@/pages/overview-page"));
+const WorkplacePage = lazy(() => import("@/pages/workplace-page"));
 const UsersPage = lazy(() =>
   import("@/pages/system-pages").then((module) => ({ default: module.UsersPage })),
 );
@@ -31,6 +40,10 @@ export const pageRegistry: Record<string, PageRegistryItem> = {
   "/overview": {
     component: OverviewPage,
     icon: LayoutDashboard,
+  },
+  "/workplace": {
+    component: WorkplacePage,
+    icon: BriefcaseBusiness,
   },
   "/system/departments": {
     component: DepartmentsPage,
