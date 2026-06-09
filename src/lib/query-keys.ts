@@ -10,6 +10,11 @@ export const overviewKeys = {
   summary: () => [...overviewKeys.all, "summary"] as const,
 };
 
+export const workplaceKeys = {
+  all: ["workplace"] as const,
+  summary: () => [...workplaceKeys.all, "summary"] as const,
+};
+
 export const systemKeys = {
   all: ["system"] as const,
   departments: () => [...systemKeys.all, "departments"] as const,
@@ -27,6 +32,10 @@ export const aboutKeys = {
 export function getRouteRefreshQueryKeys(path: string): QueryKey[] {
   if (path === "/overview") {
     return [overviewKeys.summary()];
+  }
+
+  if (path === "/workplace") {
+    return [workplaceKeys.summary()];
   }
 
   if (path === "/system/users") {

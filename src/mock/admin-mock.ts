@@ -18,6 +18,32 @@ export interface OverviewSummary {
   stats: OverviewStat[];
 }
 
+export interface WorkplaceMetric {
+  label: string;
+  trend: string;
+  value: string;
+}
+
+export interface WorkplaceTask {
+  assignee: string;
+  deadline: string;
+  priority: "高" | "中" | "低";
+  status: string;
+  title: string;
+}
+
+export interface WorkplaceActivity {
+  action: string;
+  actor: string;
+  time: string;
+}
+
+export interface WorkplaceSummary {
+  activities: WorkplaceActivity[];
+  metrics: WorkplaceMetric[];
+  tasks: WorkplaceTask[];
+}
+
 export interface UserRecord {
   department: string;
   email: string;
@@ -119,8 +145,8 @@ export const mockAdminMenu: MenuRecord[] = [
 const overviewSummary: OverviewSummary = {
   healthItems: [
     { label: "路由记录", value: "8" },
-    { label: "Mock 接口", value: "7" },
-    { label: "查询键", value: "7" },
+    { label: "Mock 接口", value: "8" },
+    { label: "查询键", value: "8" },
   ],
   operationItems: [
     { label: "菜单路由", status: "已从 mock 加载" },
@@ -134,6 +160,42 @@ const overviewSummary: OverviewSummary = {
     { label: "角色组", trend: "+2", value: "8" },
     { label: "菜单节点", trend: "+5", value: "33" },
     { label: "部门数量", trend: "+1", value: "12" },
+  ],
+};
+
+const workplaceSummary: WorkplaceSummary = {
+  activities: [
+    { action: "完成菜单管理权限复核", actor: "审计账号", time: "10:24" },
+    { action: "同步部门组织明细", actor: "运营账号", time: "09:42" },
+    { action: "刷新用户风险标签", actor: "超级管理员", time: "09:18" },
+  ],
+  metrics: [
+    { label: "待审批", trend: "-4", value: "18" },
+    { label: "路由缓存", trend: "+6", value: "14" },
+    { label: "固定标签页", trend: "+2", value: "9" },
+  ],
+  tasks: [
+    {
+      assignee: "明",
+      deadline: "今天 18:00",
+      priority: "高",
+      status: "处理中",
+      title: "确认工作台数据接入",
+    },
+    {
+      assignee: "青",
+      deadline: "明天 12:00",
+      priority: "中",
+      status: "待开始",
+      title: "补充运营账号风险说明",
+    },
+    {
+      assignee: "林",
+      deadline: "本周五",
+      priority: "低",
+      status: "排期中",
+      title: "整理部门审计记录",
+    },
   ],
 };
 
@@ -364,6 +426,7 @@ export const adminMockApi = {
   overview: (signal?: AbortSignal) => delay(overviewSummary, signal),
   roles: (signal?: AbortSignal) => delay(roles, signal),
   users: (signal?: AbortSignal) => delay(users, signal),
+  workplace: (signal?: AbortSignal) => delay(workplaceSummary, signal),
 };
 
 // 函数：getProjectInfo。组装关于页展示的项目元信息。

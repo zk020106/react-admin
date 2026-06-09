@@ -261,6 +261,9 @@ describe("admin app shell", () => {
     expect(await within(pageSurface).findByText("工作台")).toBeInTheDocument();
     expect(within(pageSurface).getByText("面向高频后台操作的紧凑任务队列。")).toBeInTheDocument();
     expect(within(pageSurface).getByText("待审批")).toBeInTheDocument();
+    expect(await within(pageSurface).findByText("确认工作台数据接入")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("活动流")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("完成菜单管理权限复核")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "工作台" })).toBeInTheDocument();
 
     await waitFor(() => {

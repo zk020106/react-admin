@@ -1,6 +1,12 @@
 import { queryOptions } from "@tanstack/react-query";
 
-import { aboutKeys, navigationKeys, overviewKeys, systemKeys } from "@/lib/query-keys";
+import {
+  aboutKeys,
+  navigationKeys,
+  overviewKeys,
+  systemKeys,
+  workplaceKeys,
+} from "@/lib/query-keys";
 import { adminMockApi, mockAdminMenu } from "@/mock/admin-mock";
 
 // 导航查询：菜单通过 mock request 获取，placeholder 只用于避免首屏空菜单。
@@ -20,6 +26,15 @@ export const overviewQueries = {
     queryOptions({
       queryFn: ({ signal }) => adminMockApi.overview(signal),
       queryKey: overviewKeys.summary(),
+    }),
+};
+
+// 工作台查询：用于承载高频任务、指标和活动流数据。
+export const workplaceQueries = {
+  summary: () =>
+    queryOptions({
+      queryFn: ({ signal }) => adminMockApi.workplace(signal),
+      queryKey: workplaceKeys.summary(),
     }),
 };
 
