@@ -15,6 +15,7 @@ async function openSystemMenu(sidebarNavigation: HTMLElement) {
   }
 
   return {
+    departmentsLink: await within(sidebarNavigation).findByRole("link", { name: /部门管理/ }),
     menusLink: await within(sidebarNavigation).findByRole("link", { name: /菜单管理/ }),
     rolesLink: await within(sidebarNavigation).findByRole("link", { name: /角色管理/ }),
     systemTrigger,
@@ -362,6 +363,39 @@ describe("admin app shell", () => {
     expect(within(pageSurface).getByText("只读审计数据")).toBeInTheDocument();
     expect(within(pageSurface).getAllByText("system:menu:read").length).toBeGreaterThan(0);
     expect(within(pageSurface).getByText("auditor")).toBeInTheDocument();
+  });
+
+  it("opens the department management page from the sidebar", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    });
+    const { departmentsLink } = await openSystemMenu(sidebarNavigation);
+
+    await userEvent.click(departmentsLink);
+
+    await waitFor(() => {
+      expect(
+        document.querySelector("[data-slot='page-surface'][data-route-key='/system/departments']"),
+      ).toBeInTheDocument();
+    });
+
+    const pageSurface = document.querySelector(
+      "[data-slot='page-surface'][data-route-key='/system/departments']",
+    ) as HTMLElement;
+
+    expect(await within(pageSurface).findByText("组织明细")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("成员总数")).toBeInTheDocument();
+    expect(
+      await within(pageSurface).findByText("负责后台基础能力、权限体系和工程框架。"),
+    ).toBeInTheDocument();
+    expect(await within(pageSurface).findByText("dept-risk")).toBeInTheDocument();
+    expect(
+      within(pageSurface).getByText("负责风险复核、审计追踪和异常流程处置。"),
+    ).toBeInTheDocument();
+    expect(within(pageSurface).getAllByText("运营部").length).toBeGreaterThan(0);
   });
 
   it("renders header widgets in vben order", async () => {

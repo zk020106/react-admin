@@ -28,8 +28,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import type { MenuManagementRecord, RoleRecord, UserRecord } from "@/mock/admin-mock";
+import type {
+  DepartmentRecord,
+  MenuManagementRecord,
+  RoleRecord,
+  UserRecord,
+} from "@/mock/admin-mock";
 
+const emptyDepartments: DepartmentRecord[] = [];
 const emptyMenus: MenuManagementRecord[] = [];
 const emptyRoles: RoleRecord[] = [];
 const emptyUsers: UserRecord[] = [];
@@ -396,30 +402,112 @@ export function MenusPage() {
  * @returns 部门管理页面。
  */
 export function DepartmentsPage() {
-  const { data = [] } = useQuery(systemQueries.departments());
+  const { data = emptyDepartments } = useQuery(systemQueries.departments());
+  const departmentSummary = useMemo(() => {
+    const memberCount = data.reduce((total, department) => total + department.memberCount, 0);
+    const projectCount = data.reduce((total, department) => total + department.projectCount, 0);
+    const childrenCount = data.reduce((total, department) => total + department.childrenCount, 0);
+
+    return [
+      { icon: Building2, label: "部门数量", value: data.length },
+      { icon: Users, label: "成员总数", value: memberCount },
+      { icon: Route, label: "项目数量", value: projectCount },
+      { icon: FolderTree, label: "子部门", value: childrenCount },
+    ];
+  }, [data]);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>部门管理</CardTitle>
-        <CardDescription>展示组织部门、负责人和成员数量。</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-3 md:grid-cols-3">
+    <>
+      <section className="grid gap-4 md:grid-cols-4">
+        {departmentSummary.map((item) => {
+          const Icon = item.icon;
+
+          return (
+            <Card key={item.label}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardDescription>{item.label}</CardDescription>
+                  <CardTitle>{item.value}</CardTitle>
+                </div>
+                <Icon className="size-5 text-primary" />
+              </CardHeader>
+            </Card>
+          );
+        })}
+      </section>
+      <section className="grid gap-4 lg:grid-cols-3">
         {data.map((department) => (
-          <div className="rounded-lg border bg-background p-4" key={department.name}>
-            <Building2 className="mb-3 size-5 text-primary" />
-            <div className="font-medium">{department.name}</div>
-            <div className="mt-1 text-sm text-muted-foreground">上级：{department.parent}</div>
-            <div className="mt-3 flex items-center justify-between text-sm">
-              <span className="inline-flex items-center gap-1">
-                <Users className="size-4" />
-                {department.memberCount} 人
-              </span>
-              <Badge variant="secondary">{department.status}</Badge>
-            </div>
-          </div>
+          <Card key={department.code}>
+            <CardHeader>
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <CardTitle>{department.name}</CardTitle>
+                  <CardDescription>{department.description}</CardDescription>
+                </div>
+                <Badge variant={department.status === "启用" ? "default" : "secondary"}>
+                  {department.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="grid gap-3 text-sm">
+              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+                <span className="text-muted-foreground">负责人</span>
+                <span className="font-medium">{department.leader}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+                <span className="text-muted-foreground">上级部门</span>
+                <span className="font-medium">{department.parent}</span>
+              </div>
+              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
+                <span className="text-muted-foreground">成员 / 项目</span>
+                <span className="font-medium">
+                  {department.memberCount} 人 / {department.projectCount} 项
+                </span>
+              </div>
+            </CardContent>
+          </Card>
         ))}
-      </CardContent>
-    </Card>
+      </section>
+      <Card>
+        <CardHeader>
+          <CardTitle>组织明细</CardTitle>
+          <CardDescription>展示部门编码、层级关系、负责人和资源规模。</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>部门</TableHead>
+                <TableHead>编码</TableHead>
+                <TableHead>上级</TableHead>
+                <TableHead>负责人</TableHead>
+                <TableHead>成员</TableHead>
+                <TableHead>项目</TableHead>
+                <TableHead>子部门</TableHead>
+                <TableHead>状态</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data.map((department) => (
+                <TableRow key={department.code}>
+                  <TableCell className="font-medium">{department.name}</TableCell>
+                  <TableCell>{department.code}</TableCell>
+                  <TableCell>{department.parent}</TableCell>
+                  <TableCell>{department.leader}</TableCell>
+                  <TableCell>{department.memberCount}</TableCell>
+                  <TableCell>{department.projectCount}</TableCell>
+                  <TableCell>{department.childrenCount}</TableCell>
+                  <TableCell>
+                    <Badge variant={department.status === "启用" ? "default" : "secondary"}>
+                      {department.status}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+    </>
   );
 }

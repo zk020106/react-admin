@@ -52,10 +52,14 @@ export interface MenuManagementRecord {
 }
 
 export interface DepartmentRecord {
+  childrenCount: number;
+  code: string;
+  description: string;
   leader: string;
   memberCount: number;
   name: string;
   parent: string;
+  projectCount: number;
   status: string;
 }
 
@@ -296,9 +300,39 @@ const menus: MenuManagementRecord[] = [
 ];
 
 const departments: DepartmentRecord[] = [
-  { leader: "明", memberCount: 18, name: "平台部", parent: "-", status: "启用" },
-  { leader: "青", memberCount: 24, name: "运营部", parent: "-", status: "启用" },
-  { leader: "林", memberCount: 9, name: "风控部", parent: "运营部", status: "启用" },
+  {
+    childrenCount: 0,
+    code: "dept-platform",
+    description: "负责后台基础能力、权限体系和工程框架。",
+    leader: "明",
+    memberCount: 18,
+    name: "平台部",
+    parent: "-",
+    projectCount: 5,
+    status: "启用",
+  },
+  {
+    childrenCount: 1,
+    code: "dept-operations",
+    description: "负责业务运营、用户增长和日常活动配置。",
+    leader: "青",
+    memberCount: 24,
+    name: "运营部",
+    parent: "-",
+    projectCount: 8,
+    status: "启用",
+  },
+  {
+    childrenCount: 0,
+    code: "dept-risk",
+    description: "负责风险复核、审计追踪和异常流程处置。",
+    leader: "林",
+    memberCount: 9,
+    name: "风控部",
+    parent: "运营部",
+    projectCount: 3,
+    status: "启用",
+  },
 ];
 
 const dependencies: DependencyRecord[] = [
