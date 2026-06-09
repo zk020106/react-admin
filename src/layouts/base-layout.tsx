@@ -20,7 +20,6 @@ import {
   ExternalLink,
   FoldHorizontal,
   Globe2,
-  Info,
   LayoutGrid,
   LayoutDashboard,
   LockKeyhole,
@@ -37,16 +36,14 @@ import {
   RefreshCcw,
   Search,
   Settings2,
-  Shield,
   SquareMenu,
   Sun,
   SunMoon,
   UserRoundCog,
-  Users,
   X,
   type LucideIcon,
 } from "lucide-react";
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 
 import {
@@ -156,44 +153,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
+import {
+  findActiveMenuRecord,
+  getMenuRecordIcon,
+  getTabIcon,
+  hasPageIcon,
+  isMenuRecordActive,
+} from "@/layouts/navigation";
+import { PageSurface } from "@/layouts/page-surface";
 import { navigationQueries } from "@/pages/admin-queries";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
-
-// 组件：OverviewPage。用于展示首页概览。
-const OverviewPage = lazy(() => import("@/pages/overview-page"));
-// 组件：UsersPage。用于展示用户列表和状态信息。
-const UsersPage = lazy(() =>
-  import("@/pages/system-pages").then((module) => ({ default: module.UsersPage })),
-);
-// 组件：RolesPage。用于展示角色卡片列表。
-const RolesPage = lazy(() =>
-  import("@/pages/system-pages").then((module) => ({ default: module.RolesPage })),
-);
-// 组件：MenusPage。用于展示菜单配置。
-const MenusPage = lazy(() =>
-  import("@/pages/system-pages").then((module) => ({ default: module.MenusPage })),
-);
-// 组件：DepartmentsPage。用于展示部门列表。
-const DepartmentsPage = lazy(() =>
-  import("@/pages/system-pages").then((module) => ({ default: module.DepartmentsPage })),
-);
-// 组件：AboutPage。用于展示项目信息和依赖版本。
-const AboutPage = lazy(() => import("@/pages/about-page"));
-
-const iconMap: Record<string, LucideIcon> = {
-  Info,
-  LayoutDashboard,
-  Shield,
-};
-
-const pageIconMap: Record<string, LucideIcon> = {
-  "/about": Info,
-  "/overview": LayoutDashboard,
-  "/system/departments": Users,
-  "/system/menus": SquareMenu,
-  "/system/roles": Shield,
-  "/system/users": Users,
-};
 
 const colorModeIcons: Record<AdminPreferences["colorMode"], LucideIcon> = {
   dark: MoonStar,
@@ -229,7 +198,7 @@ function resolveTab(path: string, menu: MenuRecord[]): TabRecord {
   const title = getMenuTitle(path, menu);
   return {
     affix: path === ADMIN_DEFAULT_PATH,
-    icon: pageIconMap[path] ? path : undefined,
+    icon: hasPageIcon(path) ? path : undefined,
     key: path,
     path,
     title,
@@ -239,11 +208,6 @@ function resolveTab(path: string, menu: MenuRecord[]): TabRecord {
 // 函数：getRootMenu。获取当前路径所在的一级菜单。
 function getRootMenu(path: string, menu: MenuRecord[]) {
   return findMenuTrail(menu, path)?.[0] ?? menu.find((item) => item.path === path) ?? menu[0];
-}
-
-// 函数：findRootMenuInScope。仅在给定菜单范围内查找激活的根菜单。
-function findRootMenuInScope(menu: MenuRecord[], path: string) {
-  return menu.find((item) => isMenuRecordActive(item, path));
 }
 
 // 函数：clampNumber。把数值约束在最小值和最大值之间。
@@ -734,7 +698,7 @@ function AdminWorkspace() {
   const displayedMixedRoot = activeMenu.find((item) => item.path === mixedRootPath) ?? rootMenu;
   const headerMixedRoot = effectiveLayout === "header-mixed-nav" ? displayedMixedRoot : rootMenu;
   const headerMixedSideMenu = headerMixedRoot.children ?? [];
-  const activeHeaderMixedSideRoot = findRootMenuInScope(headerMixedSideMenu, activePath);
+  const activeHeaderMixedSideRoot = findActiveMenuRecord(headerMixedSideMenu, activePath);
   const selectedHeaderMixedSideRoot =
     headerMixedSideMenu.find((item) => item.path === manualHeaderMixedSideRootPath) ??
     activeHeaderMixedSideRoot ??
@@ -1259,7 +1223,6 @@ function MixedSidebarFrame({
               <SidebarMenu className="gap-1">
                 {rootMenus.map((item) => (
                   <MixedRootMenuItem
-                    activePath={activePath}
                     activeRootPath={activeRootPath}
                     item={item}
                     key={item.key}
@@ -1399,23 +1362,20 @@ function MixedSidebarFrame({
 
 // 组件：MixedRootMenuItem。用于渲染混合导航的一级根菜单项。
 function MixedRootMenuItem({
-  activePath,
   activeRootPath,
   item,
   onMouseEnter,
   onSelectRoot,
   rounded,
 }: {
-  activePath: string;
   activeRootPath: string;
   item: MenuRecord;
   onMouseEnter?: () => void;
   onSelectRoot: (item: MenuRecord) => void;
   rounded: boolean;
 }) {
-  const Icon = item.icon ? iconMap[item.icon] : pageIconMap[item.path];
-  const isRouteActive = isMenuRecordActive(item, activePath);
-  const isActive = activeRootPath === item.path || isRouteActive;
+  const Icon = getMenuRecordIcon(item);
+  const isActive = activeRootPath === item.path;
 
   return (
     <SidebarMenuItem className="px-2">
@@ -1457,7 +1417,7 @@ function CollapsedExtraMenuItem({
   navigate: (path: string) => void;
   rounded: boolean;
 }) {
-  const Icon = item.icon ? iconMap[item.icon] : (pageIconMap[item.path] ?? SquareMenu);
+  const Icon = getMenuRecordIcon(item, SquareMenu);
   const isActive = isMenuRecordActive(item, activePath);
   const targetPath = item.children?.length ? getDefaultMenuPath(item) : item.path;
 
@@ -1507,7 +1467,7 @@ function MenuNode({
   rounded: boolean;
   setAccordionOpenKey?: (key: string | null) => void;
 }) {
-  const Icon = item.icon ? iconMap[item.icon] : pageIconMap[item.path];
+  const Icon = getMenuRecordIcon(item);
   const children = item.children ?? [];
   const isActive = activePath === item.path;
   const hasActiveChild = children.some((child) => isMenuRecordActive(child, activePath));
@@ -1988,7 +1948,7 @@ function HeaderNavigationItem({
   onSelectRoot: (item: MenuRecord) => void;
   rootOnly: boolean;
 }) {
-  const Icon = item.icon ? iconMap[item.icon] : pageIconMap[item.path];
+  const Icon = getMenuRecordIcon(item);
   const children = item.children ?? [];
   const isActive = rootOnly ? activeRootPath === item.path : isMenuRecordActive(item, activePath);
 
@@ -2032,7 +1992,7 @@ function HeaderNavigationItem({
           <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {children.map((child) => {
-            const ChildIcon = child.icon ? iconMap[child.icon] : pageIconMap[child.path];
+            const ChildIcon = getMenuRecordIcon(child);
             const childActive = isMenuRecordActive(child, activePath);
 
             return (
@@ -2063,14 +2023,6 @@ function HeaderNavigationItem({
   }
 
   return null;
-}
-
-// 函数：isMenuRecordActive。判断菜单节点或任意子节点是否匹配当前路径。
-function isMenuRecordActive(item: MenuRecord, activePath: string): boolean {
-  return (
-    item.path === activePath ||
-    (item.children ?? []).some((child) => isMenuRecordActive(child, activePath))
-  );
 }
 
 // 组件：HeaderIconButton。用于渲染顶栏图标按钮并附带悬浮提示。
@@ -2389,7 +2341,7 @@ function Tabbar({
             const hasClosableLeft = tabs.slice(0, tabIndex).some((item) => !item.affix);
             const hasClosableRight = tabs.slice(tabIndex + 1).some((item) => !item.affix);
             const hasClosableOther = tabs.some((item) => item.key !== tab.key && !item.affix);
-            const Icon = tab.icon ? (pageIconMap[tab.path] ?? LayoutDashboard) : undefined;
+            const Icon = getTabIcon(tab, LayoutDashboard);
 
             return (
               <ContextMenu key={tab.key} modal={false}>
@@ -2631,45 +2583,6 @@ function PageTransitionLoading({ routeKey }: { routeKey: string }) {
       data-slot="page-transition-loading"
     >
       <div className="admin-page-transition-spinner" />
-    </div>
-  );
-}
-
-// 组件：PageSurface。用于承载当前路由页面并应用内容宽度约束。
-function PageSurface({
-  activePath,
-  preferences,
-}: {
-  activePath: string;
-  preferences: AdminPreferences;
-}) {
-  return (
-    <div
-      className="mx-auto flex w-full flex-col gap-4"
-      data-route-key={activePath}
-      data-slot="page-surface"
-      style={{
-        maxWidth: preferences.contentCompact === "compact" ? preferences.contentCompactWidth : 1440,
-      }}
-    >
-      <Suspense fallback={<PageSurfaceFallback />}>
-        {activePath === "/overview" && <OverviewPage />}
-        {activePath === "/system/users" && <UsersPage />}
-        {activePath === "/system/roles" && <RolesPage />}
-        {activePath === "/system/menus" && <MenusPage />}
-        {activePath === "/system/departments" && <DepartmentsPage />}
-        {activePath === "/about" && <AboutPage />}
-      </Suspense>
-    </div>
-  );
-}
-
-// 组件：PageSurfaceFallback。用于渲染页面懒加载期间的骨架占位。
-function PageSurfaceFallback() {
-  return (
-    <div className="grid gap-4" data-slot="page-surface-fallback">
-      <div className="h-24 rounded-lg border bg-muted/40" />
-      <div className="h-40 rounded-lg border bg-muted/30" />
     </div>
   );
 }

@@ -482,7 +482,10 @@ describe("admin app shell", () => {
       name: "混合次级导航",
     });
 
-    expect(within(rootNavigation).getByRole("button", { name: /概览/ })).toBeInTheDocument();
+    expect(within(rootNavigation).getByRole("button", { name: /概览/ })).not.toHaveAttribute(
+      "data-active",
+      "true",
+    );
     expect(within(rootNavigation).getByRole("button", { name: /系统管理/ })).toHaveAttribute(
       "data-active",
       "true",
