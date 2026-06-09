@@ -157,15 +157,12 @@ import {
   resolvePreferencesButtonPlacement,
   type PreferencesButtonPlacement,
 } from "@/layouts/preferences-options";
+import { ContentModePicker, LayoutModePicker } from "@/layouts/preferences-pickers";
 import {
-  BuiltinThemeGrid,
-  ContentModePicker,
-  FontSizeStepper,
-  LayoutModePicker,
-  RadiusPicker,
-  ThemeModePicker,
-  TransitionPresetPicker,
-} from "@/layouts/preferences-pickers";
+  AppearancePreferences,
+  GeneralPreferences,
+  ShortcutPreferences,
+} from "@/layouts/preferences-sections";
 import { navigationQueries } from "@/pages/admin-queries";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
 
@@ -2553,7 +2550,6 @@ function PreferencesSheet({
   const navigationStyleOptions = getNavigationStyleOptions(preferences.appLocale);
   const tabbarStyleOptions = getTabbarStyleOptions(preferences.appLocale);
   const preferenceButtonPositionOptions = getPreferenceButtonPositionOptions(preferences.appLocale);
-  const localeOptions = getLocaleOptions(preferences.appLocale);
   const breadcrumbStyleOptions: Array<{
     label: string;
     value: AdminPreferences["breadcrumbStyleType"];
@@ -2573,7 +2569,6 @@ function PreferencesSheet({
     await navigator.clipboard?.writeText(JSON.stringify(preferenceDiff, null, 2));
   }
 
-  const isDarkMode = preferences.colorMode === "dark";
   const isFullContent = preferences.layout === "full-content";
   const isSideMode = [
     "header-mixed-nav",
@@ -2585,12 +2580,6 @@ function PreferencesSheet({
   const isMixedLike = ["header-mixed-nav", "mixed-nav", "sidebar-mixed-nav"].includes(
     preferences.layout,
   );
-  const isDoubleColumnLayout = ["header-mixed-nav", "sidebar-mixed-nav"].includes(
-    preferences.layout,
-  );
-  const darkSidebarDisabled = isDarkMode || preferences.layout === "header-nav" || isFullContent;
-  const darkSidebarSubDisabled =
-    isDarkMode || !isDoubleColumnLayout || !preferences.themeSemiDarkSidebar;
   const breadcrumbDisabled =
     isFullContent ||
     !["header-sidebar-nav", "sidebar-mixed-nav", "sidebar-nav"].includes(preferences.layout);
@@ -2672,79 +2661,7 @@ function PreferencesSheet({
           </div>
           <ScrollArea className="min-h-0 flex-1 px-4">
             <TabsContent className="m-0 pb-6" value="appearance">
-              <PreferenceBlock title={messages.preferences.appearance.theme}>
-                <ThemeModePicker
-                  locale={preferences.appLocale}
-                  mode={preferences.colorMode}
-                  setMode={(colorMode) => setPreferences({ colorMode })}
-                />
-                <PreferenceToggle
-                  checked={preferences.themeSemiDarkSidebar}
-                  disabled={darkSidebarDisabled}
-                  label={messages.preferences.appearance.darkSidebar}
-                  onCheckedChange={(checked) =>
-                    setPreferences({
-                      themeSemiDarkSidebar: checked,
-                      themeSemiDarkSidebarSub: checked
-                        ? preferences.themeSemiDarkSidebarSub
-                        : false,
-                    })
-                  }
-                />
-                <PreferenceToggle
-                  checked={preferences.themeSemiDarkSidebarSub}
-                  disabled={darkSidebarSubDisabled}
-                  label={messages.preferences.appearance.darkSidebarSub}
-                  onCheckedChange={(checked) =>
-                    setPreferences({ themeSemiDarkSidebarSub: checked })
-                  }
-                />
-                <PreferenceToggle
-                  checked={preferences.themeSemiDarkHeader}
-                  disabled={isDarkMode}
-                  label={messages.preferences.appearance.darkHeader}
-                  onCheckedChange={(checked) => setPreferences({ themeSemiDarkHeader: checked })}
-                />
-              </PreferenceBlock>
-              <PreferenceBlock title={messages.preferences.appearance.builtinTheme}>
-                <BuiltinThemeGrid
-                  activeType={preferences.themeBuiltinType}
-                  colorPrimary={preferences.themeColorPrimary}
-                  locale={preferences.appLocale}
-                  onCustomColorChange={(themeColorPrimary) =>
-                    setPreferences({
-                      themeBuiltinType: "custom",
-                      themeColorPrimary,
-                    })
-                  }
-                  onSelect={(themeBuiltinType) => setPreferences({ themeBuiltinType })}
-                />
-              </PreferenceBlock>
-              <PreferenceBlock title={messages.preferences.appearance.radius}>
-                <RadiusPicker
-                  radius={preferences.themeRadius}
-                  setRadius={(themeRadius) => setPreferences({ themeRadius })}
-                />
-              </PreferenceBlock>
-              <PreferenceBlock title={messages.preferences.appearance.fontSize}>
-                <FontSizeStepper
-                  fontSize={preferences.themeFontSize}
-                  locale={preferences.appLocale}
-                  setFontSize={(themeFontSize) => setPreferences({ themeFontSize })}
-                />
-              </PreferenceBlock>
-              <PreferenceBlock title={messages.preferences.appearance.other}>
-                <PreferenceToggle
-                  checked={preferences.colorWeakMode}
-                  label={messages.preferences.appearance.colorWeak}
-                  onCheckedChange={(checked) => setPreferences({ colorWeakMode: checked })}
-                />
-                <PreferenceToggle
-                  checked={preferences.colorGrayMode}
-                  label={messages.preferences.appearance.grayMode}
-                  onCheckedChange={(checked) => setPreferences({ colorGrayMode: checked })}
-                />
-              </PreferenceBlock>
+              <AppearancePreferences preferences={preferences} setPreferences={setPreferences} />
             </TabsContent>
             <TabsContent className="m-0 pb-6" value="layout">
               <PreferenceBlock title={messages.preferences.layout.layout}>
@@ -3117,132 +3034,10 @@ function PreferencesSheet({
               </PreferenceBlock>
             </TabsContent>
             <TabsContent className="m-0 pb-6" value="shortcut">
-              <PreferenceBlock title={messages.preferences.shortcut.title}>
-                <PreferenceToggle
-                  checked={preferences.shortcutKeysEnable}
-                  label={messages.preferences.shortcut.enable}
-                  onCheckedChange={(shortcutKeysEnable) => setPreferences({ shortcutKeysEnable })}
-                />
-                <PreferenceToggle
-                  checked={preferences.shortcutKeysGlobalSearch}
-                  disabled={!preferences.shortcutKeysEnable}
-                  label={messages.preferences.shortcut.globalSearch}
-                  onCheckedChange={(shortcutKeysGlobalSearch) =>
-                    setPreferences({ shortcutKeysGlobalSearch })
-                  }
-                  shortcut="Ctrl / ⌘ K"
-                />
-                <PreferenceToggle
-                  checked={preferences.shortcutKeysGlobalLogout}
-                  disabled={!preferences.shortcutKeysEnable}
-                  label={messages.preferences.shortcut.logout}
-                  onCheckedChange={(shortcutKeysGlobalLogout) =>
-                    setPreferences({ shortcutKeysGlobalLogout })
-                  }
-                  shortcut="Alt Q"
-                />
-                <PreferenceToggle
-                  checked={preferences.shortcutKeysGlobalLockScreen}
-                  disabled={!preferences.shortcutKeysEnable}
-                  label={messages.preferences.shortcut.lockScreen}
-                  onCheckedChange={(shortcutKeysGlobalLockScreen) =>
-                    setPreferences({ shortcutKeysGlobalLockScreen })
-                  }
-                  shortcut="Alt L"
-                />
-                <PreferenceToggle
-                  checked={preferences.shortcutKeysGlobalEscape}
-                  disabled={!preferences.shortcutKeysEnable}
-                  label={messages.preferences.shortcut.closeOverlay}
-                  onCheckedChange={(shortcutKeysGlobalEscape) =>
-                    setPreferences({ shortcutKeysGlobalEscape })
-                  }
-                  shortcut="Esc"
-                />
-              </PreferenceBlock>
+              <ShortcutPreferences preferences={preferences} setPreferences={setPreferences} />
             </TabsContent>
             <TabsContent className="m-0 pb-6" value="general">
-              <PreferenceBlock title={messages.preferences.general.title}>
-                <PreferenceSelect
-                  items={localeOptions}
-                  label={messages.preferences.general.language}
-                  onValueChange={(appLocale) => setPreferences({ appLocale })}
-                  value={preferences.appLocale}
-                />
-                <PreferenceSelect
-                  items={preferenceTimezoneOptions}
-                  label={messages.preferences.general.timezone}
-                  onValueChange={(appTimezone) => setPreferences({ appTimezone })}
-                  value={preferences.appTimezone}
-                />
-                <PreferenceToggle
-                  checked={preferences.appDynamicTitle}
-                  label={messages.preferences.general.dynamicTitle}
-                  onCheckedChange={(appDynamicTitle) => setPreferences({ appDynamicTitle })}
-                />
-                <PreferenceToggle
-                  checked={preferences.appWatermark}
-                  label={messages.preferences.general.watermark}
-                  onCheckedChange={(appWatermark) =>
-                    setPreferences({
-                      appWatermark,
-                      appWatermarkContent: appWatermark
-                        ? preferences.appWatermarkContent || messages.common.systemName
-                        : "",
-                    })
-                  }
-                />
-                {preferences.appWatermark && (
-                  <PreferenceText
-                    label={messages.preferences.general.watermarkContent}
-                    onValueChange={(appWatermarkContent) => setPreferences({ appWatermarkContent })}
-                    value={preferences.appWatermarkContent}
-                  />
-                )}
-                <PreferenceToggle
-                  checked={preferences.appEnableCheckUpdates}
-                  label={messages.preferences.general.checkUpdates}
-                  onCheckedChange={(appEnableCheckUpdates) =>
-                    setPreferences({ appEnableCheckUpdates })
-                  }
-                />
-                <PreferenceToggle
-                  checked={preferences.appEnableCopyPreferences}
-                  label={messages.preferences.general.copyPreferences}
-                  onCheckedChange={(appEnableCopyPreferences) =>
-                    setPreferences({ appEnableCopyPreferences })
-                  }
-                />
-              </PreferenceBlock>
-              <PreferenceBlock title={messages.preferences.animation.title}>
-                <PreferenceToggle
-                  checked={preferences.transitionProgress}
-                  label={messages.preferences.animation.progress}
-                  onCheckedChange={(transitionProgress) => setPreferences({ transitionProgress })}
-                />
-                <PreferenceToggle
-                  checked={preferences.transitionLoading}
-                  label={messages.preferences.animation.pageLoading}
-                  onCheckedChange={(transitionLoading) => setPreferences({ transitionLoading })}
-                />
-                <PreferenceToggle
-                  checked={preferences.transitionEnable}
-                  label={messages.preferences.animation.transition}
-                  onCheckedChange={(transitionEnable) =>
-                    setPreferences({
-                      animationEnable: transitionEnable,
-                      transitionEnable,
-                    })
-                  }
-                />
-                {preferences.transitionEnable && (
-                  <TransitionPresetPicker
-                    activeName={preferences.transitionName}
-                    locale={preferences.appLocale}
-                    onSelect={(transitionName) => setPreferences({ transitionName })}
-                  />
-                )}
-              </PreferenceBlock>
+              <GeneralPreferences preferences={preferences} setPreferences={setPreferences} />
             </TabsContent>
           </ScrollArea>
         </Tabs>
