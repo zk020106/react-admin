@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { useBoolean, useKeyPress } from "ahooks";
-import NProgress from "nprogress";
 import { Settings2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
@@ -27,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { findActiveMenuRecord, hasPageIcon } from "@/layouts/navigation";
 import { AdminHeader } from "@/layouts/admin-header";
 import { AdminSidebar, MixedSidebarFrame } from "@/layouts/admin-sidebar";
+import { PageTransitionLoading, PageTransitionProgress } from "@/layouts/page-transitions";
 import { PageSurface } from "@/layouts/page-surface";
 import { resolvePreferencesButtonPlacement } from "@/layouts/preferences-options";
 import { PreferencesSheet } from "@/layouts/preferences-sheet";
@@ -644,46 +644,6 @@ function AdminWorkspace() {
         />
       )}
     </SidebarProvider>
-  );
-}
-
-// 组件：PageTransitionProgress。用于驱动页面切换时的顶部进度条。
-function PageTransitionProgress({ routeKey }: { routeKey: string }) {
-  useEffect(() => {
-    NProgress.configure({ showSpinner: false, trickleSpeed: 80 });
-    NProgress.start();
-
-    const timer = window.setTimeout(() => {
-      NProgress.done();
-    }, 320);
-
-    return () => {
-      window.clearTimeout(timer);
-      NProgress.done(true);
-    };
-  }, [routeKey]);
-
-  return (
-    <span
-      aria-hidden="true"
-      className="hidden"
-      data-route-key={routeKey}
-      data-slot="page-transition-progress"
-    />
-  );
-}
-
-// 组件：PageTransitionLoading。用于渲染页面切换时的 loading 动画。
-function PageTransitionLoading({ routeKey }: { routeKey: string }) {
-  return (
-    <div
-      aria-hidden="true"
-      className="admin-page-transition-loading"
-      data-route-key={routeKey}
-      data-slot="page-transition-loading"
-    >
-      <div className="admin-page-transition-spinner" />
-    </div>
   );
 }
 
