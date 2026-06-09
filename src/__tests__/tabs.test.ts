@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { getVisibleTabs } from "@/layouts/tabbar";
 import { createTabsStore } from "@/store/tabs";
 
 describe("tabs store", () => {
@@ -109,5 +110,27 @@ describe("tabs store", () => {
 
     expect(store.getState().tabs.map((tab) => tab.key)).toEqual(["/dashboard", "/workplace"]);
     expect(store.getState().activeKey).toBe("/workplace");
+  });
+
+  it("keeps the active tab visible when trimming tabbar items", () => {
+    const tabs = [
+      { affix: true, key: "/dashboard", path: "/dashboard", title: "Dashboard" },
+      { key: "/workplace", path: "/workplace", title: "Workplace" },
+      { key: "/system/users", path: "/system/users", title: "Users" },
+      { key: "/system/roles", path: "/system/roles", title: "Roles" },
+    ];
+
+    expect(getVisibleTabs(tabs, "/workplace", 2).map((tab) => tab.key)).toEqual([
+      "/system/roles",
+      "/workplace",
+    ]);
+    expect(getVisibleTabs(tabs, "/system/roles", 2).map((tab) => tab.key)).toEqual([
+      "/system/users",
+      "/system/roles",
+    ]);
+    expect(getVisibleTabs(tabs, "/missing", 2).map((tab) => tab.key)).toEqual([
+      "/system/users",
+      "/system/roles",
+    ]);
   });
 });
