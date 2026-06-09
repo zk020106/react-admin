@@ -17,13 +17,13 @@ import {
 import { preferenceStore } from "@/store/preferences";
 import { tabsStore } from "@/store/tabs";
 import { applyVbenTheme } from "@/theme";
-import type { AdminPreferences, MenuRecord, TabRecord } from "@/types/admin";
+import type { AdminPreferences, MenuRecord } from "@/types/admin";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
-import { findActiveMenuRecord, hasPageIcon } from "@/layouts/navigation";
+import { findActiveMenuRecord } from "@/layouts/navigation";
 import { AdminHeader } from "@/layouts/admin-header";
 import { AdminSidebar, MixedSidebarFrame } from "@/layouts/admin-sidebar";
 import { PageTransitionLoading, PageTransitionProgress } from "@/layouts/page-transitions";
@@ -36,27 +36,10 @@ import {
   LockScreenOverlay,
   LockScreenSetupDialog,
 } from "@/layouts/workspace-overlays";
+import { getWorkspaceRootMenu, resolveWorkspaceTab } from "@/layouts/workspace-navigation";
 import { navigationQueries } from "@/pages/admin-queries";
-import { findMenuTrail } from "@/utils/menu";
 
 const emptyMenu: MenuRecord[] = [];
-
-// 函数：resolveTab。把路由路径转换成标签页记录。
-function resolveTab(path: string, menu: MenuRecord[]): TabRecord {
-  const title = getMenuTitle(path, menu);
-  return {
-    affix: path === ADMIN_DEFAULT_PATH,
-    icon: hasPageIcon(path) ? path : undefined,
-    key: path,
-    path,
-    title,
-  };
-}
-
-// 函数：getRootMenu。获取当前路径所在的一级菜单。
-function getRootMenu(path: string, menu: MenuRecord[]) {
-  return findMenuTrail(menu, path)?.[0] ?? menu.find((item) => item.path === path) ?? menu[0];
-}
 
 // 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
 function AdminWorkspace() {
@@ -178,7 +161,7 @@ function AdminWorkspace() {
     }
 
     const initialTabs = affixTabs.map((tab) => ({
-      ...resolveTab(tab.path, activeMenu),
+      ...resolveWorkspaceTab(tab.path, activeMenu),
       affix: tab.affix,
     }));
 
@@ -186,7 +169,7 @@ function AdminWorkspace() {
       activeKey: initialTabs[0]?.key,
       tabs: initialTabs,
     });
-    tabsStore.getState().openTab(resolveTab(ADMIN_DEFAULT_PATH, activeMenu));
+    tabsStore.getState().openTab(resolveWorkspaceTab(ADMIN_DEFAULT_PATH, activeMenu));
     tabsInitializedRef.current = true;
   }, [activeMenu]);
 
@@ -284,7 +267,7 @@ function AdminWorkspace() {
   }, [activePath, routePathname, routerNavigate]);
 
   useEffect(() => {
-    const nextRootMenu = getRootMenu(activePath, activeMenu);
+    const nextRootMenu = getWorkspaceRootMenu(activePath, activeMenu);
 
     if (nextRootMenu.path !== activePath) {
       lastActiveByRootRef.current = {
@@ -295,7 +278,7 @@ function AdminWorkspace() {
   }, [activeMenu, activePath]);
 
   useEffect(() => {
-    tabsStore.getState().openTab(resolveTab(activePath, activeMenu));
+    tabsStore.getState().openTab(resolveWorkspaceTab(activePath, activeMenu));
   }, [activeMenu, activePath]);
 
   // 函数：navigate。统一规整管理端路径后触发路由跳转。
@@ -376,7 +359,7 @@ function AdminWorkspace() {
     setLockScreenPassword("");
   }
 
-  const rootMenu = getRootMenu(activePath, activeMenu);
+  const rootMenu = getWorkspaceRootMenu(activePath, activeMenu);
   const manualMixedRootPath =
     manualMixedRoot?.anchorPath === activePath ? manualMixedRoot.path : undefined;
   const manualHeaderMixedSideRootPath =

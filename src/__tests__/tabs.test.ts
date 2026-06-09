@@ -1,7 +1,27 @@
 import { describe, expect, it } from "vitest";
 
 import { getVisibleTabs } from "@/layouts/tabbar";
+import { getWorkspaceRootMenu, resolveWorkspaceTab } from "@/layouts/workspace-navigation";
 import { createTabsStore } from "@/store/tabs";
+
+const menu = [
+  {
+    icon: "LayoutDashboard",
+    key: "/overview",
+    path: "/overview",
+    title: "Overview",
+  },
+  {
+    children: [
+      { key: "/system/users", path: "/system/users", title: "Users" },
+      { key: "/system/roles", path: "/system/roles", title: "Roles" },
+    ],
+    icon: "Shield",
+    key: "/system",
+    path: "/system",
+    title: "System",
+  },
+];
 
 describe("tabs store", () => {
   it("adds unique tabs and falls back to the nearest tab when closing the active tab", () => {
@@ -132,5 +152,31 @@ describe("tabs store", () => {
       "/system/users",
       "/system/roles",
     ]);
+  });
+});
+
+describe("workspace navigation helpers", () => {
+  it("resolves workspace tabs with affix and page icon metadata", () => {
+    expect(resolveWorkspaceTab("/overview", menu)).toEqual({
+      affix: true,
+      icon: "/overview",
+      key: "/overview",
+      path: "/overview",
+      title: "Overview",
+    });
+
+    expect(resolveWorkspaceTab("/system/users", menu)).toEqual({
+      affix: false,
+      icon: "/system/users",
+      key: "/system/users",
+      path: "/system/users",
+      title: "Users",
+    });
+  });
+
+  it("resolves the root menu for nested paths and falls back safely", () => {
+    expect(getWorkspaceRootMenu("/system/users", menu)?.path).toBe("/system");
+    expect(getWorkspaceRootMenu("/overview", menu)?.path).toBe("/overview");
+    expect(getWorkspaceRootMenu("/missing", menu)?.path).toBe("/overview");
   });
 });
