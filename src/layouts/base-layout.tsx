@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "@tanstack/react-router";
-import { TinyColor } from "@ctrl/tinycolor";
 import { useBoolean, useDebounce, useKeyPress } from "ahooks";
 import NProgress from "nprogress";
 import {
@@ -8,7 +7,6 @@ import {
   ArrowLeftToLine,
   ArrowRightLeft,
   ArrowRightToLine,
-  Check,
   CheckCircle2,
   ChevronDown,
   ChevronRight,
@@ -27,18 +25,14 @@ import {
   Maximize2,
   Minimize2,
   Moon,
-  MoonStar,
   PanelsTopLeft,
-  PencilLine,
   Pin,
   PinOff,
-  Plus,
   RefreshCcw,
   Search,
   Settings2,
   SquareMenu,
   Sun,
-  SunMoon,
   UserRoundCog,
   X,
   type LucideIcon,
@@ -48,18 +42,13 @@ import { useStore } from "zustand";
 
 import {
   getAdminMessages,
-  getColorModeOptions,
-  getContentOptions,
   getHeaderAlignOptions,
   getHeaderModeOptions,
-  getLayoutOptions,
   getLocaleOptions,
   getNavigationStyleOptions,
   getPreferenceButtonPositionOptions,
-  getPreferenceStepAria,
   getPreferenceTabs,
   getTabbarStyleOptions,
-  getThemePresetLabel,
 } from "@/i18n/admin-i18n";
 import { getRouteRefreshQueryKeys } from "@/lib/query-keys";
 import {
@@ -71,7 +60,7 @@ import {
 } from "@/router/app-data";
 import { createPreferenceStore, preferenceStore } from "@/store/preferences";
 import { tabsStore } from "@/store/tabs";
-import { applyVbenTheme, BUILT_IN_THEME_PRESETS } from "@/theme";
+import { applyVbenTheme } from "@/theme";
 import type { AdminPreferences, MenuRecord, TabRecord } from "@/types/admin";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -164,20 +153,21 @@ import {
 } from "@/layouts/preferences-controls";
 import {
   getPreferenceDiff,
-  preferenceRadiusOptions,
   preferenceTimezoneOptions,
-  preferenceTransitionOptions,
   resolvePreferencesButtonPlacement,
   type PreferencesButtonPlacement,
 } from "@/layouts/preferences-options";
+import {
+  BuiltinThemeGrid,
+  ContentModePicker,
+  FontSizeStepper,
+  LayoutModePicker,
+  RadiusPicker,
+  ThemeModePicker,
+  TransitionPresetPicker,
+} from "@/layouts/preferences-pickers";
 import { navigationQueries } from "@/pages/admin-queries";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
-
-const colorModeIcons: Record<AdminPreferences["colorMode"], LucideIcon> = {
-  dark: MoonStar,
-  light: Sun,
-  system: SunMoon,
-};
 
 const emptyMenu: MenuRecord[] = [];
 
@@ -3278,550 +3268,6 @@ function PreferencesSheet({
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-// 组件：ThemeModePicker。用于切换亮色、暗色和系统主题模式。
-function ThemeModePicker({
-  locale,
-  mode,
-  setMode,
-}: {
-  locale: string;
-  mode: AdminPreferences["colorMode"];
-  setMode: (mode: AdminPreferences["colorMode"]) => void;
-}) {
-  const colorModeOptions = getColorModeOptions(locale);
-
-  return (
-    <div className="flex w-full flex-wrap justify-between gap-y-4">
-      {colorModeOptions.map((option) => {
-        const Icon = colorModeIcons[option.value];
-        const active = mode === option.value;
-
-        return (
-          <PreferenceChoice
-            active={active}
-            key={option.value}
-            label={option.label}
-            onClick={() => setMode(option.value)}
-          >
-            <Icon className="size-5" />
-          </PreferenceChoice>
-        );
-      })}
-    </div>
-  );
-}
-
-// 组件：LayoutModePicker。用于切换后台整体布局模式。
-function LayoutModePicker({
-  locale,
-  layout,
-  setLayout,
-}: {
-  locale: string;
-  layout: AdminPreferences["layout"];
-  setLayout: (layout: AdminPreferences["layout"]) => void;
-}) {
-  const layoutOptions = getLayoutOptions(locale);
-  const messages = getAdminMessages(locale);
-
-  return (
-    <div className="flex w-full flex-wrap gap-5">
-      {layoutOptions.map((option) => (
-        <PreferenceChoice
-          active={layout === option.value}
-          ariaLabel={`${messages.preferences.layout.layout} ${option.label}`}
-          key={option.value}
-          label={option.label}
-          onClick={() => setLayout(option.value)}
-          title={option.tip}
-        >
-          <LayoutPreview layout={option.value} />
-        </PreferenceChoice>
-      ))}
-    </div>
-  );
-}
-
-// 组件：ContentModePicker。用于切换内容区域宽度模式。
-function ContentModePicker({
-  locale,
-  mode,
-  setMode,
-}: {
-  locale: string;
-  mode: AdminPreferences["contentCompact"];
-  setMode: (mode: AdminPreferences["contentCompact"]) => void;
-}) {
-  const contentOptions = getContentOptions(locale);
-  const messages = getAdminMessages(locale);
-
-  return (
-    <div className="flex w-full gap-5">
-      {contentOptions.map((option) => (
-        <PreferenceChoice
-          active={mode === option.value}
-          ariaLabel={`${messages.preferences.layout.content} ${option.label}`}
-          key={option.value}
-          label={option.label}
-          onClick={() => setMode(option.value)}
-        >
-          <ContentPreview mode={option.value} />
-        </PreferenceChoice>
-      ))}
-    </div>
-  );
-}
-
-// 组件：BuiltinThemeGrid。用于渲染内置主题预设的选择网格。
-function BuiltinThemeGrid({
-  activeType,
-  colorPrimary,
-  locale,
-  onCustomColorChange,
-  onSelect,
-}: {
-  activeType: AdminPreferences["themeBuiltinType"];
-  colorPrimary: string;
-  locale: string;
-  onCustomColorChange: (color: string) => void;
-  onSelect: (type: AdminPreferences["themeBuiltinType"]) => void;
-}) {
-  const messages = getAdminMessages(locale);
-
-  return (
-    <div className="flex w-full flex-wrap justify-between gap-y-3">
-      {BUILT_IN_THEME_PRESETS.map((preset) => {
-        const active = activeType === preset.type;
-        const label = getThemePresetLabel(preset.type, locale);
-
-        return (
-          <PreferenceChoice
-            active={active}
-            ariaLabel={`${messages.preferences.appearance.theme} ${label}`}
-            key={preset.type}
-            label={label}
-            onClick={() => onSelect(preset.type)}
-          >
-            {preset.type === "custom" ? (
-              <span className="relative flex size-5 items-center justify-center rounded-sm">
-                <PencilLine className="absolute z-10 size-5 opacity-60 group-hover:opacity-100" />
-                <input
-                  aria-label={messages.preferences.actions.customThemeColor}
-                  className="absolute inset-0 opacity-0"
-                  onChange={(event) => onCustomColorChange(event.target.value)}
-                  onClick={(event) => event.stopPropagation()}
-                  type="color"
-                  value={toColorInputValue(colorPrimary)}
-                />
-              </span>
-            ) : (
-              <span className="size-5 rounded-md" style={{ backgroundColor: preset.color }} />
-            )}
-          </PreferenceChoice>
-        );
-      })}
-    </div>
-  );
-}
-
-// 组件：RadiusPicker。用于调节全局圆角半径。
-function RadiusPicker({
-  radius,
-  setRadius,
-}: {
-  radius: string;
-  setRadius: (radius: string) => void;
-}) {
-  return (
-    <div className="grid grid-cols-5 gap-2">
-      {preferenceRadiusOptions.map((option) => {
-        const active = radius === option;
-
-        return (
-          <button
-            aria-label={`圆角 ${option}`}
-            aria-pressed={active}
-            data-active={active ? "true" : undefined}
-            className={cn(
-              "h-8 rounded-sm border bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground",
-              active &&
-                "border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground",
-            )}
-            key={option}
-            onClick={() => setRadius(option)}
-            type="button"
-          >
-            {option}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-// 组件：FontSizeStepper。用于通过步进按钮调节基础字号。
-function FontSizeStepper({
-  fontSize,
-  locale,
-  setFontSize,
-}: {
-  fontSize: number;
-  locale: string;
-  setFontSize: (fontSize: number) => void;
-}) {
-  const messages = getAdminMessages(locale);
-
-  return (
-    <div className="grid gap-3">
-      <div className="grid grid-cols-[2.5rem_1fr_2.5rem_auto] items-center overflow-hidden rounded-md border">
-        <Button
-          aria-label={getPreferenceStepAria(
-            locale,
-            "decrease",
-            messages.preferences.appearance.fontSize,
-          )}
-          className="rounded-none"
-          onClick={() => setFontSize(fontSize - 1)}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <span className="text-lg leading-none">-</span>
-        </Button>
-        <div className="border-x px-3 text-center text-sm font-medium tabular-nums">{fontSize}</div>
-        <Button
-          aria-label={getPreferenceStepAria(
-            locale,
-            "increase",
-            messages.preferences.appearance.fontSize,
-          )}
-          className="rounded-none"
-          onClick={() => setFontSize(fontSize + 1)}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <Plus className="size-4" />
-        </Button>
-        <span className="px-2 text-xs text-muted-foreground">px</span>
-      </div>
-      <div className="text-xs text-muted-foreground">
-        {messages.preferences.appearance.fontSizeDescription}
-      </div>
-    </div>
-  );
-}
-
-// 函数：toColorInputValue。把任意主题色转换为颜色输入框可识别的 HEX。
-function toColorInputValue(color: string) {
-  if (/^#[0-9a-f]{6}$/i.test(color)) {
-    return color;
-  }
-
-  const parsed = new TinyColor(color);
-
-  if (parsed.isValid) {
-    return parsed.toHexString();
-  }
-
-  return "#0072e5";
-}
-
-// 组件：PreferenceChoice。用于渲染偏好设置中的图文选择项。
-function PreferenceChoice({
-  active,
-  ariaLabel,
-  children,
-  label,
-  onClick,
-  title,
-}: {
-  active: boolean;
-  ariaLabel?: string;
-  children: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  title?: string;
-}) {
-  return (
-    <button
-      aria-label={ariaLabel ?? label}
-      aria-pressed={active}
-      data-active={active ? "true" : undefined}
-      className="group flex w-25 min-w-0 cursor-pointer flex-col items-center gap-2 text-center text-xs text-muted-foreground"
-      onClick={onClick}
-      title={title}
-      type="button"
-    >
-      <span
-        className={cn(
-          "vben-outline-box relative flex h-14 w-full items-center justify-center overflow-hidden rounded-md bg-background text-foreground transition-all",
-          active && "vben-outline-box-active",
-        )}
-        data-active={active ? "true" : undefined}
-      >
-        {children}
-        {active && <Check className="vben-outline-check pointer-events-none" strokeWidth={3} />}
-      </span>
-      <span
-        className={cn("vben-outline-label w-full truncate", active && "font-semibold text-primary")}
-      >
-        {label}
-      </span>
-    </button>
-  );
-}
-
-// 组件：LayoutPreview。用于预览布局模式的结构效果。
-function LayoutPreview({ layout }: { layout: AdminPreferences["layout"] }) {
-  const hasHeader = layout !== "full-content" && layout !== "sidebar-nav";
-  const headerPrimary = ["header-nav", "header-mixed-nav", "mixed-nav"].includes(layout);
-  const hasPrimarySidebar = [
-    "header-mixed-nav",
-    "header-sidebar-nav",
-    "sidebar-mixed-nav",
-    "sidebar-nav",
-  ].includes(layout);
-  const hasSecondarySidebar = ["header-mixed-nav", "mixed-nav", "sidebar-mixed-nav"].includes(
-    layout,
-  );
-  const headerY = hasHeader ? 9 : 0;
-  const contentX =
-    layout === "sidebar-nav"
-      ? 29
-      : layout === "sidebar-mixed-nav" || layout === "header-mixed-nav"
-        ? 26
-        : layout === "header-sidebar-nav" || layout === "mixed-nav"
-          ? 19
-          : 4;
-
-  if (layout === "full-content") {
-    return (
-      <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
-        <rect fill="currentColor" fillOpacity="0.02" height="66" rx="4" width="104" />
-        <rect fill="currentColor" fillOpacity="0.08" height="26" rx="2" width="39" x="4" y="4" />
-        <rect fill="currentColor" fillOpacity="0.08" height="26" rx="2" width="50" x="49" y="4" />
-        <rect fill="currentColor" fillOpacity="0.08" height="25" rx="2" width="95" x="4" y="35" />
-      </svg>
-    );
-  }
-
-  return (
-    <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
-      <rect fill="currentColor" fillOpacity="0.02" height="66" rx="4" width="104" />
-      {hasHeader && (
-        <>
-          <rect
-            fill={headerPrimary ? "hsl(var(--primary))" : "currentColor"}
-            fillOpacity={headerPrimary ? 1 : 0.08}
-            height="9"
-            width="104"
-          />
-          <rect
-            fill={headerPrimary ? "#e5e5e5" : "#b2b2b2"}
-            height="2.8"
-            rx="1.4"
-            width="7.5"
-            x="28"
-            y="3"
-          />
-          <rect
-            fill={headerPrimary ? "#e5e5e5" : "#b2b2b2"}
-            height="2.8"
-            rx="1.4"
-            width="7.5"
-            x="41"
-            y="3.2"
-          />
-          <rect
-            fill={headerPrimary ? "#e5e5e5" : "#b2b2b2"}
-            height="2.8"
-            rx="1.4"
-            width="7.5"
-            x="54"
-            y="3"
-          />
-          <rect fill="#ffffff" height="6.5" rx="2" width="7.8" x="1.5" y="1" />
-        </>
-      )}
-      {hasPrimarySidebar && (
-        <rect
-          fill="hsl(var(--primary))"
-          height={layout === "sidebar-nav" || layout === "sidebar-mixed-nav" ? 66 : 57}
-          width={
-            layout === "sidebar-nav"
-              ? 27
-              : layout === "sidebar-mixed-nav" || layout === "header-mixed-nav"
-                ? 10
-                : 15
-          }
-          x="0"
-          y={layout === "sidebar-nav" || layout === "sidebar-mixed-nav" ? 0 : headerY}
-        />
-      )}
-      {hasSecondarySidebar && (
-        <rect
-          fill="currentColor"
-          fillOpacity="0.08"
-          height={layout === "sidebar-mixed-nav" ? 66 : 57}
-          width={layout === "mixed-nav" ? 15 : 12}
-          x={layout === "mixed-nav" ? 0 : 10}
-          y={layout === "sidebar-mixed-nav" ? 0 : headerY}
-        />
-      )}
-      {["sidebar-nav", "sidebar-mixed-nav"].includes(layout) && (
-        <rect
-          fill="#ffffff"
-          height="7.5"
-          rx="2"
-          width="8.2"
-          x={layout === "sidebar-nav" ? 9 : 0.6}
-          y="1.4"
-        />
-      )}
-      {hasPrimarySidebar && (
-        <>
-          <rect
-            fill="#ffffff"
-            fillOpacity={layout === "sidebar-nav" || layout === "header-sidebar-nav" ? 1 : 0.85}
-            height="2.8"
-            rx="1.4"
-            width={layout === "sidebar-nav" ? 17.5 : 5.5}
-            x={layout === "sidebar-nav" ? 4.9 : 1.7}
-            y={headerY + 15}
-          />
-          <rect
-            fill="#ffffff"
-            fillOpacity={layout === "sidebar-nav" || layout === "header-sidebar-nav" ? 1 : 0.65}
-            height="2.8"
-            rx="1.4"
-            width={layout === "sidebar-nav" ? 17.5 : 5.5}
-            x={layout === "sidebar-nav" ? 4.9 : 1.7}
-            y={headerY + 28}
-          />
-          <rect
-            fill="#ffffff"
-            fillOpacity={layout === "sidebar-nav" || layout === "header-sidebar-nav" ? 1 : 0.65}
-            height="2.8"
-            rx="1.4"
-            width={layout === "sidebar-nav" ? 17.5 : 5.5}
-            x={layout === "sidebar-nav" ? 4.9 : 1.7}
-            y={headerY + 41}
-          />
-        </>
-      )}
-      <rect
-        fill="currentColor"
-        fillOpacity="0.08"
-        height="21.5"
-        rx="2"
-        width={98 - contentX}
-        x={contentX}
-        y={headerY + 14}
-      />
-      <rect
-        fill="currentColor"
-        fillOpacity="0.08"
-        height="21"
-        rx="2"
-        width="24"
-        x={contentX}
-        y={headerY + 14}
-      />
-      <rect
-        fill="currentColor"
-        fillOpacity="0.08"
-        height="21.5"
-        rx="2"
-        width={98 - contentX}
-        x={contentX}
-        y={headerY + 39}
-      />
-    </svg>
-  );
-}
-
-// 组件：ContentPreview。用于预览内容宽度模式的布局效果。
-function ContentPreview({ mode }: { mode: AdminPreferences["contentCompact"] }) {
-  return (
-    <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
-      <rect fill="currentColor" fillOpacity="0.02" height="66" rx="4" width="104" />
-      <rect fill="hsl(var(--primary))" height="9" width="104" />
-      <rect fill="#e5e5e5" height="2.8" rx="1.4" width="7.5" x="28" y="3" />
-      <rect fill="#e5e5e5" height="2.8" rx="1.4" width="7.5" x="41" y="3.2" />
-      <rect fill="#ffffff" height="6.5" rx="2" width="7.8" x="1.5" y="1" />
-      <rect
-        fill="currentColor"
-        fillOpacity="0.08"
-        height="21.5"
-        rx="2"
-        width={mode === "compact" ? 42 : 54}
-        x={mode === "compact" ? 45 : 42}
-        y="14"
-      />
-      <rect
-        fill="currentColor"
-        fillOpacity="0.08"
-        height="21"
-        rx="2"
-        width={mode === "compact" ? 24 : 34}
-        x={mode === "compact" ? 17 : 4}
-        y="14"
-      />
-      <rect
-        fill="currentColor"
-        fillOpacity="0.08"
-        height="21.5"
-        rx="2"
-        width={mode === "compact" ? 72 : 95}
-        x={mode === "compact" ? 17 : 4}
-        y="39"
-      />
-    </svg>
-  );
-}
-
-// 组件：TransitionPresetPicker。用于选择页面切换动效预设。
-function TransitionPresetPicker({
-  activeName,
-  locale,
-  onSelect,
-}: {
-  activeName: AdminPreferences["transitionName"];
-  locale: string;
-  onSelect: (value: AdminPreferences["transitionName"]) => void;
-}) {
-  const messages = getAdminMessages(locale);
-
-  return (
-    <div className="grid grid-cols-4 gap-3 px-2 py-2">
-      {preferenceTransitionOptions.map((item) => {
-        const active = activeName === item.value;
-
-        return (
-          <button
-            aria-label={`${messages.preferences.animation.title} ${item.label}`}
-            aria-pressed={active}
-            data-active={active ? "true" : undefined}
-            className={cn(
-              "vben-outline-box relative flex h-14 min-w-0 items-center justify-center overflow-hidden rounded-md bg-background p-2",
-              active && "vben-outline-box-active",
-            )}
-            key={item.value}
-            onClick={() => onSelect(item.value)}
-            type="button"
-          >
-            <span
-              className={cn("h-9 w-10 rounded-md bg-primary", `transition-preview-${item.value}`)}
-            />
-            {active && <Check className="vben-outline-check pointer-events-none" strokeWidth={3} />}
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
