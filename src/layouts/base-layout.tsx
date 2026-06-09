@@ -40,7 +40,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 
-import { getAdminMessages, getLocaleOptions, getPreferenceTabs } from "@/i18n/admin-i18n";
+import { getAdminMessages, getLocaleOptions } from "@/i18n/admin-i18n";
 import { getRouteRefreshQueryKeys } from "@/lib/query-keys";
 import {
   ADMIN_DEFAULT_PATH,
@@ -95,13 +95,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -121,7 +114,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -134,17 +127,11 @@ import {
 } from "@/layouts/navigation";
 import { PageSurface } from "@/layouts/page-surface";
 import {
-  getPreferenceDiff,
   preferenceTimezoneOptions,
   resolvePreferencesButtonPlacement,
   type PreferencesButtonPlacement,
 } from "@/layouts/preferences-options";
-import {
-  AppearancePreferences,
-  GeneralPreferences,
-  LayoutPreferences,
-  ShortcutPreferences,
-} from "@/layouts/preferences-sections";
+import { PreferencesSheet } from "@/layouts/preferences-sheet";
 import { navigationQueries } from "@/pages/admin-queries";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
 
@@ -2508,149 +2495,6 @@ function PageTransitionLoading({ routeKey }: { routeKey: string }) {
     >
       <div className="admin-page-transition-spinner" />
     </div>
-  );
-}
-
-// 组件：PreferencesSheet。用于渲染偏好设置抽屉和全部配置面板。
-function PreferencesSheet({
-  onOpenChange,
-  open,
-  preferences,
-  resetPreferences,
-  setPreferences,
-}: {
-  onOpenChange: (open: boolean) => void;
-  open: boolean;
-  preferences: AdminPreferences;
-  resetPreferences: () => void;
-  setPreferences: ReturnType<typeof preferenceStore.getState>["setPreferences"];
-}) {
-  const messages = getAdminMessages(preferences.appLocale);
-  const preferenceTabs = getPreferenceTabs(preferences.appLocale);
-  const preferenceDiff = useMemo(() => getPreferenceDiff(preferences), [preferences]);
-  const hasPreferenceDiff = Object.keys(preferenceDiff).length > 0;
-
-  // 函数：copyPreferences。复制当前与默认值不同的偏好配置。
-  async function copyPreferences() {
-    if (!hasPreferenceDiff) {
-      return;
-    }
-
-    await navigator.clipboard?.writeText(JSON.stringify(preferenceDiff, null, 2));
-  }
-
-  return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="w-[390px] gap-0 sm:max-w-[390px]">
-        <SheetHeader className="pr-20">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <SheetTitle>{messages.preferences.title}</SheetTitle>
-              <SheetDescription>{messages.preferences.description}</SheetDescription>
-            </div>
-            <div className="absolute top-3 right-11 flex items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={messages.preferences.actions.reset}
-                    className="relative"
-                    disabled={!hasPreferenceDiff}
-                    onClick={resetPreferences}
-                    size="icon-sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    {hasPreferenceDiff && (
-                      <span className="absolute top-1 right-1 size-1.5 rounded-sm bg-primary" />
-                    )}
-                    <RefreshCcw />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{messages.preferences.actions.resetTooltip}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={
-                      preferences.appEnableStickyPreferencesNavigationBar
-                        ? messages.preferences.actions.unpinNavigation
-                        : messages.preferences.actions.pinNavigation
-                    }
-                    onClick={() =>
-                      setPreferences({
-                        appEnableStickyPreferencesNavigationBar:
-                          !preferences.appEnableStickyPreferencesNavigationBar,
-                      })
-                    }
-                    size="icon-sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    {preferences.appEnableStickyPreferencesNavigationBar ? <PinOff /> : <Pin />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {preferences.appEnableStickyPreferencesNavigationBar
-                    ? messages.preferences.actions.unpinNavigation
-                    : messages.preferences.actions.pinNavigation}
-                </TooltipContent>
-              </Tooltip>
-            </div>
-          </div>
-        </SheetHeader>
-        <Tabs className="min-h-0 flex-1 gap-0" defaultValue="appearance">
-          <div className="px-4 pb-3">
-            <TabsList
-              className={cn(
-                "grid h-9 w-full",
-                preferences.appEnableStickyPreferencesNavigationBar && "sticky top-0 z-20",
-              )}
-              style={{ gridTemplateColumns: `repeat(${preferenceTabs.length}, minmax(0, 1fr))` }}
-            >
-              {preferenceTabs.map((tab) => (
-                <TabsTrigger key={tab.value} value={tab.value}>
-                  {tab.label}
-                </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
-          <ScrollArea className="min-h-0 flex-1 px-4">
-            <TabsContent className="m-0 pb-6" value="appearance">
-              <AppearancePreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-            <TabsContent className="m-0 pb-6" value="layout">
-              <LayoutPreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-            <TabsContent className="m-0 pb-6" value="shortcut">
-              <ShortcutPreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-            <TabsContent className="m-0 pb-6" value="general">
-              <GeneralPreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
-        <div
-          className={cn(
-            "grid gap-3 border-t p-4",
-            preferences.appEnableCopyPreferences ? "grid-cols-2" : "grid-cols-1",
-          )}
-        >
-          {preferences.appEnableCopyPreferences && (
-            <Button
-              disabled={!hasPreferenceDiff}
-              onClick={() => void copyPreferences()}
-              variant="default"
-            >
-              <Copy />
-              {messages.preferences.actions.copy}
-            </Button>
-          )}
-          <Button disabled={!hasPreferenceDiff} onClick={resetPreferences} variant="ghost">
-            {messages.preferences.actions.clearCacheLogout}
-          </Button>
-        </div>
-      </SheetContent>
-    </Sheet>
   );
 }
 
