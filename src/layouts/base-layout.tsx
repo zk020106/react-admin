@@ -69,7 +69,7 @@ import {
   getMenuTitle,
   normalizeAdminPath,
 } from "@/router/app-data";
-import { createPreferenceStore, DEFAULT_PREFERENCES, preferenceStore } from "@/store/preferences";
+import { createPreferenceStore, preferenceStore } from "@/store/preferences";
 import { tabsStore } from "@/store/tabs";
 import { applyVbenTheme, BUILT_IN_THEME_PRESETS } from "@/theme";
 import type { AdminPreferences, MenuRecord, TabRecord } from "@/types/admin";
@@ -161,6 +161,14 @@ import {
   isMenuRecordActive,
 } from "@/layouts/navigation";
 import { PageSurface } from "@/layouts/page-surface";
+import {
+  getPreferenceDiff,
+  preferenceRadiusOptions,
+  preferenceTimezoneOptions,
+  preferenceTransitionOptions,
+  resolvePreferencesButtonPlacement,
+  type PreferencesButtonPlacement,
+} from "@/layouts/preferences-options";
 import { navigationQueries } from "@/pages/admin-queries";
 import { findMenuTrail, searchMenu } from "@/utils/menu";
 
@@ -170,28 +178,7 @@ const colorModeIcons: Record<AdminPreferences["colorMode"], LucideIcon> = {
   system: SunMoon,
 };
 
-const radiusOptions = ["0", "0.25", "0.5", "0.75", "1"];
 const emptyMenu: MenuRecord[] = [];
-
-const timezoneOptions = [
-  { label: "Asia/Shanghai", value: "Asia/Shanghai" },
-  { label: "UTC", value: "UTC" },
-  { label: "America/New_York", value: "America/New_York" },
-  { label: "Europe/London", value: "Europe/London" },
-];
-
-const transitionOptions: Array<{ label: string; value: AdminPreferences["transitionName"] }> = [
-  { label: "fade", value: "fade" },
-  { label: "fade-slide", value: "fade-slide" },
-  { label: "fade-up", value: "fade-up" },
-  { label: "fade-down", value: "fade-down" },
-];
-
-type PreferencesButtonPlacement = {
-  fixed: boolean;
-  header: boolean;
-  userDropdown: boolean;
-};
 
 // 函数：resolveTab。把路由路径转换成标签页记录。
 function resolveTab(path: string, menu: MenuRecord[]): TabRecord {
@@ -332,39 +319,6 @@ function startDeferredSidebarResize({
   window.addEventListener("pointermove", handlePointerMove);
   window.addEventListener("pointerup", handlePointerUp);
   window.addEventListener("pointercancel", handlePointerCancel);
-}
-
-// 函数：resolvePreferencesButtonPlacement。根据布局和设备决定偏好按钮位置。
-function resolvePreferencesButtonPlacement({
-  headerEnabled,
-  isMobile,
-  preferences,
-  sidebarEnabled,
-}: {
-  headerEnabled: boolean;
-  isMobile: boolean;
-  preferences: AdminPreferences;
-  sidebarEnabled: boolean;
-}): PreferencesButtonPlacement {
-  const position = preferences.appPreferencesButtonPosition;
-
-  if (position !== "auto") {
-    return {
-      fixed: position === "fixed",
-      header: position === "header",
-      userDropdown: position === "user-dropdown",
-    };
-  }
-
-  const contentIsMaximized = !headerEnabled && !sidebarEnabled;
-  const fixed =
-    contentIsMaximized || preferences.layout === "full-content" || isMobile || !headerEnabled;
-
-  return {
-    fixed,
-    header: !fixed,
-    userDropdown: false,
-  };
 }
 
 // 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
@@ -2132,7 +2086,7 @@ function TimezoneDialogButton({
             <DialogDescription>{messages.header.timezoneDescription}</DialogDescription>
           </DialogHeader>
           <RadioGroup className="grid gap-2" onValueChange={setDraftTimezone} value={draftTimezone}>
-            {timezoneOptions.map((item) => {
+            {preferenceTimezoneOptions.map((item) => {
               const active = draftTimezone === item.value;
 
               return (
@@ -2585,19 +2539,6 @@ function PageTransitionLoading({ routeKey }: { routeKey: string }) {
       <div className="admin-page-transition-spinner" />
     </div>
   );
-}
-
-// 函数：getPreferenceDiff。提取与默认偏好不同的配置项。
-function getPreferenceDiff(preferences: AdminPreferences) {
-  const diff: Partial<AdminPreferences> = {};
-
-  (Object.keys(DEFAULT_PREFERENCES) as Array<keyof AdminPreferences>).forEach((key) => {
-    if (preferences[key] !== DEFAULT_PREFERENCES[key]) {
-      diff[key] = preferences[key] as never;
-    }
-  });
-
-  return diff;
 }
 
 // 组件：PreferencesSheet。用于渲染偏好设置抽屉和全部配置面板。
@@ -3238,7 +3179,7 @@ function PreferencesSheet({
                   value={preferences.appLocale}
                 />
                 <PreferenceSelect
-                  items={timezoneOptions}
+                  items={preferenceTimezoneOptions}
                   label={messages.preferences.general.timezone}
                   onValueChange={(appTimezone) => setPreferences({ appTimezone })}
                   value={preferences.appTimezone}
@@ -3495,7 +3436,7 @@ function RadiusPicker({
 }) {
   return (
     <div className="grid grid-cols-5 gap-2">
-      {radiusOptions.map((option) => {
+      {preferenceRadiusOptions.map((option) => {
         const active = radius === option;
 
         return (
@@ -4155,7 +4096,7 @@ function TransitionPresetPicker({
 
   return (
     <div className="grid grid-cols-4 gap-3 px-2 py-2">
-      {transitionOptions.map((item) => {
+      {preferenceTransitionOptions.map((item) => {
         const active = activeName === item.value;
 
         return (
