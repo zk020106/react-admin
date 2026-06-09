@@ -21,7 +21,10 @@ export interface OverviewSummary {
 export interface UserRecord {
   department: string;
   email: string;
+  lastLogin: string;
+  loginMethod: string;
   name: string;
+  riskLevel: "低" | "中" | "高";
   role: string;
   status: string;
 }
@@ -134,21 +137,30 @@ const users: UserRecord[] = [
   {
     department: "平台部",
     email: "root@example.com",
+    lastLogin: "2026-06-10 09:24",
+    loginMethod: "密码 + MFA",
     name: "超级管理员",
+    riskLevel: "低",
     role: "所有者",
     status: "启用",
   },
   {
     department: "运营部",
     email: "ops@example.com",
+    lastLogin: "2026-06-09 18:10",
+    loginMethod: "企业微信",
     name: "运营账号",
+    riskLevel: "中",
     role: "运营员",
     status: "启用",
   },
   {
     department: "风控部",
     email: "audit@example.com",
+    lastLogin: "2026-06-08 14:32",
+    loginMethod: "密码",
     name: "审计账号",
+    riskLevel: "高",
     role: "审计员",
     status: "复核中",
   },

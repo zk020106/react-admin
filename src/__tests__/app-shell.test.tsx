@@ -267,6 +267,45 @@ describe("admin app shell", () => {
     });
   });
 
+  it("opens the user management page and filters user records", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    const sidebarNavigation = screen.getByRole("navigation", {
+      name: "侧栏导航",
+    });
+    const { usersLink } = await openSystemMenu(sidebarNavigation);
+
+    await userEvent.click(usersLink);
+
+    await waitFor(() => {
+      expect(
+        document.querySelector("[data-slot='page-surface'][data-route-key='/system/users']"),
+      ).toBeInTheDocument();
+    });
+
+    const pageSurface = document.querySelector(
+      "[data-slot='page-surface'][data-route-key='/system/users']",
+    ) as HTMLElement;
+
+    expect(await within(pageSurface).findByText("用户管理")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("风险关注")).toBeInTheDocument();
+    expect(await within(pageSurface).findByText("密码 + MFA")).toBeInTheDocument();
+    expect(within(pageSurface).getByText("2026-06-10 09:24")).toBeInTheDocument();
+
+    const searchInput = within(pageSurface).getByLabelText("搜索用户");
+    await userEvent.type(searchInput, "audit");
+
+    expect(await within(pageSurface).findByText("审计账号")).toBeInTheDocument();
+    expect(within(pageSurface).queryByText("超级管理员")).not.toBeInTheDocument();
+
+    await userEvent.clear(searchInput);
+    await userEvent.click(within(pageSurface).getByRole("button", { name: "复核中" }));
+
+    expect(await within(pageSurface).findByText("审计账号")).toBeInTheDocument();
+    expect(within(pageSurface).queryByText("运营账号")).not.toBeInTheDocument();
+  });
+
   it("opens the menu management page from the sidebar", async () => {
     preferenceStore.getState().resetPreferences();
     await renderApp();
