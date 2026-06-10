@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useStore } from "zustand";
 
 import { workplaceQueries } from "@/pages/admin-queries";
+import { Page, PageSection } from "@/components/page";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getAdminMessages } from "@/i18n/admin-i18n";
@@ -19,8 +20,8 @@ export default function WorkplacePage() {
   const { data } = useQuery(workplaceQueries.summary());
 
   return (
-    <>
-      <section className="grid gap-4 md:grid-cols-3">
+    <Page title={workplace.title} description={workplace.description}>
+      <PageSection contentClassName="grid gap-4 md:grid-cols-3">
         {(data?.metrics ?? workplace.items.map((label) => ({ label, trend: "-", value: "0" }))).map(
           (item) => (
             <Card key={item.label}>
@@ -34,8 +35,8 @@ export default function WorkplacePage() {
             </Card>
           ),
         )}
-      </section>
-      <section className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+      </PageSection>
+      <PageSection contentClassName="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <Card>
           <CardHeader>
             <CardTitle>{workplace.title}</CardTitle>
@@ -82,7 +83,7 @@ export default function WorkplacePage() {
             ))}
           </CardContent>
         </Card>
-      </section>
-    </>
+      </PageSection>
+    </Page>
   );
 }

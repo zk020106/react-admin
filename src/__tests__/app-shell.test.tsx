@@ -238,6 +238,49 @@ describe("admin app shell", () => {
     expect(screen.queryByText("管理套件")).not.toBeInTheDocument();
   });
 
+  it("keeps wide content full width and only constrains compact content", async () => {
+    preferenceStore.getState().resetPreferences();
+    preferenceStore.getState().setPreferences({
+      contentCompact: "wide",
+      contentCompactWidth: 1200,
+    });
+
+    await renderApp();
+
+    const pageSurface = document.querySelector("[data-slot='page-surface']") as HTMLElement;
+
+    expect(pageSurface).not.toHaveClass("mx-auto");
+    expect(pageSurface.style.maxWidth).toBe("");
+
+    preferenceStore.getState().setPreferences({ contentCompact: "compact" });
+
+    await waitFor(() => {
+      expect(pageSurface).toHaveClass("mx-auto");
+      expect(pageSurface.style.maxWidth).toBe("1200px");
+    });
+  });
+
+  it("keeps the workspace chrome fixed and lets the content area own scrolling", async () => {
+    preferenceStore.getState().resetPreferences();
+    preferenceStore.getState().setPreferences({ footerEnable: true });
+
+    await renderApp();
+
+    const wrapper = document.querySelector("[data-slot='sidebar-wrapper']");
+    const inset = document.querySelector("[data-slot='sidebar-inset']");
+    const content = document.querySelector("[data-slot='admin-content']");
+    const footer = document.querySelector("footer");
+
+    expect(wrapper).toHaveClass("h-svh");
+    expect(wrapper).toHaveClass("min-h-0");
+    expect(wrapper).toHaveClass("overflow-hidden");
+    expect(inset).toHaveClass("min-h-0");
+    expect(content).toHaveClass("min-h-0");
+    expect(content).toHaveClass("flex-1");
+    expect(content).toHaveClass("overflow-auto");
+    expect(footer).toHaveClass("shrink-0");
+  });
+
   it("opens the workplace page from the sidebar", async () => {
     preferenceStore.getState().resetPreferences();
     await renderApp();
@@ -258,8 +301,12 @@ describe("admin app shell", () => {
       "[data-slot='page-surface'][data-route-key='/workplace']",
     ) as HTMLElement;
 
-    expect(await within(pageSurface).findByText("工作台")).toBeInTheDocument();
-    expect(within(pageSurface).getByText("面向高频后台操作的紧凑任务队列。")).toBeInTheDocument();
+    expect((await within(pageSurface).findAllByText("工作台")).length).toBeGreaterThan(0);
+    expect(
+      within(pageSurface).getAllByText("面向高频后台操作的紧凑任务队列。").length,
+    ).toBeGreaterThan(0);
+    expect(pageSurface.querySelector("[data-slot='page-header']")).toBeInTheDocument();
+    expect(pageSurface.querySelectorAll("[data-slot='page-section']")).toHaveLength(2);
     expect(within(pageSurface).getByText("待审批")).toBeInTheDocument();
     expect(await within(pageSurface).findByText("确认工作台数据接入")).toBeInTheDocument();
     expect(within(pageSurface).getByText("活动流")).toBeInTheDocument();
@@ -293,6 +340,19 @@ describe("admin app shell", () => {
     ) as HTMLElement;
 
     expect(await within(pageSurface).findByText("用户管理")).toBeInTheDocument();
+    const page = pageSurface.querySelector("[data-slot='page']") as HTMLElement;
+    const pageHeader = pageSurface.querySelector("[data-slot='page-header']") as HTMLElement;
+    const pageSections = pageSurface.querySelectorAll("[data-slot='page-section']");
+    const summarySectionContent = pageSections[0]?.querySelector(
+      "[data-slot='page-section-content']",
+    ) as HTMLElement;
+
+    expect(page).toHaveClass("p-4");
+    expect(page).toHaveClass("gap-4");
+    expect(pageHeader).toHaveClass("rounded-lg");
+    expect(pageSections).toHaveLength(2);
+    expect(summarySectionContent).toHaveClass("grid");
+    expect(summarySectionContent).toHaveClass("md:grid-cols-4");
     expect(within(pageSurface).getByText("风险关注")).toBeInTheDocument();
     expect(await within(pageSurface).findByText("密码 + MFA")).toBeInTheDocument();
     expect(within(pageSurface).getByText("2026-06-10 09:24")).toBeInTheDocument();
@@ -496,7 +556,7 @@ describe("admin app shell", () => {
     });
   });
 
-  it("renders about mock project information", async () => {
+  it("renders about workspace project information", async () => {
     preferenceStore.getState().resetPreferences();
     await renderApp();
 
@@ -504,8 +564,12 @@ describe("admin app shell", () => {
     await userEvent.click(within(sidebarNavigation).getByRole("link", { name: /关于/ }));
 
     expect(await screen.findByText("关于项目")).toBeInTheDocument();
+    expect(await screen.findByText("基本信息")).toBeInTheDocument();
+    expect(await screen.findByText("生产环境依赖")).toBeInTheDocument();
+    expect(await screen.findByText("开发环境依赖")).toBeInTheDocument();
     expect(await screen.findByText("antd-react-admin")).toBeInTheDocument();
     expect(await screen.findByText("@tanstack/react-query")).toBeInTheDocument();
+    expect(await screen.findByText("vite")).toBeInTheDocument();
   });
 
   it("renders sidebar menu groups as collapsible branches", async () => {

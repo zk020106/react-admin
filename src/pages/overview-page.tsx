@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 
 import { overviewQueries } from "@/pages/admin-queries";
+import { Page, PageSection } from "@/components/page";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
@@ -17,8 +18,8 @@ export default function OverviewPage() {
   const { data, isLoading } = useQuery(overviewQueries.summary());
 
   return (
-    <>
-      <section className="grid gap-4 lg:grid-cols-4">
+    <Page title="概览" description="展示系统关键指标、运行状态和 mock 数据集。">
+      <PageSection contentClassName="grid gap-4 lg:grid-cols-4">
         {(data?.stats ?? Array.from({ length: 4 })).map((item, index) => (
           <Card key={item ? item.label : index}>
             <CardHeader>
@@ -38,8 +39,8 @@ export default function OverviewPage() {
             </CardHeader>
           </Card>
         ))}
-      </section>
-      <section className="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
+      </PageSection>
+      <PageSection contentClassName="grid gap-4 lg:grid-cols-[1.4fr_0.8fr]">
         <Card>
           <CardHeader>
             <CardTitle>运行概览</CardTitle>
@@ -73,7 +74,7 @@ export default function OverviewPage() {
             ))}
           </CardContent>
         </Card>
-      </section>
-    </>
+      </PageSection>
+    </Page>
   );
 }

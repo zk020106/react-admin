@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from "react";
 
+import { cn } from "@/lib/utils";
 import type { AdminPreferences } from "@/types/admin";
 
 type PageRegistryItem = {
@@ -75,15 +76,14 @@ export function PageSurface({
   preferences: AdminPreferences;
 }) {
   const ActivePage = pageRegistry[activePath]?.component;
+  const compactContent = preferences.contentCompact === "compact";
 
   return (
     <div
-      className="mx-auto flex w-full flex-col gap-4"
+      className={cn("flex w-full flex-col gap-4", compactContent && "mx-auto")}
       data-route-key={activePath}
       data-slot="page-surface"
-      style={{
-        maxWidth: preferences.contentCompact === "compact" ? preferences.contentCompactWidth : 1440,
-      }}
+      style={compactContent ? { maxWidth: preferences.contentCompactWidth } : undefined}
     >
       <Suspense fallback={<PageSurfaceFallback />}>{ActivePage ? <ActivePage /> : null}</Suspense>
     </div>

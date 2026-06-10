@@ -1,4 +1,7 @@
+import { projectInfo } from "virtual:admin-project-info";
+
 import type { MenuRecord } from "@/types/admin";
+import type { ProjectInfo } from "@/types/project-info";
 
 export interface OverviewStat {
   label: string;
@@ -96,23 +99,6 @@ export interface DepartmentRecord {
   parent: string;
   projectCount: number;
   status: string;
-}
-
-export interface DependencyRecord {
-  name: string;
-  type: "dependency" | "devDependency";
-  version: string;
-}
-
-export interface ProjectInfo {
-  dependencies: DependencyRecord[];
-  description: string;
-  meta: Array<{
-    label: string;
-    value: string;
-  }>;
-  name: string;
-  version: string;
 }
 
 const MOCK_DELAY = 120;
@@ -425,26 +411,6 @@ const departments: DepartmentRecord[] = [
   },
 ];
 
-const dependencies: DependencyRecord[] = [
-  { name: "@tanstack/react-query", type: "dependency", version: "^5.101.0" },
-  { name: "@tanstack/react-router", type: "dependency", version: "^1.170.11" },
-  { name: "@tanstack/react-table", type: "dependency", version: "^8.21.3" },
-  { name: "antd", type: "dependency", version: "^6.4.3" },
-  { name: "axios", type: "dependency", version: "^1.17.0" },
-  { name: "lucide-react", type: "dependency", version: "^1.17.0" },
-  { name: "react", type: "dependency", version: "^19.2.6" },
-  { name: "react-dom", type: "dependency", version: "^19.2.6" },
-  { name: "react-hook-form", type: "dependency", version: "^7.77.0" },
-  { name: "tailwindcss", type: "dependency", version: "^4.3.0" },
-  { name: "zod", type: "dependency", version: "^4.4.3" },
-  { name: "zustand", type: "dependency", version: "^5.0.14" },
-  { name: "typescript", type: "devDependency", version: "~6.0.2" },
-  { name: "vite", type: "devDependency", version: "^8.0.12" },
-  { name: "vitest", type: "devDependency", version: "^4.1.8" },
-  { name: "oxfmt", type: "devDependency", version: "^0.53.0" },
-  { name: "oxlint", type: "devDependency", version: "^1.68.0" },
-];
-
 // Mock API 保持和真实请求一致的 Promise + AbortSignal 形态，方便后续替换为 axios。
 export const adminMockApi = {
   about: (signal?: AbortSignal) => delay(getProjectInfo(), signal),
@@ -460,18 +426,7 @@ export const adminMockApi = {
 
 // 函数：getProjectInfo。组装关于页展示的项目元信息。
 function getProjectInfo(): ProjectInfo {
-  return {
-    dependencies,
-    description: "Ant Design 6 + TanStack Query + TanStack Router 管理端示例。",
-    meta: [
-      { label: "包名", value: "antd-react-admin" },
-      { label: "版本", value: "0.0.0" },
-      { label: "运行时", value: "React 19" },
-      { label: "包管理器", value: "pnpm" },
-    ],
-    name: "antd-react-admin",
-    version: "0.0.0",
-  };
+  return projectInfo;
 }
 
 // 函数：delay。模拟网络延迟，并在 TanStack Query 取消查询时中止等待。

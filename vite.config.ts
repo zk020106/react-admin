@@ -8,6 +8,8 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react";
 import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 
+import { projectInfoPlugin } from "./vite.project-info";
+
 function zipAfterBuildPlugin(): Plugin {
   return {
     name: "zip-after-build",
@@ -81,6 +83,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    projectInfoPlugin(__dirname),
     tailwindcss(),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
