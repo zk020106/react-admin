@@ -16,12 +16,17 @@ const indexRoute = createRoute({
   path: '/'
 })
 
+const loginRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/login'
+})
+
 const fallbackRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '$'
 })
 
-const routeTree = rootRoute.addChildren([indexRoute, fallbackRoute])
+const routeTree = rootRoute.addChildren([indexRoute, loginRoute, fallbackRoute])
 
 // 函数：resolveRouterBasepath。把 Vite base URL 转为 TanStack Router 的 basepath。
 export function resolveRouterBasepath(baseUrl = import.meta.env.BASE_URL) {

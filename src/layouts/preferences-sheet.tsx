@@ -25,6 +25,7 @@ import type { PreferenceStoreState } from '@/store/preferences'
 import type { AdminPreferences } from '@/types/admin'
 
 type PreferencesSheetProps = {
+  onClearCacheLogout: () => void
   onOpenChange: (open: boolean) => void
   open: boolean
   preferences: AdminPreferences
@@ -44,6 +45,7 @@ type PreferencesSheetProps = {
  * @returns 偏好设置抽屉。
  */
 export function PreferencesSheet({
+  onClearCacheLogout,
   onOpenChange,
   open,
   preferences,
@@ -66,6 +68,12 @@ export function PreferencesSheet({
     }
 
     await navigator.clipboard?.writeText(JSON.stringify(preferenceDiff, null, 2))
+  }
+
+  function handleClearCacheLogout() {
+    resetPreferences()
+    onOpenChange(false)
+    onClearCacheLogout()
   }
 
   return (
@@ -174,7 +182,7 @@ export function PreferencesSheet({
               {messages.preferences.actions.copy}
             </Button>
           ) : null}
-          <Button disabled={!hasPreferenceDiff} onClick={resetPreferences} variant="ghost">
+          <Button onClick={handleClearCacheLogout} variant="ghost">
             {messages.preferences.actions.clearCacheLogout}
           </Button>
         </div>

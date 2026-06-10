@@ -12,7 +12,6 @@ import {
   Maximize2,
   Minimize2,
   Moon,
-  PanelsTopLeft,
   RefreshCcw,
   Search,
   Settings2,
@@ -22,6 +21,7 @@ import {
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
+import { AppLogo } from '@/components/app-logo'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -198,7 +198,8 @@ export function AdminHeader({
   const headerFullWidth = layout === 'header-sidebar-nav'
   const headerInlineBrandVisible =
     !isMobile &&
-    ['header-mixed-nav', 'header-nav', 'header-sidebar-nav', 'mixed-nav'].includes(layout)
+    (['header-mixed-nav', 'header-nav', 'header-sidebar-nav'].includes(layout) ||
+      (layout === 'mixed-nav' && !sidebarEnabled))
   const headerInlineBrandStyle =
     layout === 'header-sidebar-nav'
       ? ({ minWidth: 'var(--admin-header-brand-width)' } as CSSProperties)
@@ -260,9 +261,7 @@ export function AdminHeader({
           className="flex h-full w-10 shrink-0 items-center justify-center"
           data-slot="admin-header-mobile-brand"
         >
-          <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <PanelsTopLeft className="size-4" />
-          </div>
+          <AppLogo size="sm" />
         </div>
       )}
       {mobileSidebarTriggerVisible && (
@@ -275,9 +274,7 @@ export function AdminHeader({
             data-slot="admin-header-inline-brand"
             style={headerInlineBrandStyle}
           >
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <PanelsTopLeft className="size-4" />
-            </div>
+            <AppLogo size="sm" />
             <span className="text-sm font-semibold">{messages.common.systemName}</span>
           </div>
           <Separator className="hidden h-5 md:block" orientation="vertical" />
@@ -406,9 +403,7 @@ function HeaderNavigation({
       {showBrand && (
         <>
           <div className="hidden shrink-0 items-center gap-2 md:flex">
-            <div className="flex size-7 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-              <PanelsTopLeft className="size-4" />
-            </div>
+            <AppLogo size="sm" />
             <span className="text-sm font-semibold">{systemName}</span>
           </div>
           <Separator className="hidden h-5 md:block" orientation="vertical" />

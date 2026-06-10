@@ -740,8 +740,10 @@ describe('admin app shell', () => {
       name: '顶部导航'
     })
     const headerBrand = document.querySelector("[data-slot='admin-header-inline-brand']")
+    const sidebarBrand = document.querySelector("[data-slot='admin-sidebar-brand']")
 
-    expect(headerBrand).toHaveTextContent('React Admin')
+    expect(headerBrand).not.toBeInTheDocument()
+    expect(sidebarBrand).toHaveTextContent('React Admin')
     await userEvent.click(within(headerNavigation).getByRole('button', { name: /系统管理/ }))
 
     const sidebarNavigation = screen.getByRole('navigation', {

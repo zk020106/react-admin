@@ -2,7 +2,6 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  PanelsTopLeft,
   Pin,
   PinOff,
   SquareMenu,
@@ -10,6 +9,7 @@ import {
 } from 'lucide-react'
 import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
+import { AppLogo } from '@/components/app-logo'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
@@ -289,9 +289,7 @@ export function AdminSidebar({
               className="flex h-10 items-center gap-2 rounded-lg px-2"
               data-slot="admin-sidebar-brand"
             >
-              <div className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                <PanelsTopLeft className="size-4" />
-              </div>
+              <AppLogo size="md" />
               <div className="grid min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
                 <span className="truncate text-sm font-semibold">{messages.common.systemName}</span>
               </div>
@@ -452,9 +450,7 @@ export function MixedSidebarFrame({
       >
         <div className="flex h-full w-(--mixed-sidebar-width) shrink-0 flex-col border-r border-sidebar-border bg-sidebar-deep">
           <div className="flex h-12 items-center justify-center">
-            <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <PanelsTopLeft className="size-4" />
-            </div>
+            <AppLogo size="md" />
           </div>
           <ScrollArea className="min-h-0 flex-1 py-2">
             <nav aria-label={resolvedRootAriaLabel}>

@@ -410,6 +410,7 @@ function AdminWorkspace() {
       authStore.getState().clearSession()
       tabsStore.getState().closeAll()
       void queryClient.invalidateQueries({ queryKey: navigationKeys.all })
+      void routerNavigate({ replace: true, to: '/login' })
     })
   }
 
@@ -654,6 +655,7 @@ function AdminWorkspace() {
         )}
       </SidebarInset>
       <PreferencesSheet
+        onClearCacheLogout={logout}
         onOpenChange={preferencesActions.set}
         open={preferencesOpen}
         preferences={preferences}
@@ -711,8 +713,9 @@ export function BaseLayout() {
 
 function AuthGate({ children }: { children: ReactNode }) {
   const session = useStore(authStore, state => state.session)
+  const routePathname = useLocation({ select: location => location.pathname })
 
-  if (runtimeEnv.authRequired && !session) {
+  if (routePathname === '/login' || (runtimeEnv.authRequired && !session)) {
     return <LoginPage />
   }
 
