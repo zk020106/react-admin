@@ -3,6 +3,7 @@ import { queryOptions } from "@tanstack/react-query";
 import {
   aboutKeys,
   navigationKeys,
+  notificationKeys,
   overviewKeys,
   systemKeys,
   workplaceKeys,
@@ -17,6 +18,16 @@ export const navigationQueries = {
       queryFn: ({ signal }) => adminMockApi.menu(signal),
       queryKey: navigationKeys.menu(),
       staleTime: 10 * 60 * 1000,
+    }),
+};
+
+/** 通知中心查询，顶部栏通过该查询读取最新通知列表。 */
+export const notificationQueries = {
+  list: () =>
+    queryOptions({
+      queryFn: ({ signal }) => adminMockApi.notifications(signal),
+      queryKey: notificationKeys.list(),
+      staleTime: 60 * 1000,
     }),
 };
 

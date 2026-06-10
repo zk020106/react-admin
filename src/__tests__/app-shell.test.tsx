@@ -425,6 +425,17 @@ describe("admin app shell", () => {
     expect(screen.queryByText("查询状态：缓存已预热")).not.toBeInTheDocument();
   });
 
+  it("opens the data-driven notification center from the header", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    expect(screen.getByRole("button", { name: /通知|Notifications/i })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /通知|Notifications/i }));
+
+    expect(await screen.findByText("系统巡检完成")).toBeInTheDocument();
+    expect(screen.getByText("权限矩阵已同步")).toBeInTheDocument();
+  });
+
   it("updates locale timezone and lock screen from header controls", async () => {
     preferenceStore.getState().resetPreferences();
     await renderApp();

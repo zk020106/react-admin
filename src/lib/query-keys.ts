@@ -5,6 +5,12 @@ export const navigationKeys = {
   menu: () => [...navigationKeys.all, "menu"] as const,
 };
 
+/** 通知中心查询键，用于精确刷新顶部通知列表。 */
+export const notificationKeys = {
+  all: ["notifications"] as const,
+  list: () => [...notificationKeys.all, "list"] as const,
+};
+
 export const overviewKeys = {
   all: ["overview"] as const,
   summary: () => [...overviewKeys.all, "summary"] as const,

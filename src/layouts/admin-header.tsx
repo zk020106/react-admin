@@ -19,7 +19,8 @@ import {
   Sun,
   UserRoundCog,
 } from "lucide-react";
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,8 @@ import {
   preferenceTimezoneOptions,
   type PreferencesButtonPlacement,
 } from "@/layouts/preferences-options";
+import type { NotificationRecord } from "@/mock/admin-mock";
+import { notificationQueries } from "@/pages/admin-queries";
 import { ADMIN_DEFAULT_PATH, getDefaultMenuPath, getMenuTitle } from "@/router/app-data";
 import type { AdminPreferences, MenuRecord } from "@/types/admin";
 import { findMenuTrail } from "@/utils/menu";
@@ -128,6 +131,8 @@ type UserMenuProps = {
   openPreferences: () => void;
   showPreferencesItem?: boolean;
 };
+
+const emptyNotifications: NotificationRecord[] = [];
 
 /**
  * 渲染后台顶栏、面包屑、导航和工具按钮。
@@ -670,6 +675,8 @@ function TimezoneDialogButton({ locale, setTimezone, timezone }: TimezoneDialogB
  */
 function NotificationsMenu({ locale }: { locale: string }) {
   const messages = getAdminMessages(locale);
+  const { data = emptyNotifications } = useQuery(notificationQueries.list());
+  const unreadCount = useMemo(() => data.filter((item) => item.status === "unread").length, [data]);
 
   return (
     <DropdownMenu>
@@ -681,18 +688,27 @@ function NotificationsMenu({ locale }: { locale: string }) {
           variant="ghost"
         >
           <Bell />
-          <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
+          {unreadCount > 0 ? (
+            <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
+          ) : null}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-72">
+      <DropdownMenuContent align="end" className="w-80">
         <DropdownMenuLabel>{messages.header.notifications}</DropdownMenuLabel>
         <DropdownMenuSeparator />
-        {messages.header.notificationItems.map((item) => (
-          <DropdownMenuItem className="items-start gap-2" key={item}>
-            <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-            <span>{item}</span>
-          </DropdownMenuItem>
-        ))}
+        {data.length > 0 ? (
+          data.map((item) => (
+            <DropdownMenuItem className="items-start gap-2" key={item.id}>
+              <CheckCircle2 className="mt-0.5 size-4 text-primary" />
+              <span className="grid gap-0.5">
+                <span>{item.title}</span>
+                <span className="text-xs text-muted-foreground">{item.description}</span>
+              </span>
+            </DropdownMenuItem>
+          ))
+        ) : (
+          <DropdownMenuItem disabled>暂无通知</DropdownMenuItem>
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

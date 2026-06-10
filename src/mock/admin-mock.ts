@@ -44,6 +44,15 @@ export interface WorkplaceSummary {
   tasks: WorkplaceTask[];
 }
 
+export interface NotificationRecord {
+  description: string;
+  id: string;
+  status: "read" | "unread";
+  time: string;
+  title: string;
+  type: "success" | "warning" | "info";
+}
+
 export interface UserRecord {
   department: string;
   email: string;
@@ -198,6 +207,25 @@ const workplaceSummary: WorkplaceSummary = {
     },
   ],
 };
+
+const notifications: NotificationRecord[] = [
+  {
+    description: "工作台指标和系统管理数据均已完成刷新。",
+    id: "notice-system-health",
+    status: "unread",
+    time: "10:30",
+    title: "系统巡检完成",
+    type: "success",
+  },
+  {
+    description: "角色、菜单、部门页面的读取权限已按最新 mock 数据同步。",
+    id: "notice-permission-sync",
+    status: "read",
+    time: "09:50",
+    title: "权限矩阵已同步",
+    type: "info",
+  },
+];
 
 const users: UserRecord[] = [
   {
@@ -423,6 +451,7 @@ export const adminMockApi = {
   departments: (signal?: AbortSignal) => delay(departments, signal),
   menu: (signal?: AbortSignal) => delay(mockAdminMenu, signal),
   menus: (signal?: AbortSignal) => delay(menus, signal),
+  notifications: (signal?: AbortSignal) => delay(notifications, signal),
   overview: (signal?: AbortSignal) => delay(overviewSummary, signal),
   roles: (signal?: AbortSignal) => delay(roles, signal),
   users: (signal?: AbortSignal) => delay(users, signal),
