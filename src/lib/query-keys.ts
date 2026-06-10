@@ -1,53 +1,68 @@
-import type { QueryKey } from "@tanstack/react-query";
+import type { QueryKey } from '@tanstack/react-query'
 
 export const navigationKeys = {
-  all: ["navigation"] as const,
-  menu: () => [...navigationKeys.all, "menu"] as const,
-};
+  all: ['navigation'] as const,
+  menu: () => [...navigationKeys.all, 'menu'] as const
+}
+
+/** 通知中心查询键，用于精确刷新顶部通知列表。 */
+export const notificationKeys = {
+  all: ['notifications'] as const,
+  list: () => [...notificationKeys.all, 'list'] as const
+}
 
 export const overviewKeys = {
-  all: ["overview"] as const,
-  summary: () => [...overviewKeys.all, "summary"] as const,
-};
+  all: ['overview'] as const,
+  summary: () => [...overviewKeys.all, 'summary'] as const
+}
+
+export const workplaceKeys = {
+  all: ['workplace'] as const,
+  summary: () => [...workplaceKeys.all, 'summary'] as const
+}
 
 export const systemKeys = {
-  all: ["system"] as const,
-  departments: () => [...systemKeys.all, "departments"] as const,
-  menus: () => [...systemKeys.all, "menus"] as const,
-  roles: () => [...systemKeys.all, "roles"] as const,
-  users: () => [...systemKeys.all, "users"] as const,
-};
+  all: ['system'] as const,
+  departments: () => [...systemKeys.all, 'departments'] as const,
+  menus: () => [...systemKeys.all, 'menus'] as const,
+  roles: () => [...systemKeys.all, 'roles'] as const,
+  users: () => [...systemKeys.all, 'users'] as const
+}
 
 export const aboutKeys = {
-  all: ["about"] as const,
-  project: () => [...aboutKeys.all, "project"] as const,
-};
+  all: ['about'] as const,
+  project: () => [...aboutKeys.all, 'project'] as const
+}
 
 // 当前页刷新只失效该路由实际拥有的查询，避免 invalidateQueries() 清空全局缓存。
 export function getRouteRefreshQueryKeys(path: string): QueryKey[] {
-  if (path === "/overview") {
-    return [overviewKeys.summary()];
+  if (path === '/overview') {
+    return [overviewKeys.summary()]
   }
 
-  if (path === "/system/users") {
-    return [systemKeys.users()];
+  if (path === '/workplace') {
+    return [workplaceKeys.summary()]
   }
 
-  if (path === "/system/roles") {
-    return [systemKeys.roles()];
+  if (path === '/system/users') {
+    return [systemKeys.users()]
   }
 
-  if (path === "/system/menus") {
-    return [systemKeys.menus(), navigationKeys.menu()];
+  if (path === '/system/roles') {
+    return [systemKeys.roles()]
   }
 
-  if (path === "/system/departments") {
-    return [systemKeys.departments()];
+  if (path === '/system/menus') {
+    return [systemKeys.menus(), navigationKeys.menu()]
   }
 
-  if (path === "/about") {
-    return [aboutKeys.project()];
+  if (path === '/system/departments') {
+    return [systemKeys.departments()]
   }
 
-  return [];
+  if (path === '/about') {
+    return [aboutKeys.project()]
+  }
+
+  return []
 }
