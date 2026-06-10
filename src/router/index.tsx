@@ -23,9 +23,17 @@ const fallbackRoute = createRoute({
 
 const routeTree = rootRoute.addChildren([indexRoute, fallbackRoute]);
 
+// 函数：resolveRouterBasepath。把 Vite base URL 转为 TanStack Router 的 basepath。
+export function resolveRouterBasepath(baseUrl = import.meta.env.BASE_URL) {
+  const normalized = baseUrl.replace(/\/+$/, "");
+
+  return normalized || "/";
+}
+
 // 函数：createAppRouter。创建应用路由实例并绑定浏览器历史。
 export function createAppRouter() {
   return createRouter({
+    basepath: resolveRouterBasepath(),
     history: createBrowserHistory(),
     routeTree,
   });
