@@ -1,5 +1,23 @@
 # React + TypeScript + Vite
 
+## Admin Runtime Config
+
+Copy `.env.example` to `.env.local` for local overrides.
+
+```env
+VITE_BASE_URL=/
+VITE_API_URL=/api
+VITE_USE_MOCK=true
+VITE_AUTH_REQUIRED=false
+```
+
+- `VITE_BASE_URL`: Vite public base path. Use `/react-admin/` for GitHub Pages.
+- `VITE_API_URL`: backend API base URL. `VITE_API_BASE_URL` is still accepted as a legacy alias.
+- `VITE_USE_MOCK`: `true` keeps the built-in mock service, `false` switches queries to the HTTP API layer.
+- `VITE_AUTH_REQUIRED`: `true` enables the login guard and session-based permission filtering.
+
+Mock login credentials are `admin` / `admin123` when `VITE_AUTH_REQUIRED=true`.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:

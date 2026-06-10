@@ -109,30 +109,55 @@ export const mockAdminMenu: MenuRecord[] = [
     icon: 'LayoutDashboard',
     key: '/overview',
     path: '/overview',
+    permission: 'overview:read',
     title: '概览'
   },
   {
     icon: 'BriefcaseBusiness',
     key: '/workplace',
     path: '/workplace',
+    permission: 'workplace:read',
     title: '工作台'
   },
   {
     children: [
-      { badge: '12', key: '/system/users', path: '/system/users', title: '用户管理' },
-      { key: '/system/roles', path: '/system/roles', title: '角色管理' },
-      { key: '/system/menus', path: '/system/menus', title: '菜单管理' },
-      { key: '/system/departments', path: '/system/departments', title: '部门管理' }
+      {
+        badge: '12',
+        key: '/system/users',
+        path: '/system/users',
+        permission: 'system:user:read',
+        title: '用户管理'
+      },
+      {
+        key: '/system/roles',
+        path: '/system/roles',
+        permission: 'system:role:read',
+        title: '角色管理'
+      },
+      {
+        key: '/system/menus',
+        path: '/system/menus',
+        permission: 'system:menu:read',
+        title: '菜单管理'
+      },
+      {
+        key: '/system/departments',
+        path: '/system/departments',
+        permission: 'system:department:read',
+        title: '部门管理'
+      }
     ],
     icon: 'Shield',
     key: '/system',
     path: '/system',
+    permission: 'system:read',
     title: '系统管理'
   },
   {
     icon: 'Info',
     key: '/about',
     path: '/about',
+    permission: 'about:read',
     title: '关于'
   }
 ]

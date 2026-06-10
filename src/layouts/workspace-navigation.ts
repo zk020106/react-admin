@@ -31,5 +31,13 @@ export function resolveWorkspaceTab(path: string, menu: MenuRecord[]): TabRecord
  * @returns 命中的一级菜单；若未命中则回退到同路径菜单或首个菜单。
  */
 export function getWorkspaceRootMenu(path: string, menu: MenuRecord[]) {
-  return findMenuTrail(menu, path)?.[0] ?? menu.find(item => item.path === path) ?? menu[0]
+  return (
+    findMenuTrail(menu, path)?.[0] ??
+    menu.find(item => item.path === path) ??
+    menu[0] ?? {
+      key: ADMIN_DEFAULT_PATH,
+      path: ADMIN_DEFAULT_PATH,
+      title: getMenuTitle(ADMIN_DEFAULT_PATH, menu)
+    }
+  )
 }

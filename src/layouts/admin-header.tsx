@@ -73,6 +73,7 @@ type AdminHeaderProps = {
   layout: AdminPreferences['layout']
   menu: MenuRecord[]
   navigate: (path: string) => void
+  onLogout: () => void
   onRefresh: () => void
   onSelectRoot: (item: MenuRecord) => void
   openLock: () => void
@@ -130,6 +131,7 @@ type UserMenuProps = {
   openLock: () => void
   openPreferences: () => void
   showPreferencesItem?: boolean
+  onLogout: () => void
 }
 
 const emptyNotifications: NotificationRecord[] = []
@@ -164,6 +166,7 @@ export function AdminHeader({
   layout,
   menu,
   navigate,
+  onLogout,
   onRefresh,
   onSelectRoot,
   openLock,
@@ -371,6 +374,7 @@ export function AdminHeader({
       <UserMenu
         locale={preferences.appLocale}
         lockScreenEnabled={preferences.widgetLockScreen}
+        onLogout={onLogout}
         openLock={openLock}
         openPreferences={openPreferences}
         showPreferencesItem={preferencesButtonPlacement.userDropdown}
@@ -723,6 +727,7 @@ function NotificationsMenu({ locale }: { locale: string }) {
 function UserMenu({
   locale,
   lockScreenEnabled,
+  onLogout,
   openLock,
   openPreferences,
   showPreferencesItem = false
@@ -760,7 +765,7 @@ function UserMenu({
             {messages.header.lockScreen}
           </DropdownMenuItem>
         )}
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={onLogout}>
           <LogOut />
           {messages.header.logout}
         </DropdownMenuItem>

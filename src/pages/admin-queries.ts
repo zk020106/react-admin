@@ -8,14 +8,15 @@ import {
   systemKeys,
   workplaceKeys
 } from '@/lib/query-keys'
-import { adminMockApi, mockAdminMenu } from '@/mock/admin-mock'
+import { adminApi } from '@/api/admin'
+import { mockAdminMenu } from '@/mock/admin-mock'
 
 // 导航查询：菜单通过 mock request 获取，placeholder 只用于避免首屏空菜单。
 export const navigationQueries = {
   menu: () =>
     queryOptions({
       placeholderData: mockAdminMenu,
-      queryFn: ({ signal }) => adminMockApi.menu(signal),
+      queryFn: ({ signal }) => adminApi.menu(signal),
       queryKey: navigationKeys.menu(),
       staleTime: 10 * 60 * 1000
     })
@@ -25,7 +26,7 @@ export const navigationQueries = {
 export const notificationQueries = {
   list: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.notifications(signal),
+      queryFn: ({ signal }) => adminApi.notifications(signal),
       queryKey: notificationKeys.list(),
       staleTime: 60 * 1000
     })
@@ -35,7 +36,7 @@ export const notificationQueries = {
 export const overviewQueries = {
   summary: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.overview(signal),
+      queryFn: ({ signal }) => adminApi.overview(signal),
       queryKey: overviewKeys.summary()
     })
 }
@@ -44,7 +45,7 @@ export const overviewQueries = {
 export const workplaceQueries = {
   summary: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.workplace(signal),
+      queryFn: ({ signal }) => adminApi.workplace(signal),
       queryKey: workplaceKeys.summary()
     })
 }
@@ -53,22 +54,22 @@ export const workplaceQueries = {
 export const systemQueries = {
   departments: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.departments(signal),
+      queryFn: ({ signal }) => adminApi.departments(signal),
       queryKey: systemKeys.departments()
     }),
   menus: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.menus(signal),
+      queryFn: ({ signal }) => adminApi.menus(signal),
       queryKey: systemKeys.menus()
     }),
   roles: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.roles(signal),
+      queryFn: ({ signal }) => adminApi.roles(signal),
       queryKey: systemKeys.roles()
     }),
   users: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.users(signal),
+      queryFn: ({ signal }) => adminApi.users(signal),
       queryKey: systemKeys.users()
     })
 }
@@ -77,7 +78,7 @@ export const systemQueries = {
 export const aboutQueries = {
   project: () =>
     queryOptions({
-      queryFn: ({ signal }) => adminMockApi.about(signal),
+      queryFn: ({ signal }) => adminApi.about(signal),
       queryKey: aboutKeys.project(),
       staleTime: 10 * 60 * 1000
     })

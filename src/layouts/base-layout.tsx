@@ -2,12 +2,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLocation, useNavigate } from '@tanstack/react-router'
 import { useBoolean, useKeyPress } from 'ahooks'
 import { Settings2 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useStore } from 'zustand'
 
+import { authApi } from '@/api/auth'
+import { runtimeEnv } from '@/config/env'
 import { getAdminMessages } from '@/i18n/admin-i18n'
-import { getRouteRefreshQueryKeys } from '@/lib/query-keys'
+import { filterAuthorizedMenu } from '@/lib/permissions'
+import { getRouteRefreshQueryKeys, navigationKeys } from '@/lib/query-keys'
 import { affixTabs, getDefaultMenuPath, getMenuTitle, normalizeAdminPath } from '@/router/app-data'
+import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
 import { applyVbenTheme } from '@/theme'
@@ -32,6 +36,7 @@ import {
 } from '@/layouts/workspace-overlays'
 import { getWorkspaceRootMenu, resolveWorkspaceTab } from '@/layouts/workspace-navigation'
 import { navigationQueries } from '@/pages/admin-queries'
+import { LoginPage } from '@/pages/login-page'
 
 const emptyMenu: MenuRecord[] = []
 
@@ -86,13 +91,22 @@ function AdminWorkspace() {
   const menuQuery = useQuery(navigationQueries.menu())
   const preferences = useStore(preferenceStore, state => state.preferences)
   const setPreferences = useStore(preferenceStore, state => state.setPreferences)
+  const authSession = useStore(authStore, state => state.session)
   const tabs = useStore(tabsStore, state => state.tabs)
   const routePathname = useLocation({ select: location => location.pathname })
   const routerNavigate = useNavigate()
   const navigationMenu = menuQuery.data ?? emptyMenu
+  const activeMenu = useMemo(
+    () =>
+      filterAuthorizedMenu(
+        navigationMenu,
+        authSession?.user.permissions ?? (runtimeEnv.authRequired ? [] : ['*'])
+      ),
+    [authSession, navigationMenu]
+  )
   const activePath = useMemo(
-    () => normalizeAdminPath(routePathname, navigationMenu),
-    [navigationMenu, routePathname]
+    () => normalizeAdminPath(routePathname, activeMenu),
+    [activeMenu, routePathname]
   )
   const lastActiveByRootRef = useRef<Record<string, string>>({})
   const tabsInitializedRef = useRef(false)
@@ -113,7 +127,6 @@ function AdminWorkspace() {
   const [lockScreenPassword, setLockScreenPassword] = useState('')
   const isMobile = useIsMobile()
   const messages = useMemo(() => getAdminMessages(preferences.appLocale), [preferences.appLocale])
-  const activeMenu = navigationMenu
   const effectiveLayout: AdminPreferences['layout'] =
     isMobile && preferences.layout !== 'full-content' ? 'sidebar-nav' : preferences.layout
   const headerHidden =
@@ -167,6 +180,7 @@ function AdminWorkspace() {
     'alt.q',
     event => {
       event.preventDefault()
+      logout()
     },
     {
       exactMatch: true,
@@ -390,6 +404,15 @@ function AdminWorkspace() {
     )
   }
 
+  // 函数：logout。退出登录并刷新依赖登录态的查询缓存。
+  function logout() {
+    void authApi.logout().finally(() => {
+      authStore.getState().clearSession()
+      tabsStore.getState().closeAll()
+      void queryClient.invalidateQueries({ queryKey: navigationKeys.all })
+    })
+  }
+
   // 函数：lockScreen。保存锁屏密码并进入锁屏状态。
   function lockScreen(password: string) {
     setLockScreenPassword(password)
@@ -562,6 +585,7 @@ function AdminWorkspace() {
             openPreferences={preferencesActions.setTrue}
             openSearch={searchActions.setTrue}
             onRefresh={refreshActiveTab}
+            onLogout={logout}
             onSelectRoot={selectMixedRoot}
             preferences={preferences}
             preferencesButtonPlacement={preferencesButtonPlacement}
@@ -678,7 +702,19 @@ function AdminWorkspace() {
 export function BaseLayout() {
   return (
     <TooltipProvider>
-      <AdminWorkspace />
+      <AuthGate>
+        <AdminWorkspace />
+      </AuthGate>
     </TooltipProvider>
   )
+}
+
+function AuthGate({ children }: { children: ReactNode }) {
+  const session = useStore(authStore, state => state.session)
+
+  if (runtimeEnv.authRequired && !session) {
+    return <LoginPage />
+  }
+
+  return children
 }
