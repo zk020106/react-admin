@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { useStore } from 'zustand'
 import {
   Button,
   Checkbox,
@@ -26,6 +27,9 @@ import { authApi } from '@/api/auth'
 import { cn } from '@/lib/utils'
 import { navigationKeys, notificationKeys } from '@/lib/query-keys'
 import { authStore } from '@/store/auth'
+import { preferenceStore } from '@/store/preferences'
+import { applyAdminTheme } from '@/theme'
+import type { AdminPreferences } from '@/types/admin'
 import { BrandMark } from './BrandMark'
 import { DashboardPreview } from './DashboardPreview'
 import { GithubMark } from './GithubMark'
@@ -40,37 +44,35 @@ interface LoginValues {
 
 type LoginLanguage = 'en-US' | 'zh-CN'
 
-const LOGIN_THEME_STORAGE_KEY = 'react-admin-theme'
-
-function readStoredTheme(): LoginThemeMode {
-  if (typeof window === 'undefined') {
-    return 'light'
+function readSystemDarkPreference() {
+  if (typeof window === 'undefined' || !window.matchMedia) {
+    return false
   }
 
-  try {
-    const stored = window.localStorage.getItem(LOGIN_THEME_STORAGE_KEY)
-
-    return stored === 'dark' || stored === 'light' ? stored : 'light'
-  } catch {
-    return 'light'
-  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
-function persistTheme(themeMode: LoginThemeMode) {
-  try {
-    window.localStorage.setItem(LOGIN_THEME_STORAGE_KEY, themeMode)
-  } catch {
-    // Storage failures should not block login.
+function resolveLoginThemeMode(
+  colorMode: AdminPreferences['colorMode'],
+  systemDark: boolean
+): LoginThemeMode {
+  if (colorMode === 'system') {
+    return systemDark ? 'dark' : 'light'
   }
+
+  return colorMode
 }
 
 export function LoginPage() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const [themeMode, setThemeMode] = useState<LoginThemeMode>(readStoredTheme)
+  const preferences = useStore(preferenceStore, state => state.preferences)
+  const setPreferences = useStore(preferenceStore, state => state.setPreferences)
+  const [systemDark, setSystemDark] = useState(readSystemDarkPreference)
   const [language, setLanguage] = useState<LoginLanguage>('zh-CN')
   const [compactLayout, setCompactLayout] = useState(false)
   const [interactionStatus, setInteractionStatus] = useState('')
+  const themeMode = resolveLoginThemeMode(preferences.colorMode, systemDark)
   const isDark = themeMode === 'dark'
   const loginMutation = useMutation({
     mutationFn: authApi.login,
@@ -126,20 +128,57 @@ export function LoginPage() {
   )
 
   useEffect(() => {
-    const root = document.documentElement
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return undefined
+    }
 
-    root.classList.toggle('dark', isDark)
-    root.classList.toggle('light', !isDark)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
+
+    function handleSystemThemeChange() {
+      setSystemDark(mediaQuery.matches)
+    }
+
+    handleSystemThemeChange()
+    mediaQuery.addEventListener('change', handleSystemThemeChange)
+
+    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
+  }, [])
+
+  useEffect(() => {
+    applyAdminTheme({
+      builtinType: preferences.themeBuiltinType,
+      colorDestructive: preferences.themeColorDestructive,
+      colorPrimary: preferences.themeColorPrimary,
+      colorSuccess: preferences.themeColorSuccess,
+      colorWarning: preferences.themeColorWarning,
+      fontSize: preferences.themeFontSize,
+      mode: preferences.colorMode === 'system' ? 'auto' : preferences.colorMode,
+      radius: preferences.themeRadius,
+      semiDarkHeader: preferences.themeSemiDarkHeader,
+      semiDarkSidebar: preferences.themeSemiDarkSidebar,
+      semiDarkSidebarSub: preferences.themeSemiDarkSidebarSub
+    })
+
+    const root = document.documentElement
     root.dataset.loginTheme = themeMode
-    root.style.colorScheme = themeMode
-    persistTheme(themeMode)
 
     return () => {
-      root.classList.remove('dark', 'light')
       delete root.dataset.loginTheme
-      root.style.colorScheme = ''
     }
-  }, [isDark, themeMode])
+  }, [
+    preferences.colorMode,
+    preferences.themeBuiltinType,
+    preferences.themeColorDestructive,
+    preferences.themeColorPrimary,
+    preferences.themeColorSuccess,
+    preferences.themeColorWarning,
+    preferences.themeFontSize,
+    preferences.themeRadius,
+    preferences.themeSemiDarkHeader,
+    preferences.themeSemiDarkSidebar,
+    preferences.themeSemiDarkSidebarSub,
+    themeMode
+  ])
 
   function handleFinish(values: LoginValues) {
     loginMutation.mutate({
@@ -199,7 +238,7 @@ export function LoginPage() {
               compactLayout={compactLayout}
               language={language}
               onGithubClick={handleGithubClick}
-              onThemeToggle={() => setThemeMode(current => (current === 'dark' ? 'light' : 'dark'))}
+              onThemeToggle={() => setPreferences({ colorMode: isDark ? 'light' : 'dark' })}
               onToggleLanguage={() =>
                 setLanguage(current => (current === 'zh-CN' ? 'en-US' : 'zh-CN'))
               }

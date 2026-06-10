@@ -64,7 +64,7 @@ describe('admin app shell', () => {
     document.body.removeAttribute('data-scroll-locked')
   })
 
-  it('renders the vben-style admin shell and opens preferences', async () => {
+  it('renders the admin shell and opens preferences', async () => {
     preferenceStore.getState().resetPreferences()
     await renderApp()
 
@@ -197,7 +197,7 @@ describe('admin app shell', () => {
     expect(within(sidebarNavigation).getByRole('button', { name: /系统管理/ })).toBeInTheDocument()
   })
 
-  it('renders vben-like shortcut and general preference controls', async () => {
+  it('renders shortcut and general preference controls', async () => {
     preferenceStore.getState().resetPreferences()
     await renderApp()
 
@@ -219,7 +219,7 @@ describe('admin app shell', () => {
 
     expect(activeTransitionButton).toHaveAttribute('aria-pressed', 'true')
     expect(activeTransitionButton).toHaveAttribute('data-active', 'true')
-    expect(activeTransitionButton).toHaveClass('vben-outline-box-active')
+    expect(activeTransitionButton).toHaveClass('admin-outline-box-active')
   })
 
   it('renders menu records in the header when header layout is selected', async () => {
@@ -499,7 +499,7 @@ describe('admin app shell', () => {
     expect(within(pageSurface).getAllByText('运营部').length).toBeGreaterThan(0)
   })
 
-  it('renders header widgets in vben order', async () => {
+  it('renders header widgets in admin order', async () => {
     preferenceStore.getState().resetPreferences()
 
     await renderApp()
@@ -891,7 +891,7 @@ describe('admin app shell', () => {
     expect(screen.getByRole('tab', { name: '用户管理' })).toBeInTheDocument()
   })
 
-  it('applies vben header-sidebar layout offset class', async () => {
+  it('applies admin header-sidebar layout offset class', async () => {
     preferenceStore.getState().resetPreferences()
     preferenceStore.getState().setPreferences({ layout: 'header-sidebar-nav' })
 
@@ -950,7 +950,7 @@ describe('admin app shell', () => {
     expect(headerBrand).toHaveTextContent('React Admin')
   })
 
-  it('limits visible tabs by vben tabbar max count preference', async () => {
+  it('limits visible tabs by admin tabbar max count preference', async () => {
     preferenceStore.getState().resetPreferences()
     preferenceStore.getState().setPreferences({ tabbarMaxCount: 2 })
 
@@ -970,7 +970,7 @@ describe('admin app shell', () => {
     expect(screen.queryByRole('tab', { name: '概览' })).not.toBeInTheDocument()
   })
 
-  it('keeps the active tab visible when vben tabbar max count trims old tabs', async () => {
+  it('keeps the active tab visible when admin tabbar max count trims old tabs', async () => {
     preferenceStore.getState().resetPreferences()
     preferenceStore.getState().setPreferences({ tabbarMaxCount: 2 })
 
@@ -992,7 +992,7 @@ describe('admin app shell', () => {
     expect(screen.queryByRole('tab', { name: '概览' })).not.toBeInTheDocument()
   })
 
-  it('hides the native tabbar scrollbar and opens a vben-like tab context menu', async () => {
+  it('hides the native tabbar scrollbar and opens an admin tab context menu', async () => {
     preferenceStore.getState().resetPreferences()
     await renderApp()
 

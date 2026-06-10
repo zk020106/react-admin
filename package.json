@@ -2,6 +2,11 @@
   "name": "antd-react-admin",
   "version": "0.0.0",
   "private": true,
+  "author": "KAI <1373639299@qq.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zk020106/react-admin.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "vite",

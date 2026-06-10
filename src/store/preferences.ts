@@ -1,11 +1,11 @@
-import { createStore } from "zustand/vanilla";
+import { createStore } from 'zustand/vanilla'
 
 import type {
   AdminPreferences,
   LayoutMode,
   PreferencesButtonPosition,
-  TransitionName,
-} from "@/types/admin";
+  TransitionName
+} from '@/types/admin'
 
 export const DEFAULT_PREFERENCES: AdminPreferences = {
   animationEnable: true,
@@ -13,38 +13,38 @@ export const DEFAULT_PREFERENCES: AdminPreferences = {
   appEnableCheckUpdates: true,
   appEnableCopyPreferences: true,
   appEnableStickyPreferencesNavigationBar: true,
-  appLocale: "zh-CN",
-  appPreferencesButtonPosition: "auto",
-  appTimezone: "Asia/Shanghai",
+  appLocale: 'zh-CN',
+  appPreferencesButtonPosition: 'auto',
+  appTimezone: 'Asia/Shanghai',
   appWatermark: false,
-  appWatermarkContent: "",
+  appWatermarkContent: '',
   colorGrayMode: false,
   colorWeakMode: false,
   breadcrumbEnable: true,
   breadcrumbHideOnlyOne: false,
   breadcrumbShowHome: false,
   breadcrumbShowIcon: true,
-  breadcrumbStyleType: "normal",
-  colorMode: "dark",
-  contentCompact: "wide",
+  breadcrumbStyleType: 'normal',
+  colorMode: 'dark',
+  contentCompact: 'wide',
   contentCompactWidth: 1200,
   contentPadding: 0,
-  copyrightCompanyName: "Vben",
-  copyrightCompanySiteLink: "https://www.vben.pro",
-  copyrightDate: "2024",
+  copyrightCompanyName: 'React Admin',
+  copyrightCompanySiteLink: 'https://github.com/zk020106/react-admin',
+  copyrightDate: '2024',
   copyrightEnable: true,
-  copyrightIcp: "",
-  copyrightIcpLink: "",
+  copyrightIcp: '',
+  copyrightIcpLink: '',
   footerEnable: false,
   footerFixed: false,
   headerHeight: 50,
-  headerMenuAlign: "start",
-  headerMode: "fixed",
+  headerMenuAlign: 'start',
+  headerMode: 'fixed',
   headerVisible: true,
-  layout: "sidebar-nav",
+  layout: 'sidebar-nav',
   navigationAccordion: true,
   navigationSplit: true,
-  navigationStyleType: "rounded",
+  navigationStyleType: 'rounded',
   shortcutKeysEnable: true,
   shortcutKeysGlobalEscape: false,
   shortcutKeysGlobalLockScreen: true,
@@ -72,22 +72,22 @@ export const DEFAULT_PREFERENCES: AdminPreferences = {
   tabbarShowMaximize: true,
   tabbarShowMore: true,
   tabbarShowRefresh: true,
-  tabbarStyleType: "chrome",
+  tabbarStyleType: 'chrome',
   tabbarVisitHistory: true,
   tabbarWheelable: true,
-  themeBuiltinType: "default",
-  themeColorDestructive: "hsl(348 100% 61%)",
-  themeColorPrimary: "hsl(212 100% 45%)",
-  themeColorSuccess: "hsl(144 57% 58%)",
-  themeColorWarning: "hsl(42 84% 61%)",
+  themeBuiltinType: 'default',
+  themeColorDestructive: 'hsl(348 100% 61%)',
+  themeColorPrimary: 'hsl(212 100% 45%)',
+  themeColorSuccess: 'hsl(144 57% 58%)',
+  themeColorWarning: 'hsl(42 84% 61%)',
   themeFontSize: 16,
-  themeRadius: "0.5",
+  themeRadius: '0.5',
   themeSemiDarkHeader: false,
   themeSemiDarkSidebar: false,
   themeSemiDarkSidebarSub: false,
   transitionEnable: true,
   transitionLoading: true,
-  transitionName: "fade-slide",
+  transitionName: 'fade-slide',
   transitionProgress: true,
   widgetFullscreen: true,
   widgetGlobalSearch: true,
@@ -97,105 +97,105 @@ export const DEFAULT_PREFERENCES: AdminPreferences = {
   widgetRefresh: true,
   widgetSidebarToggle: true,
   widgetThemeToggle: true,
-  widgetTimezone: true,
-};
+  widgetTimezone: true
+}
 
 const LAYOUTS = new Set<LayoutMode>([
-  "full-content",
-  "header-mixed-nav",
-  "header-nav",
-  "header-sidebar-nav",
-  "mixed-nav",
-  "sidebar-mixed-nav",
-  "sidebar-nav",
-]);
+  'full-content',
+  'header-mixed-nav',
+  'header-nav',
+  'header-sidebar-nav',
+  'mixed-nav',
+  'sidebar-mixed-nav',
+  'sidebar-nav'
+])
 
-const TRANSITIONS = new Set<TransitionName>(["fade", "fade-down", "fade-slide", "fade-up"]);
+const TRANSITIONS = new Set<TransitionName>(['fade', 'fade-down', 'fade-slide', 'fade-up'])
 const PREFERENCES_BUTTON_POSITIONS = new Set<PreferencesButtonPosition>([
-  "auto",
-  "fixed",
-  "header",
-  "user-dropdown",
-]);
+  'auto',
+  'fixed',
+  'header',
+  'user-dropdown'
+])
 
 export interface PreferenceStoreState {
-  preferences: AdminPreferences;
+  preferences: AdminPreferences
   // 方法：resetPreferences。把偏好设置恢复为默认值。
-  resetPreferences: () => void;
+  resetPreferences: () => void
   // 方法：setPreferences。合并局部偏好设置并触发持久化。
   setPreferences: (
     updater:
       | ((preferences: AdminPreferences) => Partial<AdminPreferences>)
-      | Partial<AdminPreferences>,
-  ) => void;
+      | Partial<AdminPreferences>
+  ) => void
 }
 
 interface PreferenceStoreOptions {
-  persist?: boolean;
-  storageKey?: string;
+  persist?: boolean
+  storageKey?: string
 }
 
-const PREFERENCES_STORAGE_KEY = "antd-react-admin:preferences";
+const PREFERENCES_STORAGE_KEY = 'antd-react-admin:preferences'
 
 // 函数：clamp。把数值限制在给定范围内。
 function clamp(value: number, min: number, max: number) {
-  return Math.min(Math.max(value, min), max);
+  return Math.min(Math.max(value, min), max)
 }
 
 // 函数：getLocalStorage。安全获取浏览器 localStorage。
 function getLocalStorage() {
-  if (typeof window === "undefined") {
-    return undefined;
+  if (typeof window === 'undefined') {
+    return undefined
   }
 
   try {
-    return window.localStorage;
+    return window.localStorage
   } catch {
-    return undefined;
+    return undefined
   }
 }
 
 // 函数：readStoredPreferences。读取并兼容旧结构的偏好设置缓存。
 function readStoredPreferences(storageKey: string): Partial<AdminPreferences> | undefined {
-  const storage = getLocalStorage();
+  const storage = getLocalStorage()
 
   if (!storage) {
-    return undefined;
+    return undefined
   }
 
   try {
-    const raw = storage.getItem(storageKey);
+    const raw = storage.getItem(storageKey)
 
     if (!raw) {
-      return undefined;
+      return undefined
     }
 
-    const parsed = JSON.parse(raw) as unknown;
+    const parsed = JSON.parse(raw) as unknown
 
-    if (parsed && typeof parsed === "object" && "preferences" in parsed) {
-      return (parsed as { preferences?: Partial<AdminPreferences> }).preferences;
+    if (parsed && typeof parsed === 'object' && 'preferences' in parsed) {
+      return (parsed as { preferences?: Partial<AdminPreferences> }).preferences
     }
 
-    if (parsed && typeof parsed === "object") {
-      return parsed as Partial<AdminPreferences>;
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Partial<AdminPreferences>
     }
   } catch {
-    storage.removeItem(storageKey);
+    storage.removeItem(storageKey)
   }
 
-  return undefined;
+  return undefined
 }
 
 // 函数：writeStoredPreferences。把当前偏好设置写入本地存储。
 function writeStoredPreferences(storageKey: string, preferences: AdminPreferences) {
-  const storage = getLocalStorage();
+  const storage = getLocalStorage()
 
   if (!storage) {
-    return;
+    return
   }
 
   try {
-    storage.setItem(storageKey, JSON.stringify({ preferences }));
+    storage.setItem(storageKey, JSON.stringify({ preferences }))
   } catch {
     // 忽略存储配额或隐私模式失败，内存状态仍可继续工作。
   }
@@ -204,9 +204,9 @@ function writeStoredPreferences(storageKey: string, preferences: AdminPreference
 // 函数：normalizePreferences。合并并校正偏好设置，避免非法值进入布局。
 export function normalizePreferences(
   next: Partial<AdminPreferences> = {},
-  base: AdminPreferences = DEFAULT_PREFERENCES,
+  base: AdminPreferences = DEFAULT_PREFERENCES
 ): AdminPreferences {
-  const merged = { ...base, ...next };
+  const merged = { ...base, ...next }
 
   // 约束持久化或导入值，避免无效 localStorage 数据破坏布局。
   return {
@@ -216,7 +216,7 @@ export function normalizePreferences(
     headerHeight: clamp(merged.headerHeight, 40, 80),
     layout: LAYOUTS.has(merged.layout) ? merged.layout : DEFAULT_PREFERENCES.layout,
     appPreferencesButtonPosition: PREFERENCES_BUTTON_POSITIONS.has(
-      merged.appPreferencesButtonPosition,
+      merged.appPreferencesButtonPosition
     )
       ? merged.appPreferencesButtonPosition
       : DEFAULT_PREFERENCES.appPreferencesButtonPosition,
@@ -228,41 +228,41 @@ export function normalizePreferences(
     themeRadius: String(clamp(Number(merged.themeRadius), 0, 1.5)),
     transitionName: TRANSITIONS.has(merged.transitionName)
       ? merged.transitionName
-      : DEFAULT_PREFERENCES.transitionName,
-  };
+      : DEFAULT_PREFERENCES.transitionName
+  }
 }
 
 // 函数：createPreferenceStore。创建偏好设置仓库并按需接入本地持久化。
 export function createPreferenceStore(
   initial?: Partial<AdminPreferences>,
-  options: PreferenceStoreOptions = {},
+  options: PreferenceStoreOptions = {}
 ) {
-  const storageKey = options.storageKey ?? PREFERENCES_STORAGE_KEY;
-  const persisted = options.persist ? readStoredPreferences(storageKey) : undefined;
+  const storageKey = options.storageKey ?? PREFERENCES_STORAGE_KEY
+  const persisted = options.persist ? readStoredPreferences(storageKey) : undefined
   // 显式初始值优先于持久化状态，方便隔离测试和预览。
-  const initialPreferences = normalizePreferences({ ...persisted, ...initial });
+  const initialPreferences = normalizePreferences({ ...persisted, ...initial })
 
   return createStore<PreferenceStoreState>()((set, get) => ({
     preferences: initialPreferences,
     resetPreferences: () => {
-      set({ preferences: DEFAULT_PREFERENCES });
+      set({ preferences: DEFAULT_PREFERENCES })
 
       if (options.persist) {
-        writeStoredPreferences(storageKey, DEFAULT_PREFERENCES);
+        writeStoredPreferences(storageKey, DEFAULT_PREFERENCES)
       }
     },
-    setPreferences: (updater) => {
-      const current = get().preferences;
-      const patch = typeof updater === "function" ? updater(current) : updater;
-      const preferences = normalizePreferences(patch, current);
+    setPreferences: updater => {
+      const current = get().preferences
+      const patch = typeof updater === 'function' ? updater(current) : updater
+      const preferences = normalizePreferences(patch, current)
 
-      set({ preferences });
+      set({ preferences })
 
       if (options.persist) {
-        writeStoredPreferences(storageKey, preferences);
+        writeStoredPreferences(storageKey, preferences)
       }
-    },
-  }));
+    }
+  }))
 }
 
-export const preferenceStore = createPreferenceStore(undefined, { persist: true });
+export const preferenceStore = createPreferenceStore(undefined, { persist: true })

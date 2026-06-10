@@ -370,7 +370,7 @@
   }
 }
 
-@keyframes vben-fade {
+@keyframes admin-fade {
   from {
     opacity: 0;
   }
@@ -379,7 +379,7 @@
   }
 }
 
-@keyframes vben-fade-slide {
+@keyframes admin-fade-slide {
   from {
     opacity: 0;
     transform: translateX(12px);
@@ -390,7 +390,7 @@
   }
 }
 
-@keyframes vben-fade-up {
+@keyframes admin-fade-up {
   from {
     opacity: 0;
     transform: translateY(12px);
@@ -401,7 +401,7 @@
   }
 }
 
-@keyframes vben-fade-down {
+@keyframes admin-fade-down {
   from {
     opacity: 0;
     transform: translateY(-12px);
@@ -720,7 +720,7 @@
   display: none;
 }
 
-.vben-outline-box {
+.admin-outline-box {
   border: 1px solid hsl(var(--border));
   background-color: hsl(var(--background));
   box-shadow: none;
@@ -732,11 +732,11 @@
     transform 0.18s ease;
 }
 
-.vben-outline-box:hover {
+.admin-outline-box:hover {
   border-color: hsl(var(--primary) / 70%);
 }
 
-.vben-outline-box-active {
+.admin-outline-box-active {
   border-color: hsl(var(--primary));
   background-color: hsl(var(--primary) / 12%);
   color: hsl(var(--primary));
@@ -745,7 +745,7 @@
     0 8px 18px hsl(var(--primary) / 12%);
 }
 
-.vben-outline-box-active::after {
+.admin-outline-box-active::after {
   position: absolute;
   top: 0;
   right: 0;
@@ -756,7 +756,7 @@
   border-left: 24px solid transparent;
 }
 
-.vben-outline-check {
+.admin-outline-check {
   position: absolute;
   top: 1px;
   right: 1px;
@@ -770,7 +770,7 @@
   border-color: hsl(var(--primary));
 }
 
-.vben-layout-preview {
+.admin-layout-preview {
   display: block;
   width: 104px;
   height: 66px;
@@ -778,35 +778,35 @@
 }
 
 .admin-transition-fade > [data-slot='page-surface'] {
-  animation: vben-fade 180ms ease-out;
+  animation: admin-fade 180ms ease-out;
 }
 
 .admin-transition-fade-slide > [data-slot='page-surface'] {
-  animation: vben-fade-slide 180ms ease-out;
+  animation: admin-fade-slide 180ms ease-out;
 }
 
 .admin-transition-fade-up > [data-slot='page-surface'] {
-  animation: vben-fade-up 180ms ease-out;
+  animation: admin-fade-up 180ms ease-out;
 }
 
 .admin-transition-fade-down > [data-slot='page-surface'] {
-  animation: vben-fade-down 180ms ease-out;
+  animation: admin-fade-down 180ms ease-out;
 }
 
 .transition-preview-fade {
-  animation: vben-fade 1.4s ease-in-out infinite alternate;
+  animation: admin-fade 1.4s ease-in-out infinite alternate;
 }
 
 .transition-preview-fade-slide {
-  animation: vben-fade-slide 1.4s ease-in-out infinite alternate;
+  animation: admin-fade-slide 1.4s ease-in-out infinite alternate;
 }
 
 .transition-preview-fade-up {
-  animation: vben-fade-up 1.4s ease-in-out infinite alternate;
+  animation: admin-fade-up 1.4s ease-in-out infinite alternate;
 }
 
 .transition-preview-fade-down {
-  animation: vben-fade-down 1.4s ease-in-out infinite alternate;
+  animation: admin-fade-down 1.4s ease-in-out infinite alternate;
 }
 
 #nprogress {

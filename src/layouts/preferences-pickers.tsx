@@ -348,8 +348,8 @@ export function TransitionPresetPicker({
             aria-pressed={active}
             data-active={active ? 'true' : undefined}
             className={cn(
-              'vben-outline-box relative flex h-14 min-w-0 items-center justify-center overflow-hidden rounded-md bg-background p-2',
-              active && 'vben-outline-box-active'
+              'admin-outline-box relative flex h-14 min-w-0 items-center justify-center overflow-hidden rounded-md bg-background p-2',
+              active && 'admin-outline-box-active'
             )}
             key={item.value}
             onClick={() => onSelect(item.value)}
@@ -359,7 +359,7 @@ export function TransitionPresetPicker({
               className={cn('h-9 w-10 rounded-md bg-primary', `transition-preview-${item.value}`)}
             />
             {active ? (
-              <Check className="vben-outline-check pointer-events-none" strokeWidth={3} />
+              <Check className="admin-outline-check pointer-events-none" strokeWidth={3} />
             ) : null}
           </button>
         )
@@ -420,18 +420,21 @@ function PreferenceChoice({
     >
       <span
         className={cn(
-          'vben-outline-box relative flex h-14 w-full items-center justify-center overflow-hidden rounded-md bg-background text-foreground transition-all',
-          active && 'vben-outline-box-active'
+          'admin-outline-box relative flex h-14 w-full items-center justify-center overflow-hidden rounded-md bg-background text-foreground transition-all',
+          active && 'admin-outline-box-active'
         )}
         data-active={active ? 'true' : undefined}
       >
         {children}
         {active ? (
-          <Check className="vben-outline-check pointer-events-none" strokeWidth={3} />
+          <Check className="admin-outline-check pointer-events-none" strokeWidth={3} />
         ) : null}
       </span>
       <span
-        className={cn('vben-outline-label w-full truncate', active && 'font-semibold text-primary')}
+        className={cn(
+          'admin-outline-label w-full truncate',
+          active && 'font-semibold text-primary'
+        )}
       >
         {label}
       </span>
@@ -470,7 +473,13 @@ function LayoutPreview({ layout }: LayoutPreviewProps) {
 
   if (layout === 'full-content') {
     return (
-      <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
+      <svg
+        className="admin-layout-preview"
+        fill="none"
+        height="66"
+        viewBox="0 0 104 66"
+        width="104"
+      >
         <rect fill="currentColor" fillOpacity="0.02" height="66" rx="4" width="104" />
         <rect fill="currentColor" fillOpacity="0.08" height="26" rx="2" width="39" x="4" y="4" />
         <rect fill="currentColor" fillOpacity="0.08" height="26" rx="2" width="50" x="49" y="4" />
@@ -480,7 +489,7 @@ function LayoutPreview({ layout }: LayoutPreviewProps) {
   }
 
   return (
-    <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
+    <svg className="admin-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
       <rect fill="currentColor" fillOpacity="0.02" height="66" rx="4" width="104" />
       {hasHeader ? (
         <>
@@ -623,7 +632,7 @@ function LayoutPreview({ layout }: LayoutPreviewProps) {
  */
 function ContentPreview({ mode }: ContentPreviewProps) {
   return (
-    <svg className="vben-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
+    <svg className="admin-layout-preview" fill="none" height="66" viewBox="0 0 104 66" width="104">
       <rect fill="currentColor" fillOpacity="0.02" height="66" rx="4" width="104" />
       <rect fill="hsl(var(--primary))" height="9" width="104" />
       <rect fill="#e5e5e5" height="2.8" rx="1.4" width="7.5" x="28" y="3" />

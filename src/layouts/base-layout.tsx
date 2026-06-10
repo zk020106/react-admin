@@ -14,7 +14,7 @@ import { affixTabs, getDefaultMenuPath, getMenuTitle, normalizeAdminPath } from 
 import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
-import { applyVbenTheme } from '@/theme'
+import { applyAdminTheme } from '@/theme'
 import type { AdminPreferences, MenuRecord, TabRecord } from '@/types/admin'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
@@ -234,7 +234,7 @@ function AdminWorkspace() {
   }, [activeMenu])
 
   useEffect(() => {
-    applyVbenTheme({
+    applyAdminTheme({
       builtinType: preferences.themeBuiltinType,
       colorDestructive: preferences.themeColorDestructive,
       colorPrimary: preferences.themeColorPrimary,

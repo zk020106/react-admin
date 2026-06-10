@@ -1,93 +1,93 @@
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from 'vitest'
 
-import { createPreferenceStore, DEFAULT_PREFERENCES } from "@/store/preferences";
+import { createPreferenceStore, DEFAULT_PREFERENCES } from '@/store/preferences'
 
-describe("admin preferences", () => {
+describe('admin preferences', () => {
   afterEach(() => {
-    window.localStorage.clear();
-  });
+    window.localStorage.clear()
+  })
 
-  it("starts with vben-like defaults and clamps numeric layout values", () => {
+  it('starts with admin defaults and clamps numeric layout values', () => {
     const store = createPreferenceStore({
       contentPadding: -20,
-      layout: "header-nav",
+      layout: 'header-nav',
       sidebarWidth: 640,
       tabbarMaxCount: -10,
-      themeFontSize: 100,
-    });
+      themeFontSize: 100
+    })
 
     expect(store.getState().preferences).toEqual(
       expect.objectContaining({
         ...DEFAULT_PREFERENCES,
         contentPadding: 0,
-        layout: "header-nav",
+        layout: 'header-nav',
         sidebarWidth: 320,
         tabbarMaxCount: 0,
-        themeFontSize: 22,
-      }),
-    );
-  });
+        themeFontSize: 22
+      })
+    )
+  })
 
-  it("updates and resets preferences through a zustand store", () => {
-    const store = createPreferenceStore();
+  it('updates and resets preferences through a zustand store', () => {
+    const store = createPreferenceStore()
 
     store.getState().setPreferences({
-      colorMode: "dark",
+      colorMode: 'dark',
       sidebarCollapsed: true,
-      tabbarEnable: false,
-    });
+      tabbarEnable: false
+    })
 
     expect(store.getState().preferences).toEqual(
       expect.objectContaining({
-        colorMode: "dark",
+        colorMode: 'dark',
         sidebarCollapsed: true,
-        tabbarEnable: false,
-      }),
-    );
+        tabbarEnable: false
+      })
+    )
 
-    store.getState().resetPreferences();
+    store.getState().resetPreferences()
 
-    expect(store.getState().preferences).toEqual(DEFAULT_PREFERENCES);
-  });
+    expect(store.getState().preferences).toEqual(DEFAULT_PREFERENCES)
+  })
 
-  it("persists preferences to localStorage when enabled", () => {
+  it('persists preferences to localStorage when enabled', () => {
     window.localStorage.setItem(
-      "test-preferences",
+      'test-preferences',
       JSON.stringify({
         preferences: {
-          colorMode: "light",
+          colorMode: 'light',
           sidebarWidth: 999,
-          themeBuiltinType: "green",
-        },
-      }),
-    );
+          themeBuiltinType: 'green'
+        }
+      })
+    )
 
     const store = createPreferenceStore(undefined, {
       persist: true,
-      storageKey: "test-preferences",
-    });
+      storageKey: 'test-preferences'
+    })
 
     expect(store.getState().preferences).toEqual(
       expect.objectContaining({
-        colorMode: "light",
+        colorMode: 'light',
         sidebarWidth: 320,
-        themeBuiltinType: "green",
-      }),
-    );
+        themeBuiltinType: 'green'
+      })
+    )
 
-    store.getState().setPreferences({ colorMode: "dark", themeRadius: "1" });
+    store.getState().setPreferences({ colorMode: 'dark', themeRadius: '1' })
 
-    expect(JSON.parse(window.localStorage.getItem("test-preferences") ?? "{}")).toEqual({
+    expect(JSON.parse(window.localStorage.getItem('test-preferences') ?? '{}')).toEqual({
       preferences: expect.objectContaining({
-        colorMode: "dark",
-        themeRadius: "1",
-      }),
-    });
+        colorMode: 'dark',
+        themeRadius: '1'
+      })
+    })
 
-    store.getState().resetPreferences();
+    store.getState().resetPreferences()
 
-    expect(JSON.parse(window.localStorage.getItem("test-preferences") ?? "{}")).toEqual({
-      preferences: DEFAULT_PREFERENCES,
-    });
-  });
-});
+    expect(JSON.parse(window.localStorage.getItem('test-preferences') ?? '{}')).toEqual({
+      preferences: DEFAULT_PREFERENCES
+    })
+  })
+})
