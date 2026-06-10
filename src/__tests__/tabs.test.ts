@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it } from "vitest";
 
 import { getVisibleTabs } from "@/layouts/tabbar";
 import { getWorkspaceRootMenu, resolveWorkspaceTab } from "@/layouts/workspace-navigation";
@@ -24,6 +24,10 @@ const menu = [
 ];
 
 describe("tabs store", () => {
+  afterEach(() => {
+    window.localStorage.clear();
+  });
+
   it("adds unique tabs and falls back to the nearest tab when closing the active tab", () => {
     const store = createTabsStore([
       { affix: true, key: "/dashboard", path: "/dashboard", title: "Dashboard" },
@@ -130,6 +134,75 @@ describe("tabs store", () => {
 
     expect(store.getState().tabs.map((tab) => tab.key)).toEqual(["/dashboard", "/workplace"]);
     expect(store.getState().activeKey).toBe("/workplace");
+  });
+
+  it("persists and restores tabs when persistence is enabled", () => {
+    const storageKey = "test-tabs:v1";
+    const store = createTabsStore(
+      [{ affix: true, key: "/overview", path: "/overview", title: "Overview" }],
+      { persist: true, storageKey },
+    );
+
+    store.getState().openTab({ key: "/workplace", path: "/workplace", title: "Workplace" });
+    store.getState().openTab({ key: "/system/users", path: "/system/users", title: "Users" });
+
+    expect(JSON.parse(window.localStorage.getItem(storageKey) ?? "{}")).toEqual({
+      activeKey: "/system/users",
+      tabs: [
+        { affix: true, key: "/overview", path: "/overview", title: "Overview" },
+        { key: "/workplace", path: "/workplace", title: "Workplace" },
+        { key: "/system/users", path: "/system/users", title: "Users" },
+      ],
+      version: 1,
+    });
+
+    const restoredStore = createTabsStore([], { persist: true, storageKey });
+
+    expect(restoredStore.getState().activeKey).toBe("/system/users");
+    expect(restoredStore.getState().tabs.map((tab) => tab.key)).toEqual([
+      "/overview",
+      "/workplace",
+      "/system/users",
+    ]);
+  });
+
+  it("skips restored tabs and clears storage when persistence is disabled", () => {
+    const storageKey = "test-tabs-disabled:v1";
+    let enabled = false;
+
+    window.localStorage.setItem(
+      storageKey,
+      JSON.stringify({
+        activeKey: "/system/users",
+        tabs: [{ key: "/system/users", path: "/system/users", title: "Users" }],
+        version: 1,
+      }),
+    );
+
+    const store = createTabsStore(
+      [{ affix: true, key: "/overview", path: "/overview", title: "Overview" }],
+      {
+        persist: true,
+        shouldPersist: () => enabled,
+        storageKey,
+      },
+    );
+
+    expect(store.getState().tabs.map((tab) => tab.key)).toEqual(["/overview"]);
+
+    store.getState().openTab({ key: "/workplace", path: "/workplace", title: "Workplace" });
+    expect(window.localStorage.getItem(storageKey)).toBeNull();
+
+    enabled = true;
+    store.getState().persistTabs();
+    expect(JSON.parse(window.localStorage.getItem(storageKey) ?? "{}")).toEqual({
+      activeKey: "/workplace",
+      tabs: [
+        { affix: true, key: "/overview", path: "/overview", title: "Overview" },
+        { key: "/workplace", path: "/workplace", title: "Workplace" },
+      ],
+      version: 1,
+    });
   });
 
   it("keeps the active tab visible when trimming tabbar items", () => {

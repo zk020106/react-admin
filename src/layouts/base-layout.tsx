@@ -7,17 +7,11 @@ import { useStore } from "zustand";
 
 import { getAdminMessages } from "@/i18n/admin-i18n";
 import { getRouteRefreshQueryKeys } from "@/lib/query-keys";
-import {
-  ADMIN_DEFAULT_PATH,
-  affixTabs,
-  getDefaultMenuPath,
-  getMenuTitle,
-  normalizeAdminPath,
-} from "@/router/app-data";
+import { affixTabs, getDefaultMenuPath, getMenuTitle, normalizeAdminPath } from "@/router/app-data";
 import { preferenceStore } from "@/store/preferences";
 import { tabsStore } from "@/store/tabs";
 import { applyVbenTheme } from "@/theme";
-import type { AdminPreferences, MenuRecord } from "@/types/admin";
+import type { AdminPreferences, MenuRecord, TabRecord } from "@/types/admin";
 import { Button } from "@/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -40,6 +34,51 @@ import { getWorkspaceRootMenu, resolveWorkspaceTab } from "@/layouts/workspace-n
 import { navigationQueries } from "@/pages/admin-queries";
 
 const emptyMenu: MenuRecord[] = [];
+
+// 函数：resolveInitialWorkspaceTabs。合并固定标签和恢复的标签，并用菜单刷新标题。
+function resolveInitialWorkspaceTabs(currentTabs: TabRecord[], menu: MenuRecord[]) {
+  const mergedTabs = new Map<string, TabRecord>();
+
+  for (const tab of affixTabs) {
+    const resolved = resolveWorkspaceTab(tab.path, menu);
+    mergedTabs.set(resolved.key, { ...resolved, affix: true });
+  }
+
+  for (const tab of currentTabs) {
+    const path = normalizeAdminPath(tab.path, menu);
+
+    if (path !== tab.path) {
+      continue;
+    }
+
+    const resolved = resolveWorkspaceTab(path, menu);
+    mergedTabs.set(resolved.key, {
+      ...resolved,
+      ...(tab.badge ? { badge: tab.badge } : {}),
+      affix: Boolean(tab.affix || resolved.affix),
+      icon: tab.icon ?? resolved.icon,
+    });
+  }
+
+  return [...mergedTabs.values()];
+}
+
+// 函数：resolveInitialActiveKey。为初始化后的标签页选择稳定激活项。
+function resolveInitialActiveKey(
+  activeKey: string | undefined,
+  tabs: TabRecord[],
+  activePath: string,
+) {
+  if (activeKey && tabs.some((tab) => tab.key === activeKey)) {
+    return activeKey;
+  }
+
+  if (tabs.some((tab) => tab.key === activePath)) {
+    return activePath;
+  }
+
+  return tabs[0]?.key;
+}
 
 // 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
 function AdminWorkspace() {
@@ -160,18 +199,16 @@ function AdminWorkspace() {
       return;
     }
 
-    const initialTabs = affixTabs.map((tab) => ({
-      ...resolveWorkspaceTab(tab.path, activeMenu),
-      affix: tab.affix,
-    }));
+    const current = tabsStore.getState();
+    const initialTabs = resolveInitialWorkspaceTabs(current.tabs, activeMenu);
 
     tabsStore.setState({
-      activeKey: initialTabs[0]?.key,
+      activeKey: resolveInitialActiveKey(current.activeKey, initialTabs, activePath),
       tabs: initialTabs,
     });
-    tabsStore.getState().openTab(resolveWorkspaceTab(ADMIN_DEFAULT_PATH, activeMenu));
+    tabsStore.getState().openTab(resolveWorkspaceTab(activePath, activeMenu));
     tabsInitializedRef.current = true;
-  }, [activeMenu]);
+  }, [activeMenu, activePath]);
 
   useEffect(() => {
     const current = tabsStore.getState();
@@ -211,6 +248,15 @@ function AdminWorkspace() {
     preferences.themeSemiDarkSidebar,
     preferences.themeSemiDarkSidebarSub,
   ]);
+
+  useEffect(() => {
+    if (preferences.tabbarPersist) {
+      tabsStore.getState().persistTabs();
+      return;
+    }
+
+    tabsStore.getState().clearPersistedTabs();
+  }, [preferences.tabbarPersist]);
 
   useEffect(() => {
     const root = document.documentElement;

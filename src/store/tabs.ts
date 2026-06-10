@@ -1,9 +1,12 @@
 import { createStore } from "zustand/vanilla";
 
+import { preferenceStore } from "@/store/preferences";
 import type { TabRecord } from "@/types/admin";
 
 export interface TabsStoreState {
   activeKey?: string;
+  // 方法：clearPersistedTabs。清除本地持久化的标签页缓存。
+  clearPersistedTabs: () => void;
   // 方法：closeAll。关闭所有可关闭标签并保留固定标签。
   closeAll: () => void;
   // 方法：closeLeft。关闭指定标签左侧的可关闭标签。
@@ -16,6 +19,8 @@ export interface TabsStoreState {
   closeTab: (key: string) => void;
   // 方法：openTab。打开或刷新一个标签页。
   openTab: (tab: TabRecord) => void;
+  // 方法：persistTabs。立即把当前标签页状态写入本地缓存。
+  persistTabs: () => void;
   // 方法：reorderTabs。按拖拽位置重排标签页。
   reorderTabs: (fromIndex: number, toIndex: number) => void;
   // 方法：setActiveKey。切换当前激活标签。
@@ -23,6 +28,34 @@ export interface TabsStoreState {
   tabs: TabRecord[];
   // 方法：toggleAffix。切换标签的固定状态。
   toggleAffix: (key: string) => void;
+}
+
+interface TabsStoreOptions {
+  persist?: boolean;
+  shouldPersist?: () => boolean;
+  storageKey?: string;
+}
+
+interface StoredTabsPayload {
+  activeKey?: string;
+  tabs?: unknown;
+  version?: number;
+}
+
+export const TABS_STORAGE_KEY = "antd-react-admin:tabs:v1";
+const TABS_STORAGE_VERSION = 1;
+
+// 函数：getLocalStorage。安全获取浏览器 localStorage。
+function getLocalStorage() {
+  if (typeof window === "undefined") {
+    return undefined;
+  }
+
+  try {
+    return window.localStorage;
+  } catch {
+    return undefined;
+  }
 }
 
 // 函数：uniqueTabs。移除重复标签并保留首次出现的顺序。
@@ -39,12 +72,125 @@ function nextActiveAfterClose(tabs: TabRecord[], closedIndex: number) {
   return tabs[closedIndex]?.key ?? tabs[closedIndex - 1]?.key ?? tabs[0]?.key;
 }
 
-// 函数：createTabsStore。创建标签页状态仓库并注入初始标签。
-export function createTabsStore(initialTabs: TabRecord[] = []) {
-  const normalized = uniqueTabs(initialTabs);
+// 函数：normalizeStoredTab。校正本地恢复出的单个标签页。
+function normalizeStoredTab(tab: unknown): TabRecord | undefined {
+  if (!tab || typeof tab !== "object") {
+    return undefined;
+  }
 
-  return createStore<TabsStoreState>()((set, get) => ({
-    activeKey: normalized[0]?.key,
+  const record = tab as Partial<TabRecord>;
+
+  if (
+    typeof record.key !== "string" ||
+    typeof record.path !== "string" ||
+    typeof record.title !== "string"
+  ) {
+    return undefined;
+  }
+
+  return {
+    ...(typeof record.badge === "string" ? { badge: record.badge } : {}),
+    ...(typeof record.icon === "string" ? { icon: record.icon } : {}),
+    affix: record.affix === true,
+    key: record.key,
+    path: record.path,
+    title: record.title,
+  };
+}
+
+// 函数：readStoredTabs。读取并校验本地持久化的标签页。
+function readStoredTabs(storageKey: string) {
+  const storage = getLocalStorage();
+
+  if (!storage) {
+    return undefined;
+  }
+
+  try {
+    const raw = storage.getItem(storageKey);
+
+    if (!raw) {
+      return undefined;
+    }
+
+    const parsed = JSON.parse(raw) as StoredTabsPayload;
+
+    if (parsed.version !== TABS_STORAGE_VERSION || !Array.isArray(parsed.tabs)) {
+      storage.removeItem(storageKey);
+      return undefined;
+    }
+
+    const tabs = uniqueTabs(parsed.tabs.flatMap((tab) => normalizeStoredTab(tab) ?? []));
+    const activeKey =
+      typeof parsed.activeKey === "string" && tabs.some((tab) => tab.key === parsed.activeKey)
+        ? parsed.activeKey
+        : tabs[0]?.key;
+
+    return tabs.length > 0 ? { activeKey, tabs } : undefined;
+  } catch {
+    storage.removeItem(storageKey);
+  }
+
+  return undefined;
+}
+
+// 函数：writeStoredTabs。把当前标签页状态写入本地存储。
+function writeStoredTabs(storageKey: string, state: Pick<TabsStoreState, "activeKey" | "tabs">) {
+  const storage = getLocalStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.setItem(
+      storageKey,
+      JSON.stringify({
+        activeKey: state.activeKey,
+        tabs: state.tabs.map((tab) => ({
+          ...(tab.affix ? { affix: true } : {}),
+          ...(tab.badge ? { badge: tab.badge } : {}),
+          ...(tab.icon ? { icon: tab.icon } : {}),
+          key: tab.key,
+          path: tab.path,
+          title: tab.title,
+        })),
+        version: TABS_STORAGE_VERSION,
+      }),
+    );
+  } catch {
+    // 忽略存储配额或隐私模式失败，内存状态仍可继续工作。
+  }
+}
+
+// 函数：removeStoredTabs。清除本地存储中的标签页状态。
+function removeStoredTabs(storageKey: string) {
+  const storage = getLocalStorage();
+
+  if (!storage) {
+    return;
+  }
+
+  try {
+    storage.removeItem(storageKey);
+  } catch {
+    // 忽略禁用存储导致的清理失败。
+  }
+}
+
+// 函数：createTabsStore。创建标签页状态仓库并注入初始标签。
+export function createTabsStore(initialTabs: TabRecord[] = [], options: TabsStoreOptions = {}) {
+  const storageKey = options.storageKey ?? TABS_STORAGE_KEY;
+  const shouldPersist = () => Boolean(options.persist && (options.shouldPersist?.() ?? true));
+  const persisted = shouldPersist() ? readStoredTabs(storageKey) : undefined;
+  const normalized = uniqueTabs(persisted?.tabs ?? initialTabs);
+  const initialActiveKey = normalized.some((tab) => tab.key === persisted?.activeKey)
+    ? persisted?.activeKey
+    : normalized[0]?.key;
+
+  const store = createStore<TabsStoreState>()((set, get) => ({
+    activeKey: initialActiveKey,
+    clearPersistedTabs: () => removeStoredTabs(storageKey),
     closeAll: () => {
       const affixTabs = get().tabs.filter((tab) => tab.affix);
       // 至少保留一个标签，确保外壳始终有确定的激活路由。
@@ -115,9 +261,16 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
       set({
         activeKey: tab.key,
         tabs: exists
-          ? current.tabs.map((item) => (item.key === tab.key ? { ...item, ...tab } : item))
+          ? current.tabs.map((item) =>
+              item.key === tab.key ? { ...item, ...tab, affix: item.affix || tab.affix } : item,
+            )
           : [...current.tabs, tab],
       });
+    },
+    persistTabs: () => {
+      if (shouldPersist()) {
+        writeStoredTabs(storageKey, get());
+      }
     },
     reorderTabs: (fromIndex, toIndex) => {
       const tabs = [...get().tabs];
@@ -148,8 +301,25 @@ export function createTabsStore(initialTabs: TabRecord[] = []) {
       });
     },
   }));
+
+  if (options.persist) {
+    store.subscribe((state) => {
+      if (shouldPersist()) {
+        writeStoredTabs(storageKey, state);
+        return;
+      }
+
+      removeStoredTabs(storageKey);
+    });
+  }
+
+  return store;
 }
 
-export const tabsStore = createTabsStore([
-  { affix: true, key: "/overview", path: "/overview", title: "概览" },
-]);
+export const tabsStore = createTabsStore(
+  [{ affix: true, key: "/overview", path: "/overview", title: "概览" }],
+  {
+    persist: true,
+    shouldPersist: () => preferenceStore.getState().preferences.tabbarPersist,
+  },
+);

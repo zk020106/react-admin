@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import App from "../App";
 import { preferenceStore } from "@/store/preferences";
+import { tabsStore } from "@/store/tabs";
 
 async function openSystemMenu(sidebarNavigation: HTMLElement) {
   const systemTrigger = within(sidebarNavigation).getByRole("button", {
@@ -32,6 +33,16 @@ function resizeViewport(width: number) {
   window.dispatchEvent(new Event("resize"));
 }
 
+function resetGlobalTabs() {
+  tabsStore.setState({
+    activeKey: "/overview",
+    tabs: [
+      { affix: true, icon: "LayoutDashboard", key: "/overview", path: "/overview", title: "概览" },
+    ],
+  });
+  tabsStore.getState().clearPersistedTabs();
+}
+
 async function renderApp() {
   const result = render(<App />);
 
@@ -46,6 +57,7 @@ describe("admin app shell", () => {
   afterEach(() => {
     cleanup();
     preferenceStore.getState().resetPreferences();
+    resetGlobalTabs();
     resizeViewport(1024);
     window.history.replaceState(null, "", "/");
     document.body.style.pointerEvents = "";
@@ -279,6 +291,42 @@ describe("admin app shell", () => {
     expect(content).toHaveClass("flex-1");
     expect(content).toHaveClass("overflow-auto");
     expect(footer).toHaveClass("shrink-0");
+  });
+
+  it("keeps restored sibling tabs when initializing after refresh", async () => {
+    preferenceStore.getState().resetPreferences();
+    tabsStore.setState({
+      activeKey: "/workplace",
+      tabs: [
+        {
+          affix: true,
+          icon: "LayoutDashboard",
+          key: "/overview",
+          path: "/overview",
+          title: "旧概览",
+        },
+        { key: "/workplace", path: "/workplace", title: "旧工作台" },
+        { key: "/system/users", path: "/system/users", title: "旧用户" },
+      ],
+    });
+    window.history.replaceState(null, "", "/workplace");
+
+    await renderApp();
+
+    await waitFor(() => {
+      expect(
+        document.querySelector("[data-slot='page-surface'][data-route-key='/workplace']"),
+      ).toBeInTheDocument();
+    });
+
+    expect(screen.getByRole("tab", { name: "概览" })).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "工作台" })).toHaveAttribute("data-state", "active");
+    expect(screen.getByRole("tab", { name: "用户管理" })).toBeInTheDocument();
+    expect(tabsStore.getState().tabs.map((tab) => tab.key)).toEqual([
+      "/overview",
+      "/workplace",
+      "/system/users",
+    ]);
   });
 
   it("opens the workplace page from the sidebar", async () => {
