@@ -1,6 +1,7 @@
 import { useDebounce } from "ahooks";
 import { CircleUserRound, LockKeyhole, Search } from "lucide-react";
-import { useEffect, useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,9 +24,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getAdminMessages } from "@/i18n/admin-i18n";
+import type { MenuManagementRecord, UserRecord } from "@/mock/admin-mock";
+import { systemQueries } from "@/pages/admin-queries";
 import { ADMIN_DEFAULT_PATH, getMenuTitle } from "@/router/app-data";
 import type { MenuRecord } from "@/types/admin";
-import { searchMenu } from "@/utils/menu";
+import { buildWorkspaceSearchItems } from "@/utils/menu";
 
 type GlobalSearchDialogProps = {
   locale: string;
@@ -49,6 +52,9 @@ type LockScreenOverlayProps = {
   timezone: string;
 };
 
+const emptyMenuManagementRecords: MenuManagementRecord[] = [];
+const emptyUsers: UserRecord[] = [];
+
 /**
  * 渲染菜单路由的全局搜索弹窗。
  *
@@ -71,9 +77,29 @@ export function GlobalSearchDialog({
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, { wait: 120 });
   const defaultSearchTerm = getMenuTitle(ADMIN_DEFAULT_PATH, menu);
-  const results = debouncedQuery
-    ? searchMenu(menu, debouncedQuery)
-    : searchMenu(menu, defaultSearchTerm);
+  const { data: users = emptyUsers } = useQuery({ ...systemQueries.users(), enabled: open });
+  const { data: managementMenus = emptyMenuManagementRecords } = useQuery({
+    ...systemQueries.menus(),
+    enabled: open,
+  });
+  const searchItems = useMemo(
+    () => buildWorkspaceSearchItems(menu, users, managementMenus),
+    [managementMenus, menu, users],
+  );
+  const results = useMemo(() => {
+    const normalizedQuery = (debouncedQuery || defaultSearchTerm).trim().toLowerCase();
+
+    if (!normalizedQuery) {
+      return [];
+    }
+
+    return searchItems.filter((item) =>
+      [item.title, item.description, item.keyword]
+        .join(" ")
+        .toLowerCase()
+        .includes(normalizedQuery),
+    );
+  }, [debouncedQuery, defaultSearchTerm, searchItems]);
 
   return (
     <CommandDialog onOpenChange={onOpenChange} open={open} title={messages.search.title}>
@@ -88,14 +114,18 @@ export function GlobalSearchDialog({
           <CommandGroup heading={messages.search.group}>
             {results.map((item) => (
               <CommandItem
-                key={item.key}
+                key={`${item.type}:${item.title}:${item.path}`}
                 onSelect={() => {
                   navigate(item.path);
                   onOpenChange(false);
                 }}
+                value={`${item.title} ${item.description} ${item.keyword}`}
               >
                 <Search className="size-4" />
-                {item.title}
+                <span className="grid gap-0.5">
+                  <span>{item.title}</span>
+                  <span className="text-xs text-muted-foreground">{item.description}</span>
+                </span>
               </CommandItem>
             ))}
           </CommandGroup>

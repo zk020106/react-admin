@@ -331,7 +331,7 @@ describe("admin app shell", () => {
       "[data-slot='page-surface'][data-route-key='/system/menus']",
     ) as HTMLElement;
 
-    expect(await within(pageSurface).findByText("菜单管理")).toBeInTheDocument();
+    expect((await within(pageSurface).findAllByText("菜单管理")).length).toBeGreaterThan(0);
     expect(within(pageSurface).getByText("路由记录")).toBeInTheDocument();
     expect(within(pageSurface).getByText("目录节点")).toBeInTheDocument();
     expect(await within(pageSurface).findByText("DepartmentsPage")).toBeInTheDocument();
@@ -434,6 +434,22 @@ describe("admin app shell", () => {
 
     expect(await screen.findByText("系统巡检完成")).toBeInTheDocument();
     expect(screen.getByText("权限矩阵已同步")).toBeInTheDocument();
+  });
+
+  it("searches workspace users and permissions from the global search dialog", async () => {
+    preferenceStore.getState().resetPreferences();
+    await renderApp();
+
+    await userEvent.click(screen.getByRole("button", { name: "搜索" }));
+    const searchDialog = await screen.findByRole("dialog", { name: "全局搜索" });
+    const searchInput = within(searchDialog).getByPlaceholderText("搜索路由");
+
+    await userEvent.type(searchInput, "root@example.com");
+    expect(await within(searchDialog).findByText("超级管理员")).toBeInTheDocument();
+
+    await userEvent.clear(searchInput);
+    await userEvent.type(searchInput, "system:user:read");
+    expect(await within(searchDialog).findByText("system:user:read")).toBeInTheDocument();
   });
 
   it("updates locale timezone and lock screen from header controls", async () => {

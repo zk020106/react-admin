@@ -1,4 +1,13 @@
+import type { MenuManagementRecord, UserRecord } from "@/mock/admin-mock";
 import type { MenuRecord } from "@/types/admin";
+
+export interface WorkspaceSearchItem {
+  description: string;
+  keyword: string;
+  path: string;
+  title: string;
+  type: "menu" | "user" | "permission";
+}
 
 // 函数：flattenMenu。把树形菜单展开成按深度优先排列的一维列表。
 export function flattenMenu(menu: MenuRecord[]): MenuRecord[] {
@@ -36,4 +45,37 @@ export function searchMenu(menu: MenuRecord[], query: string) {
 
     return haystack.includes(normalizedQuery);
   });
+}
+
+/** 构建全局搜索候选项，覆盖菜单、权限和系统用户。 */
+export function buildWorkspaceSearchItems(
+  menu: MenuRecord[],
+  users: UserRecord[],
+  permissions: MenuManagementRecord[],
+): WorkspaceSearchItem[] {
+  const menuItems = flattenMenu(menu).map((item) => ({
+    description: item.path,
+    keyword: [item.title, item.path, item.badge].filter(Boolean).join(" "),
+    path: item.path,
+    title: item.title,
+    type: "menu" as const,
+  }));
+
+  const permissionItems = permissions.map((item) => ({
+    description: `${item.name} / ${item.path}`,
+    keyword: [item.name, item.path, item.permission, item.component].join(" "),
+    path: item.path,
+    title: item.permission,
+    type: "permission" as const,
+  }));
+
+  const userItems = users.map((user) => ({
+    description: `${user.role} / ${user.department}`,
+    keyword: [user.name, user.email, user.role, user.department].join(" "),
+    path: "/system/users",
+    title: user.name,
+    type: "user" as const,
+  }));
+
+  return [...menuItems, ...permissionItems, ...userItems];
 }

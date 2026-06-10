@@ -66,7 +66,7 @@
 - Modify: `src/layouts/admin-header.tsx`
 - Test: `src/__tests__/app-shell.test.tsx`
 
-- [ ] **Step 1: 写出通知菜单组件测试**
+- [x] **Step 1: 写出通知菜单组件测试**
 
 在 `src/__tests__/app-shell.test.tsx` 中增加顶部通知入口断言，测试先锁定用户可见行为。
 
@@ -81,7 +81,7 @@ Run: `pnpm.cmd test -- src/__tests__/app-shell.test.tsx`
 
 Expected: FAIL，当前通知文案仍来自 `messages.header.notificationItems`，尚未接入 mock 通知数据。
 
-- [ ] **Step 2: 增加通知 query key**
+- [x] **Step 2: 增加通知 query key**
 
 在 `src/lib/query-keys.ts` 中补充通知中心 query key，并在路由刷新函数中保持不绑定业务页刷新。
 
@@ -93,7 +93,7 @@ export const notificationKeys = {
 };
 ```
 
-- [ ] **Step 3: 增加通知 mock 类型与 API**
+- [x] **Step 3: 增加通知 mock 类型与 API**
 
 在 `src/mock/admin-mock.ts` 中增加类型、数据和 API。
 
@@ -133,7 +133,7 @@ const notifications: NotificationRecord[] = [
 notifications: (signal?: AbortSignal) => delay(notifications, signal),
 ```
 
-- [ ] **Step 4: 增加通知 queryOptions**
+- [x] **Step 4: 增加通知 queryOptions**
 
 在 `src/pages/admin-queries.ts` 中导入 `notificationKeys`，并追加通知查询。
 
@@ -149,7 +149,7 @@ export const notificationQueries = {
 };
 ```
 
-- [ ] **Step 5: 改造顶部通知菜单**
+- [x] **Step 5: 改造顶部通知菜单**
 
 在 `src/layouts/admin-header.tsx` 中用 `useQuery(notificationQueries.list())` 替换 `messages.header.notificationItems`。未读红点使用数据计算，空列表显示一条短文案。
 
@@ -195,7 +195,7 @@ Run: `pnpm.cmd test -- src/__tests__/app-shell.test.tsx`
 
 Expected: PASS，通知按钮可打开，菜单内展示 mock 通知标题。
 
-- [ ] **Step 6: 全量验证并提交**
+- [x] **Step 6: 全量验证并提交**
 
 ```powershell
 pnpm.cmd format:check
@@ -218,7 +218,7 @@ Expected: 四个验证命令 exit code 均为 `0`，提交只包含通知中心�
 - Test: `src/__tests__/menu.test.ts`
 - Test: `src/__tests__/app-shell.test.tsx`
 
-- [ ] **Step 1: 补搜索索引单元测试**
+- [x] **Step 1: 补搜索索引单元测试**
 
 在 `src/__tests__/menu.test.ts` 中增加搜索候选断言，覆盖菜单、权限编码和系统用户。
 
@@ -237,7 +237,7 @@ Run: `pnpm.cmd test -- src/__tests__/menu.test.ts`
 
 Expected: FAIL，当前搜索只覆盖已有菜单路径。
 
-- [ ] **Step 2: 抽取搜索候选构建函数**
+- [x] **Step 2: 抽取搜索候选构建函数**
 
 在 `src/utils/menu.ts` 中增加纯函数，输入菜单和用户数据，输出可搜索候选项。
 
@@ -284,7 +284,7 @@ export function buildWorkspaceSearchItems(
 }
 ```
 
-- [ ] **Step 3: 接入搜索弹层**
+- [x] **Step 3: 接入搜索弹层**
 
 在 `src/layouts/workspace-overlays.tsx` 中读取 `systemQueries.users()` 和 `systemQueries.menus()`，调用候选构建函数，并保持点击候选项复用现有 `navigate(path)`。
 
@@ -292,7 +292,7 @@ Run: `pnpm.cmd test -- src/__tests__/app-shell.test.tsx`
 
 Expected: PASS，搜索弹层能展示菜单和系统用户候选项。
 
-- [ ] **Step 4: 全量验证并提交**
+- [x] **Step 4: 全量验证并提交**
 
 ```powershell
 pnpm.cmd format:check

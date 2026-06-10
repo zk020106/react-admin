@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { findMenuTrail, flattenMenu, searchMenu } from "@/utils/menu";
+import { adminMockApi, mockAdminMenu } from "@/mock/admin-mock";
+import { buildWorkspaceSearchItems, findMenuTrail, flattenMenu, searchMenu } from "@/utils/menu";
 
 const menu = [
   {
@@ -39,5 +40,16 @@ describe("menu helpers", () => {
   it("searches by title, path and badge text", () => {
     expect(searchMenu(menu, "role").map((item) => item.path)).toEqual(["/system/roles"]);
     expect(searchMenu(menu, "4").map((item) => item.path)).toEqual(["/system/roles"]);
+  });
+
+  it("builds workspace search candidates from menus permissions and users", async () => {
+    const [users, menus] = await Promise.all([adminMockApi.users(), adminMockApi.menus()]);
+
+    expect(buildWorkspaceSearchItems(mockAdminMenu, users, menus)).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ keyword: expect.stringContaining("system:user:read") }),
+        expect.objectContaining({ title: "超级管理员" }),
+      ]),
+    );
   });
 });
