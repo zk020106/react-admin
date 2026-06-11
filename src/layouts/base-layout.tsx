@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Navigate, useLocation, useNavigate } from '@tanstack/react-router'
+import { Navigate, useLocation, useMatches, useNavigate } from '@tanstack/react-router'
 import { useBoolean, useKeyPress } from 'ahooks'
 import { Settings2 } from 'lucide-react'
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
@@ -8,7 +8,7 @@ import { useStore } from 'zustand'
 import { authApi } from '@/api/auth'
 import { runtimeEnv } from '@/config/env'
 import { getAdminMessages } from '@/i18n/admin-i18n'
-import { filterAuthorizedMenu } from '@/lib/permissions'
+import { filterAuthorizedMenu, hasPermission } from '@/lib/permissions'
 import { getRouteRefreshQueryKeys, navigationKeys } from '@/lib/query-keys'
 import {
   affixTabs,
@@ -37,6 +37,7 @@ import { resolvePreferencesButtonPlacement } from '@/layouts/preferences-options
 import { Tabbar } from '@/layouts/tabbar'
 import { getWorkspaceRootMenu, resolveWorkspaceTab } from '@/layouts/workspace-navigation'
 import { navigationQueries } from '@/pages/admin-queries'
+import ForbiddenPage from '@/pages/forbidden-page'
 
 // 按需弹层走懒加载，避免 cmdk、偏好设置面板等只在特定场景使用的依赖进入首屏主包。
 const loadPreferencesSheet = () => import('@/layouts/preferences-sheet')
@@ -56,6 +57,8 @@ const LockScreenOverlay = lazy(() =>
 )
 
 const emptyMenu: MenuRecord[] = []
+const anonymousPermissions: readonly string[] = []
+const unrestrictedPermissions: readonly string[] = ['*']
 
 // 函数：resolveInitialWorkspaceTabs。合并固定标签和恢复的标签，并用菜单刷新标题。
 function resolveInitialWorkspaceTabs(currentTabs: TabRecord[], menu: MenuRecord[]) {
@@ -113,6 +116,20 @@ function useEverTrue(value: boolean) {
   return ever
 }
 
+function selectActiveRoutePermission(
+  matches: ReadonlyArray<{ staticData?: { permission?: string } }>
+) {
+  for (let index = matches.length - 1; index >= 0; index -= 1) {
+    const permission = matches[index]?.staticData?.permission
+
+    if (permission) {
+      return permission
+    }
+  }
+
+  return undefined
+}
+
 // 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
 function AdminWorkspace() {
   const queryClient = useQueryClient()
@@ -122,16 +139,19 @@ function AdminWorkspace() {
   const authSession = useStore(authStore, state => state.session)
   const tabs = useStore(tabsStore, state => state.tabs)
   const routePathname = useLocation({ select: location => location.pathname })
+  const routePermission = useMatches({
+    select: matches => selectActiveRoutePermission(matches)
+  })
   const routerNavigate = useNavigate()
   const navigationMenu = menuQuery.data ?? emptyMenu
+  const userPermissions =
+    authSession?.user.permissions ??
+    (runtimeEnv.authRequired ? anonymousPermissions : unrestrictedPermissions)
   const activeMenu = useMemo(
-    () =>
-      filterAuthorizedMenu(
-        navigationMenu,
-        authSession?.user.permissions ?? (runtimeEnv.authRequired ? [] : ['*'])
-      ),
-    [authSession, navigationMenu]
+    () => filterAuthorizedMenu(navigationMenu, userPermissions),
+    [navigationMenu, userPermissions]
   )
+  const routeAllowed = hasPermission(userPermissions, routePermission)
   // 路由已保证路径真实存在（未知路径由 $ 通配路由渲染 404），无需再做归一化。
   const activePath = routePathname
   const lastActiveByRootRef = useRef<Record<string, string>>({})
@@ -685,7 +705,9 @@ function AdminWorkspace() {
               </div>
             </div>
           )}
-          <PageSurface activePath={activePath} key={activePath} preferences={preferences} />
+          <PageSurface activePath={activePath} key={activePath} preferences={preferences}>
+            {routeAllowed ? undefined : <ForbiddenPage permission={routePermission} />}
+          </PageSurface>
         </main>
         {preferences.layout !== 'full-content' && preferences.footerEnable && (
           <footer

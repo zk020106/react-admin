@@ -3,8 +3,12 @@ import { useNavigate } from '@tanstack/react-router'
 import { ADMIN_DEFAULT_PATH } from '@/router/app-data'
 import { StatusPage } from '@/pages/status-page'
 
-/** 渲染后台 404 页面，提示路径不存在并提供回首页入口。 */
-export default function NotFoundPage() {
+interface ForbiddenPageProps {
+  permission?: string
+}
+
+/** 后台 403 页面：保留应用壳，阻止未授权页面内容加载。 */
+export default function ForbiddenPage(_props: ForbiddenPageProps) {
   const navigate = useNavigate()
 
   return (
@@ -15,10 +19,10 @@ export default function NotFoundPage() {
           onClick: () => void navigate({ replace: true, to: ADMIN_DEFAULT_PATH })
         }
       ]}
-      code="404"
-      dataSlot="not-found-page"
-      description="抱歉，您访问的页面不存在或已被移除。"
-      title="页面不存在"
+      code="403"
+      dataSlot="forbidden-page"
+      description="当前账号缺少进入该页面所需的权限。"
+      title="无权访问当前页面"
     />
   )
 }

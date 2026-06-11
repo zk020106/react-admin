@@ -155,8 +155,9 @@ export function UsersPage() {
           </AntdButton>
           <Popconfirm
             cancelText="取消"
+            okButtonProps={{ danger: true }}
             okText="确认删除"
-            onConfirm={() => removeMutation.mutate(record.id)}
+            onConfirm={() => removeMutation.mutateAsync(record.id)}
             title="确认删除该用户？"
           >
             <AntdButton danger size="small" type="link">

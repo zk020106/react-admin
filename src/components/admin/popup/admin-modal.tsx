@@ -4,6 +4,9 @@ import type { ReactNode } from 'react'
 import type { ModalApi } from '@/utils/popup-api'
 import { usePopupState } from './use-popup'
 
+const modalMotionProps =
+  import.meta.env.MODE === 'test' ? { maskTransitionName: '', transitionName: '' } : undefined
+
 /** PopupApi 驱动的模态弹窗：submitting 映射确认按钮 loading，关闭统一走 beforeClose 守卫。 */
 export function AdminModal({
   api,
@@ -34,6 +37,7 @@ export function AdminModal({
       confirmLoading={state.submitting}
       footer={state.footer ? undefined : null}
       forceRender={forceRender}
+      {...modalMotionProps}
       okText={state.confirmText}
       onCancel={() => api.onCancel()}
       onOk={() => (onConfirm ? onConfirm() : api.onConfirm())}

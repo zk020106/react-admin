@@ -4,9 +4,22 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import { queryClient } from '@/lib/query-client'
+import { RouteErrorPage } from '@/pages/error-boundary-page'
 import { createAppRouter, resolveRouterBasepath } from '@/router'
+import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
+import type { AuthSession } from '@/types/auth'
+
+const overviewOnlySession: AuthSession = {
+  accessToken: 'overview-only-token',
+  user: {
+    id: 'overview-only',
+    name: 'Overview Only',
+    permissions: ['overview:read'],
+    roles: ['viewer']
+  }
+}
 
 function renderAt(path: string) {
   const router = createAppRouter(createMemoryHistory({ initialEntries: [path] }))
@@ -33,6 +46,7 @@ describe('router basepath', () => {
 describe('admin route tree', () => {
   afterEach(() => {
     cleanup()
+    authStore.getState().clearSession()
     preferenceStore.getState().resetPreferences()
     tabsStore.setState({
       activeKey: '/overview',
@@ -41,6 +55,7 @@ describe('admin route tree', () => {
       ]
     })
     tabsStore.getState().clearPersistedTabs()
+    queryClient.clear()
     window.localStorage.clear()
   })
 
@@ -66,5 +81,22 @@ describe('admin route tree', () => {
     await screen.findByText('404')
 
     expect(tabsStore.getState().tabs.some(tab => tab.path === '/definitely-missing')).toBe(false)
+  })
+
+  it('renders an in-shell 403 page for routes without permission', async () => {
+    authStore.getState().setSession(overviewOnlySession)
+
+    renderAt('/system/users')
+
+    expect(await screen.findByText('403')).toBeInTheDocument()
+    expect(document.querySelector("[data-slot='forbidden-page']")).toBeInTheDocument()
+    expect(document.querySelector("[data-slot='sidebar']")).toBeInTheDocument()
+    expect(tabsStore.getState().tabs.some(tab => tab.path === '/system/users')).toBe(false)
+  })
+
+  it('registers the route error boundary fallback', () => {
+    const router = createAppRouter(createMemoryHistory({ initialEntries: ['/overview'] }))
+
+    expect(router.options.defaultErrorComponent).toBe(RouteErrorPage)
   })
 })

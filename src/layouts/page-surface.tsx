@@ -1,5 +1,5 @@
 import { Outlet } from '@tanstack/react-router'
-import { Suspense } from 'react'
+import { Suspense, type ReactNode } from 'react'
 
 import { cn } from '@/lib/utils'
 import type { AdminPreferences } from '@/types/admin'
@@ -9,9 +9,11 @@ import type { AdminPreferences } from '@/types/admin'
  *  此处不做全局包裹，避免 antd 进入首屏主包。 */
 export function PageSurface({
   activePath,
+  children,
   preferences
 }: {
   activePath: string
+  children?: ReactNode
   preferences: AdminPreferences
 }) {
   const compactContent = preferences.contentCompact === 'compact'
@@ -23,9 +25,7 @@ export function PageSurface({
       data-slot="page-surface"
       style={compactContent ? { maxWidth: preferences.contentCompactWidth } : undefined}
     >
-      <Suspense fallback={<PageSurfaceFallback />}>
-        <Outlet />
-      </Suspense>
+      <Suspense fallback={<PageSurfaceFallback />}>{children ?? <Outlet />}</Suspense>
     </div>
   )
 }

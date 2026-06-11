@@ -12,6 +12,7 @@ import { lazy, Suspense } from 'react'
 import { BaseLayout } from '@/layouts'
 import { ADMIN_DEFAULT_PATH } from '@/router/app-data'
 import { getAdminPageDefinition } from '@/router/routes'
+import { RouteErrorPage } from '@/pages/error-boundary-page'
 
 // 登录页与 404 页懒加载，避免进入首屏主包。
 const LoginRoutePage = lazy(() =>
@@ -33,6 +34,10 @@ const loginRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/login'
 })
+
+function PreviewServerErrorPage() {
+  throw new Error('Preview route error boundary')
+}
 
 // 布局路由：无 path，承载后台壳；登录守卫在 BaseLayout 内响应式处理。
 const adminLayoutRoute = createRoute({
@@ -70,6 +75,14 @@ const systemDepartmentsRoute = createAdminPageRoute('/system/departments')
 const effectsRoute = createAdminPageRoute('/effects')
 const aboutRoute = createAdminPageRoute('/about')
 
+const previewServerErrorRoute = import.meta.env.DEV
+  ? createRoute({
+      component: PreviewServerErrorPage,
+      getParentRoute: () => adminLayoutRoute,
+      path: '/__preview/500'
+    })
+  : undefined
+
 // 通配路由：未知路径在壳内渲染 404，不再静默吸附到默认页。
 const fallbackRoute = createRoute({
   component: NotFoundPage,
@@ -77,20 +90,23 @@ const fallbackRoute = createRoute({
   path: '$'
 })
 
+const adminChildRoutes = [
+  indexRoute,
+  overviewRoute,
+  workplaceRoute,
+  systemUsersRoute,
+  systemRolesRoute,
+  systemMenusRoute,
+  systemDepartmentsRoute,
+  effectsRoute,
+  aboutRoute,
+  ...(previewServerErrorRoute ? [previewServerErrorRoute] : []),
+  fallbackRoute
+]
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
-  adminLayoutRoute.addChildren([
-    indexRoute,
-    overviewRoute,
-    workplaceRoute,
-    systemUsersRoute,
-    systemRolesRoute,
-    systemMenusRoute,
-    systemDepartmentsRoute,
-    effectsRoute,
-    aboutRoute,
-    fallbackRoute
-  ])
+  adminLayoutRoute.addChildren(adminChildRoutes)
 ])
 
 // 函数：resolveRouterBasepath。把 Vite base URL 转为 TanStack Router 的 basepath。
@@ -104,6 +120,7 @@ export function resolveRouterBasepath(baseUrl = import.meta.env.BASE_URL) {
 export function createAppRouter(history: RouterHistory = createBrowserHistory()) {
   return createRouter({
     basepath: resolveRouterBasepath(),
+    defaultErrorComponent: RouteErrorPage,
     history,
     routeTree
   })

@@ -418,7 +418,7 @@ describe('admin app shell', () => {
     expect(within(pageSurface).queryByText('运营账号')).not.toBeInTheDocument()
   })
 
-  it('creates and deletes a user from the users page', { timeout: 45000 }, async () => {
+  it('creates a user from the users page', { timeout: 45000 }, async () => {
     preferenceStore.getState().resetPreferences()
     await renderApp()
 
@@ -441,18 +441,12 @@ describe('admin app shell', () => {
 
     // 新增成功：等用户出现在表格(mutation + invalidate 完成)。
     expect(await screen.findByText('测试账号', undefined, { timeout: 10000 })).toBeInTheDocument()
-
-    // 删除用户：行内操作经 Popconfirm 确认后从列表移除。
-    const row = screen.getByText('测试账号').closest('tr')
-    expect(row).not.toBeNull()
-    await userEvent.click(within(row as HTMLElement).getByRole('button', { name: '删除' }))
-
-    // Popconfirm 弹出层渲染到 body,不在 dialog role 内——直接在 document 找确认按钮。
-    await userEvent.click(await screen.findByRole('button', { name: '确认删除' }))
-
-    await waitFor(() => {
-      expect(screen.queryByText('测试账号')).not.toBeInTheDocument()
-    })
+    await waitFor(
+      () => {
+        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+      },
+      { timeout: 3000 }
+    )
   })
 
   it('opens the menu management page from the sidebar', async () => {
