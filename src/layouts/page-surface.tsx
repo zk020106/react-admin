@@ -1,73 +1,12 @@
-import {
-  BriefcaseBusiness,
-  Info,
-  LayoutDashboard,
-  Shield,
-  SquareMenu,
-  Users,
-  type LucideIcon
-} from 'lucide-react'
-import { lazy, Suspense, type ComponentType, type LazyExoticComponent } from 'react'
+import { Outlet } from '@tanstack/react-router'
+import { Suspense } from 'react'
 
 import { cn } from '@/lib/utils'
 import type { AdminPreferences } from '@/types/admin'
 
-type PageRegistryItem = {
-  component: LazyExoticComponent<ComponentType>
-  icon: LucideIcon
-}
-
-const OverviewPage = lazy(() => import('@/pages/overview-page'))
-const WorkplacePage = lazy(() => import('@/pages/workplace-page'))
-const UsersPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.UsersPage }))
-)
-const RolesPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.RolesPage }))
-)
-const MenusPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.MenusPage }))
-)
-const DepartmentsPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.DepartmentsPage }))
-)
-const AboutPage = lazy(() => import('@/pages/about-page'))
-
-export const pageRegistry: Record<string, PageRegistryItem> = {
-  '/about': {
-    component: AboutPage,
-    icon: Info
-  },
-  '/overview': {
-    component: OverviewPage,
-    icon: LayoutDashboard
-  },
-  '/workplace': {
-    component: WorkplacePage,
-    icon: BriefcaseBusiness
-  },
-  '/system/departments': {
-    component: DepartmentsPage,
-    icon: Users
-  },
-  '/system/menus': {
-    component: MenusPage,
-    icon: SquareMenu
-  },
-  '/system/roles': {
-    component: RolesPage,
-    icon: Shield
-  },
-  '/system/users': {
-    component: UsersPage,
-    icon: Users
-  }
-}
-
-export const pageIconMap: Record<string, LucideIcon> = Object.fromEntries(
-  Object.entries(pageRegistry).map(([path, page]) => [path, page.icon])
-)
-
+/** 渲染后台内容区容器，承载路由出口与懒加载兜底骨架。
+ *  注意：antd 页面需在自身懒加载模块内包裹 AdminConfigProvider，
+ *  此处不做全局包裹，避免 antd 进入首屏主包。 */
 export function PageSurface({
   activePath,
   preferences
@@ -75,7 +14,6 @@ export function PageSurface({
   activePath: string
   preferences: AdminPreferences
 }) {
-  const ActivePage = pageRegistry[activePath]?.component
   const compactContent = preferences.contentCompact === 'compact'
 
   return (
@@ -85,11 +23,14 @@ export function PageSurface({
       data-slot="page-surface"
       style={compactContent ? { maxWidth: preferences.contentCompactWidth } : undefined}
     >
-      <Suspense fallback={<PageSurfaceFallback />}>{ActivePage ? <ActivePage /> : null}</Suspense>
+      <Suspense fallback={<PageSurfaceFallback />}>
+        <Outlet />
+      </Suspense>
     </div>
   )
 }
 
+/** 渲染页面懒加载期间的骨架占位。 */
 function PageSurfaceFallback() {
   return (
     <div className="grid gap-4" data-slot="page-surface-fallback">

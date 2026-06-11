@@ -98,6 +98,23 @@ export function Tabbar({
 
   const visibleTabs = getVisibleTabs(tabs, activePath, preferences.tabbarMaxCount)
   const activeTab = tabs.find(tab => tab.key === activePath)
+  // 单次正反遍历预计算每个位置左右是否存在可关闭标签，避免逐标签做切片扫描。
+  const tabIndexByKey = new Map(tabs.map((tab, index) => [tab.key, index] as const))
+  const hasClosableBefore: boolean[] = []
+  const hasClosableAfter: boolean[] = []
+  let closableSeen = false
+
+  for (let index = 0; index < tabs.length; index++) {
+    hasClosableBefore.push(closableSeen)
+    closableSeen = closableSeen || !tabs[index]?.affix
+  }
+
+  closableSeen = false
+
+  for (let index = tabs.length - 1; index >= 0; index--) {
+    hasClosableAfter[index] = closableSeen
+    closableSeen = closableSeen || !tabs[index]?.affix
+  }
 
   /**
    * 把纵向滚轮转换为标签栏横向滚动。
@@ -147,11 +164,11 @@ export function Tabbar({
           variant="line"
         >
           {visibleTabs.map(tab => {
-            const tabIndex = tabs.findIndex(item => item.key === tab.key)
+            const tabIndex = tabIndexByKey.get(tab.key) ?? -1
             const canClose = !tab.affix && tabs.length > 1
-            const hasClosableLeft = tabs.slice(0, tabIndex).some(item => !item.affix)
-            const hasClosableRight = tabs.slice(tabIndex + 1).some(item => !item.affix)
-            const hasClosableOther = tabs.some(item => item.key !== tab.key && !item.affix)
+            const hasClosableLeft = hasClosableBefore[tabIndex] ?? false
+            const hasClosableRight = hasClosableAfter[tabIndex] ?? false
+            const hasClosableOther = hasClosableLeft || hasClosableRight
             const Icon = getTabIcon(tab, LayoutDashboard)
 
             return (

@@ -13,6 +13,7 @@ export const mockAuthUser: AuthUser = {
     'system:role:read',
     'system:menu:read',
     'system:department:read',
+    'effects:read',
     'about:read'
   ],
   roles: ['owner']

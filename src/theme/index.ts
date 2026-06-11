@@ -188,7 +188,10 @@ function lightSidebarSubVariables() {
 }
 
 // 函数：resolvePrimaryColor。根据内置主题和明暗模式选择主色。
-function resolvePrimaryColor(options: AdminThemeOptions, dark: boolean) {
+function resolvePrimaryColor(
+  options: Pick<AdminThemeOptions, 'builtinType' | 'colorPrimary'>,
+  dark: boolean
+) {
   if (options.builtinType === 'custom') {
     return options.colorPrimary ?? 'hsl(212 100% 45%)'
   }
@@ -200,6 +203,14 @@ function resolvePrimaryColor(options: AdminThemeOptions, dark: boolean) {
   }
 
   return (dark ? preset.darkPrimaryColor : preset.primaryColor) || preset.color
+}
+
+// 函数：resolveAdminPrimaryColor。按偏好设置和明暗模式解析当前主色，供 antd 主题桥使用。
+export function resolveAdminPrimaryColor(
+  options: Pick<AdminThemeOptions, 'builtinType' | 'colorPrimary'>,
+  dark: boolean
+) {
+  return resolvePrimaryColor(options, dark)
 }
 
 // 函数：toHslCssVar。把颜色值转换成 CSS 变量使用的 HSL 通道。

@@ -1,6 +1,6 @@
 import { BriefcaseBusiness, Info, LayoutDashboard, Shield, type LucideIcon } from 'lucide-react'
 
-import { pageIconMap } from '@/layouts/page-surface'
+import { pageIconMap } from '@/router/routes'
 import type { MenuRecord, TabRecord } from '@/types/admin'
 
 const menuIconMap: Record<string, LucideIcon> = {

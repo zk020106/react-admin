@@ -1,5 +1,6 @@
 import { projectInfo } from 'virtual:admin-project-info'
 
+import { HttpError } from '@/lib/http'
 import type { MenuRecord } from '@/types/admin'
 import type { ProjectInfo } from '@/types/project-info'
 
@@ -59,10 +60,21 @@ export interface NotificationRecord {
 export interface UserRecord {
   department: string
   email: string
+  id: string
   lastLogin: string
   loginMethod: string
   name: string
   riskLevel: '低' | '中' | '高'
+  role: string
+  status: string
+}
+
+/** 创建或更新用户时允许编辑的字段集合。 */
+export interface UserInput {
+  department: string
+  email: string
+  name: string
+  riskLevel: UserRecord['riskLevel']
   role: string
   status: string
 }
@@ -154,6 +166,13 @@ export const mockAdminMenu: MenuRecord[] = [
     title: '系统管理'
   },
   {
+    icon: 'SlidersHorizontal',
+    key: '/effects',
+    path: '/effects',
+    permission: 'effects:read',
+    title: '组件示例'
+  },
+  {
     icon: 'Info',
     key: '/about',
     path: '/about',
@@ -242,6 +261,7 @@ const users: UserRecord[] = [
   {
     department: '平台部',
     email: 'root@example.com',
+    id: 'user-root',
     lastLogin: '2026-06-10 09:24',
     loginMethod: '密码 + MFA',
     name: '超级管理员',
@@ -252,6 +272,7 @@ const users: UserRecord[] = [
   {
     department: '运营部',
     email: 'ops@example.com',
+    id: 'user-ops',
     lastLogin: '2026-06-09 18:10',
     loginMethod: '企业微信',
     name: '运营账号',
@@ -262,6 +283,7 @@ const users: UserRecord[] = [
   {
     department: '风控部',
     email: 'audit@example.com',
+    id: 'user-audit',
     lastLogin: '2026-06-08 14:32',
     loginMethod: '密码',
     name: '审计账号',
@@ -270,6 +292,16 @@ const users: UserRecord[] = [
     status: '复核中'
   }
 ]
+
+// 可变用户列表：mock 写接口在内存中维护，刷新页面即复位。
+let mutableUsers = [...users]
+let userIdSeed = 0
+
+// 函数：resetMockUsers。恢复用户 mock 数据到初始状态，测试隔离时调用。
+export function resetMockUsers() {
+  mutableUsers = [...users]
+  userIdSeed = 0
+}
 
 const roles: RoleRecord[] = [
   {
@@ -439,13 +471,39 @@ const departments: DepartmentRecord[] = [
 // Mock API 保持和真实请求一致的 Promise + AbortSignal 形态，方便后续替换为 axios。
 export const adminMockApi = {
   about: (signal?: AbortSignal) => delay(getProjectInfo(), signal),
+  createUser: (input: UserInput) => {
+    userIdSeed += 1
+    const record: UserRecord = {
+      ...input,
+      id: `user-created-${userIdSeed}`,
+      lastLogin: '尚未登录',
+      loginMethod: '密码'
+    }
+
+    mutableUsers = [record, ...mutableUsers]
+    return delay(record)
+  },
+  deleteUser: (id: string) => {
+    mutableUsers = mutableUsers.filter(user => user.id !== id)
+    return delay(undefined)
+  },
   departments: (signal?: AbortSignal) => delay(departments, signal),
   menu: (signal?: AbortSignal) => delay(mockAdminMenu, signal),
   menus: (signal?: AbortSignal) => delay(menus, signal),
   notifications: (signal?: AbortSignal) => delay(notifications, signal),
   overview: (signal?: AbortSignal) => delay(overviewSummary, signal),
   roles: (signal?: AbortSignal) => delay(roles, signal),
-  users: (signal?: AbortSignal) => delay(users, signal),
+  updateUser: (id: string, input: UserInput) => {
+    mutableUsers = mutableUsers.map(user => (user.id === id ? { ...user, ...input } : user))
+    const updated = mutableUsers.find(user => user.id === id)
+
+    if (!updated) {
+      return Promise.reject(new HttpError({ code: 404, message: '用户不存在', status: 404 }))
+    }
+
+    return delay(updated)
+  },
+  users: (signal?: AbortSignal) => delay(mutableUsers, signal),
   workplace: (signal?: AbortSignal) => delay(workplaceSummary, signal)
 }
 

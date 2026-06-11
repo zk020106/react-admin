@@ -1,8 +1,8 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLocation, useNavigate } from '@tanstack/react-router'
+import { Navigate, useLocation, useNavigate } from '@tanstack/react-router'
 import { useBoolean, useKeyPress } from 'ahooks'
 import { Settings2 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 
 import { authApi } from '@/api/auth'
@@ -10,7 +10,13 @@ import { runtimeEnv } from '@/config/env'
 import { getAdminMessages } from '@/i18n/admin-i18n'
 import { filterAuthorizedMenu } from '@/lib/permissions'
 import { getRouteRefreshQueryKeys, navigationKeys } from '@/lib/query-keys'
-import { affixTabs, getDefaultMenuPath, getMenuTitle, normalizeAdminPath } from '@/router/app-data'
+import {
+  affixTabs,
+  findMenuRecordByPath,
+  getDefaultMenuPath,
+  getMenuTitle,
+  normalizeAdminPath
+} from '@/router/app-data'
 import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
@@ -18,6 +24,7 @@ import { applyAdminTheme } from '@/theme'
 import type { AdminPreferences, MenuRecord, TabRecord } from '@/types/admin'
 import { Button } from '@/components/ui/button'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
@@ -27,16 +34,26 @@ import { AdminSidebar, MixedSidebarFrame } from '@/layouts/admin-sidebar'
 import { PageTransitionLoading, PageTransitionProgress } from '@/layouts/page-transitions'
 import { PageSurface } from '@/layouts/page-surface'
 import { resolvePreferencesButtonPlacement } from '@/layouts/preferences-options'
-import { PreferencesSheet } from '@/layouts/preferences-sheet'
 import { Tabbar } from '@/layouts/tabbar'
-import {
-  GlobalSearchDialog,
-  LockScreenOverlay,
-  LockScreenSetupDialog
-} from '@/layouts/workspace-overlays'
 import { getWorkspaceRootMenu, resolveWorkspaceTab } from '@/layouts/workspace-navigation'
 import { navigationQueries } from '@/pages/admin-queries'
-import { LoginPage } from '@/pages/login-page'
+
+// 按需弹层走懒加载，避免 cmdk、偏好设置面板等只在特定场景使用的依赖进入首屏主包。
+const loadPreferencesSheet = () => import('@/layouts/preferences-sheet')
+const loadWorkspaceOverlays = () => import('@/layouts/workspace-overlays')
+
+const PreferencesSheet = lazy(() =>
+  loadPreferencesSheet().then(module => ({ default: module.PreferencesSheet }))
+)
+const GlobalSearchDialog = lazy(() =>
+  loadWorkspaceOverlays().then(module => ({ default: module.GlobalSearchDialog }))
+)
+const LockScreenSetupDialog = lazy(() =>
+  loadWorkspaceOverlays().then(module => ({ default: module.LockScreenSetupDialog }))
+)
+const LockScreenOverlay = lazy(() =>
+  loadWorkspaceOverlays().then(module => ({ default: module.LockScreenOverlay }))
+)
 
 const emptyMenu: MenuRecord[] = []
 
@@ -85,6 +102,17 @@ function resolveInitialActiveKey(
   return tabs[0]?.key
 }
 
+// 函数：useEverTrue。值首次变为 true 后保持 true，让弹层懒挂载后不再卸载以保留关闭动画。
+function useEverTrue(value: boolean) {
+  const [ever, setEver] = useState(value)
+
+  if (value && !ever) {
+    setEver(true)
+  }
+
+  return ever
+}
+
 // 组件：AdminWorkspace。用于组织后台布局状态、路由同步、标签页和偏好设置。
 function AdminWorkspace() {
   const queryClient = useQueryClient()
@@ -104,10 +132,8 @@ function AdminWorkspace() {
       ),
     [authSession, navigationMenu]
   )
-  const activePath = useMemo(
-    () => normalizeAdminPath(routePathname, activeMenu),
-    [activeMenu, routePathname]
-  )
+  // 路由已保证路径真实存在（未知路径由 $ 通配路由渲染 404），无需再做归一化。
+  const activePath = routePathname
   const lastActiveByRootRef = useRef<Record<string, string>>({})
   const tabsInitializedRef = useRef(false)
   const [manualHeaderMixedSideRoot, setManualHeaderMixedSideRoot] = useState<{
@@ -123,6 +149,9 @@ function AdminWorkspace() {
   const [preferencesOpen, preferencesActions] = useBoolean(false)
   const [searchOpen, searchActions] = useBoolean(false)
   const [lockOpen, lockActions] = useBoolean(false)
+  const preferencesMounted = useEverTrue(preferencesOpen)
+  const searchMounted = useEverTrue(searchOpen)
+  const lockSetupMounted = useEverTrue(lockOpen)
   const [screenLocked, setScreenLocked] = useState(false)
   const [lockScreenPassword, setLockScreenPassword] = useState('')
   const isMobile = useIsMobile()
@@ -135,21 +164,7 @@ function AdminWorkspace() {
     scrollHeaderHidden
 
   useKeyPress(
-    'ctrl.k',
-    event => {
-      event.preventDefault()
-      searchActions.setTrue()
-    },
-    {
-      exactMatch: true,
-      useCapture: true,
-      events: ['keydown'],
-      target: () =>
-        preferences.shortcutKeysEnable && preferences.shortcutKeysGlobalSearch ? document : null
-    }
-  )
-  useKeyPress(
-    'meta.k',
+    ['ctrl.k', 'meta.k'],
     event => {
       event.preventDefault()
       searchActions.setTrue()
@@ -218,20 +233,52 @@ function AdminWorkspace() {
       activeKey: resolveInitialActiveKey(current.activeKey, initialTabs, activePath),
       tabs: initialTabs
     })
-    tabsStore.getState().openTab(resolveWorkspaceTab(activePath, activeMenu))
+
+    if (findMenuRecordByPath(activePath, activeMenu)) {
+      tabsStore.getState().openTab(resolveWorkspaceTab(activePath, activeMenu))
+    }
+
     tabsInitializedRef.current = true
   }, [activeMenu, activePath])
 
   useEffect(() => {
     const current = tabsStore.getState()
+    let titlesChanged = false
+    const tabs = current.tabs.map(tab => {
+      const title = getMenuTitle(tab.path, activeMenu)
 
-    tabsStore.setState({
-      tabs: current.tabs.map(tab => ({
-        ...tab,
-        title: getMenuTitle(tab.path, activeMenu)
-      }))
+      if (title === tab.title) {
+        return tab
+      }
+
+      titlesChanged = true
+      return { ...tab, title }
     })
+
+    // 标题没有变化时跳过写回，避免无意义的重渲染和持久化。
+    if (titlesChanged) {
+      tabsStore.setState({ tabs })
+    }
   }, [activeMenu])
+
+  useEffect(() => {
+    // 空闲时预热按需弹层 chunk，首次打开即时响应且不占用首屏带宽。
+    // 测试环境跳过：按需 import 可能与环境销毁产生竞态噪音。
+    if (import.meta.env.MODE === 'test') {
+      return
+    }
+
+    const schedule =
+      window.requestIdleCallback?.bind(window) ??
+      ((callback: () => void) => window.setTimeout(callback, 1500))
+    const cancel = window.cancelIdleCallback?.bind(window) ?? window.clearTimeout.bind(window)
+    const handle = schedule(() => {
+      void loadPreferencesSheet()
+      void loadWorkspaceOverlays()
+    })
+
+    return () => cancel(handle)
+  }, [])
 
   useEffect(() => {
     applyAdminTheme({
@@ -285,9 +332,11 @@ function AdminWorkspace() {
   }, [preferences.colorGrayMode, preferences.colorWeakMode])
 
   useEffect(() => {
-    document.title = preferences.appDynamicTitle
-      ? `${getMenuTitle(activePath, activeMenu)} - ${messages.common.systemName}`
-      : messages.common.systemName
+    // 404 等菜单外路径不拼页面标题，只保留系统名。
+    document.title =
+      preferences.appDynamicTitle && findMenuRecordByPath(activePath, activeMenu)
+        ? `${getMenuTitle(activePath, activeMenu)} - ${messages.common.systemName}`
+        : messages.common.systemName
   }, [activeMenu, activePath, messages.common.systemName, preferences.appDynamicTitle])
 
   useEffect(() => {
@@ -319,12 +368,6 @@ function AdminWorkspace() {
   }, [effectiveLayout, preferences.headerHeight, preferences.headerMode])
 
   useEffect(() => {
-    if (routePathname !== activePath) {
-      void routerNavigate({ replace: true, to: activePath })
-    }
-  }, [activePath, routePathname, routerNavigate])
-
-  useEffect(() => {
     const nextRootMenu = getWorkspaceRootMenu(activePath, activeMenu)
 
     if (nextRootMenu.path !== activePath) {
@@ -336,7 +379,10 @@ function AdminWorkspace() {
   }, [activeMenu, activePath])
 
   useEffect(() => {
-    tabsStore.getState().openTab(resolveWorkspaceTab(activePath, activeMenu))
+    // 仅菜单内路径产生工作区标签，404 等路径不留痕。
+    if (findMenuRecordByPath(activePath, activeMenu)) {
+      tabsStore.getState().openTab(resolveWorkspaceTab(activePath, activeMenu))
+    }
   }, [activeMenu, activePath])
 
   // 函数：navigate。统一规整管理端路径后触发路由跳转。
@@ -654,14 +700,18 @@ function AdminWorkspace() {
           </footer>
         )}
       </SidebarInset>
-      <PreferencesSheet
-        onClearCacheLogout={logout}
-        onOpenChange={preferencesActions.set}
-        open={preferencesOpen}
-        preferences={preferences}
-        resetPreferences={preferenceStore.getState().resetPreferences}
-        setPreferences={setPreferences}
-      />
+      {preferencesMounted && (
+        <Suspense fallback={null}>
+          <PreferencesSheet
+            onClearCacheLogout={logout}
+            onOpenChange={preferencesActions.set}
+            open={preferencesOpen}
+            preferences={preferences}
+            resetPreferences={preferenceStore.getState().resetPreferences}
+            setPreferences={setPreferences}
+          />
+        </Suspense>
+      )}
       {preferencesButtonPlacement.fixed && (
         <Button
           aria-label={messages.header.preferences}
@@ -675,49 +725,54 @@ function AdminWorkspace() {
           <Settings2 className="size-4" />
         </Button>
       )}
-      <GlobalSearchDialog
-        locale={preferences.appLocale}
-        menu={activeMenu}
-        navigate={navigate}
-        onOpenChange={searchActions.set}
-        open={searchOpen}
-      />
-      <LockScreenSetupDialog
-        locale={preferences.appLocale}
-        onOpenChange={lockActions.set}
-        onSubmit={lockScreen}
-        open={lockOpen}
-      />
-      {screenLocked && (
-        <LockScreenOverlay
-          locale={preferences.appLocale}
-          onUnlock={unlockScreen}
-          password={lockScreenPassword}
-          timezone={preferences.appTimezone}
-        />
+      {searchMounted && (
+        <Suspense fallback={null}>
+          <GlobalSearchDialog
+            locale={preferences.appLocale}
+            menu={activeMenu}
+            navigate={navigate}
+            onOpenChange={searchActions.set}
+            open={searchOpen}
+          />
+        </Suspense>
       )}
+      {lockSetupMounted && (
+        <Suspense fallback={null}>
+          <LockScreenSetupDialog
+            locale={preferences.appLocale}
+            onOpenChange={lockActions.set}
+            onSubmit={lockScreen}
+            open={lockOpen}
+          />
+        </Suspense>
+      )}
+      {screenLocked && (
+        <Suspense fallback={null}>
+          <LockScreenOverlay
+            locale={preferences.appLocale}
+            onUnlock={unlockScreen}
+            password={lockScreenPassword}
+            timezone={preferences.appTimezone}
+          />
+        </Suspense>
+      )}
+      <Toaster position="top-center" />
     </SidebarProvider>
   )
 }
 
-// 组件：BaseLayout。用于提供管理端基础布局入口和全局提示上下文。
+// 组件：BaseLayout。用于提供管理端基础布局入口、登录守卫和全局提示上下文。
 export function BaseLayout() {
-  return (
-    <TooltipProvider>
-      <AuthGate>
-        <AdminWorkspace />
-      </AuthGate>
-    </TooltipProvider>
-  )
-}
-
-function AuthGate({ children }: { children: ReactNode }) {
   const session = useStore(authStore, state => state.session)
-  const routePathname = useLocation({ select: location => location.pathname })
 
-  if (routePathname === '/login' || (runtimeEnv.authRequired && !session)) {
-    return <LoginPage />
+  // 会话被清除（登出、401）时响应式跳转登录页；beforeLoad 不会因 store 变化重跑，因此守卫放组件层。
+  if (runtimeEnv.authRequired && !session) {
+    return <Navigate replace to="/login" />
   }
 
-  return children
+  return (
+    <TooltipProvider>
+      <AdminWorkspace />
+    </TooltipProvider>
+  )
 }

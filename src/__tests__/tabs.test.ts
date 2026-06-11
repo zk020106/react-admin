@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { getVisibleTabs } from '@/layouts/tabbar'
 import { getWorkspaceRootMenu, resolveWorkspaceTab } from '@/layouts/workspace-navigation'
@@ -136,7 +136,7 @@ describe('tabs store', () => {
     expect(store.getState().activeKey).toBe('/workplace')
   })
 
-  it('persists and restores tabs when persistence is enabled', () => {
+  it('persists and restores tabs when persistence is enabled', async () => {
     const storageKey = 'test-tabs:v1'
     const store = createTabsStore(
       [{ affix: true, key: '/overview', path: '/overview', title: 'Overview' }],
@@ -146,14 +146,17 @@ describe('tabs store', () => {
     store.getState().openTab({ key: '/workplace', path: '/workplace', title: 'Workplace' })
     store.getState().openTab({ key: '/system/users', path: '/system/users', title: 'Users' })
 
-    expect(JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')).toEqual({
-      activeKey: '/system/users',
-      tabs: [
-        { affix: true, key: '/overview', path: '/overview', title: 'Overview' },
-        { key: '/workplace', path: '/workplace', title: 'Workplace' },
-        { key: '/system/users', path: '/system/users', title: 'Users' }
-      ],
-      version: 1
+    // 本地写入做了防抖，等待落盘后再断言和恢复。
+    await vi.waitFor(() => {
+      expect(JSON.parse(window.localStorage.getItem(storageKey) ?? '{}')).toEqual({
+        activeKey: '/system/users',
+        tabs: [
+          { affix: true, key: '/overview', path: '/overview', title: 'Overview' },
+          { key: '/workplace', path: '/workplace', title: 'Workplace' },
+          { key: '/system/users', path: '/system/users', title: 'Users' }
+        ],
+        version: 1
+      })
     })
 
     const restoredStore = createTabsStore([], { persist: true, storageKey })

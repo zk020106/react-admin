@@ -44,6 +44,7 @@ interface StoredTabsPayload {
 
 export const TABS_STORAGE_KEY = 'antd-react-admin:tabs:v1'
 const TABS_STORAGE_VERSION = 1
+const TABS_PERSIST_DEBOUNCE_MS = 150
 
 // 函数：getLocalStorage。安全获取浏览器 localStorage。
 function getLocalStorage() {
@@ -303,13 +304,23 @@ export function createTabsStore(initialTabs: TabRecord[] = [], options: TabsStor
   }))
 
   if (options.persist) {
-    store.subscribe(state => {
-      if (shouldPersist()) {
-        writeStoredTabs(storageKey, state)
+    let writeTimer: ReturnType<typeof setTimeout> | undefined
+
+    // 标签页在路由切换时高频更新，本地写入做短防抖，避免每次 set 都同步序列化。
+    store.subscribe(() => {
+      clearTimeout(writeTimer)
+
+      if (!shouldPersist()) {
+        removeStoredTabs(storageKey)
         return
       }
 
-      removeStoredTabs(storageKey)
+      writeTimer = setTimeout(() => {
+        // 延迟期间持久化开关可能已关闭，写入前需复查。
+        if (shouldPersist()) {
+          writeStoredTabs(storageKey, store.getState())
+        }
+      }, TABS_PERSIST_DEBOUNCE_MS)
     })
   }
 

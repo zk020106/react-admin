@@ -3,6 +3,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 
 import App from '../App'
+import { queryClient } from '@/lib/query-client'
+import { resetMockUsers } from '@/mock/admin-mock'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
 
@@ -58,6 +60,8 @@ describe('admin app shell', () => {
     cleanup()
     preferenceStore.getState().resetPreferences()
     resetGlobalTabs()
+    resetMockUsers()
+    queryClient.clear()
     resizeViewport(1024)
     window.history.replaceState(null, '', '/')
     document.body.style.pointerEvents = ''
@@ -76,7 +80,10 @@ describe('admin app shell', () => {
 
     await userEvent.click(screen.getByRole('button', { name: '偏好设置' }))
 
-    expect(screen.getByRole('dialog', { name: '偏好设置' })).toBeInTheDocument()
+    // 偏好设置面板懒加载，首次打开需等待 chunk 转换和解析。
+    expect(
+      await screen.findByRole('dialog', { name: '偏好设置' }, { timeout: 5000 })
+    ).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '外观' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '布局' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '快捷键' })).toBeInTheDocument()
@@ -202,7 +209,7 @@ describe('admin app shell', () => {
     await renderApp()
 
     await userEvent.click(screen.getByRole('button', { name: '偏好设置' }))
-    await userEvent.click(screen.getByRole('tab', { name: '快捷键' }))
+    await userEvent.click(await screen.findByRole('tab', { name: '快捷键' }, { timeout: 5000 }))
 
     expect(screen.getByText('启用快捷键')).toBeInTheDocument()
     expect(screen.getByText('Ctrl / ⌘ K')).toBeInTheDocument()
@@ -356,7 +363,7 @@ describe('admin app shell', () => {
     })
   })
 
-  it('opens the user management page and filters user records', async () => {
+  it('opens the user management page and filters user records', { timeout: 45000 }, async () => {
     preferenceStore.getState().resetPreferences()
     await renderApp()
 
@@ -377,7 +384,10 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/users']"
     ) as HTMLElement
 
-    expect(await within(pageSurface).findByText('用户管理')).toBeInTheDocument()
+    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
+    expect(
+      await within(pageSurface).findByText('用户管理', undefined, { timeout: 30000 })
+    ).toBeInTheDocument()
     const page = pageSurface.querySelector("[data-slot='page']") as HTMLElement
     const pageHeader = pageSurface.querySelector("[data-slot='page-header']") as HTMLElement
     const pageSections = pageSurface.querySelectorAll("[data-slot='page-section']")
@@ -406,6 +416,43 @@ describe('admin app shell', () => {
 
     expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
     expect(within(pageSurface).queryByText('运营账号')).not.toBeInTheDocument()
+  })
+
+  it('creates and deletes a user from the users page', { timeout: 45000 }, async () => {
+    preferenceStore.getState().resetPreferences()
+    await renderApp()
+
+    const sidebarNavigation = screen.getByRole('navigation', { name: '侧栏导航' })
+    const { usersLink } = await openSystemMenu(sidebarNavigation)
+
+    await userEvent.click(usersLink)
+    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
+    expect(await screen.findByText('超级管理员', undefined, { timeout: 30000 })).toBeInTheDocument()
+
+    // 新增用户：弹窗表单提交后列表自动失效刷新。
+    await userEvent.click(screen.getByRole('button', { name: /新增用户/ }))
+    const dialog = await screen.findByRole('dialog')
+
+    await userEvent.type(within(dialog).getByLabelText('姓名'), '测试账号')
+    await userEvent.type(within(dialog).getByLabelText('邮箱'), 'qa@example.com')
+    await userEvent.type(within(dialog).getByLabelText('角色'), '测试员')
+    await userEvent.type(within(dialog).getByLabelText('部门'), '质量部')
+    await userEvent.click(within(dialog).getByRole('button', { name: /确 定|OK/ }))
+
+    // 新增成功：等用户出现在表格(mutation + invalidate 完成)。
+    expect(await screen.findByText('测试账号', undefined, { timeout: 10000 })).toBeInTheDocument()
+
+    // 删除用户：行内操作经 Popconfirm 确认后从列表移除。
+    const row = screen.getByText('测试账号').closest('tr')
+    expect(row).not.toBeNull()
+    await userEvent.click(within(row as HTMLElement).getByRole('button', { name: '删除' }))
+
+    // Popconfirm 弹出层渲染到 body,不在 dialog role 内——直接在 document 找确认按钮。
+    await userEvent.click(await screen.findByRole('button', { name: '确认删除' }))
+
+    await waitFor(() => {
+      expect(screen.queryByText('测试账号')).not.toBeInTheDocument()
+    })
   })
 
   it('opens the menu management page from the sidebar', async () => {

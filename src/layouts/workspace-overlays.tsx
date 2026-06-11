@@ -83,7 +83,12 @@ export function GlobalSearchDialog({
     enabled: open
   })
   const searchItems = useMemo(
-    () => buildWorkspaceSearchItems(menu, users, managementMenus),
+    () =>
+      buildWorkspaceSearchItems(menu, users, managementMenus).map(item => ({
+        ...item,
+        // 预拼小写检索串，避免每次输入都对全量条目做 join + toLowerCase。
+        haystack: `${item.title} ${item.description} ${item.keyword}`.toLowerCase()
+      })),
     [managementMenus, menu, users]
   )
   const results = useMemo(() => {
@@ -93,9 +98,7 @@ export function GlobalSearchDialog({
       return []
     }
 
-    return searchItems.filter(item =>
-      [item.title, item.description, item.keyword].join(' ').toLowerCase().includes(normalizedQuery)
-    )
+    return searchItems.filter(item => item.haystack.includes(normalizedQuery))
   }, [debouncedQuery, defaultSearchTerm, searchItems])
 
   return (
@@ -252,30 +255,38 @@ export function LockScreenOverlay({
     }
   }, [])
 
-  const hour = new Intl.DateTimeFormat('en-US', {
-    hour: '2-digit',
-    hour12: false,
-    timeZone: timezone
-  }).format(now)
-  const minute = new Intl.DateTimeFormat('en-US', {
-    minute: '2-digit',
-    timeZone: timezone
-  }).format(now)
+  // Intl 格式化器构造开销较大，按 locale/timezone 缓存，避免每秒 tick 重建。
+  const formatters = useMemo(
+    () => ({
+      date: new Intl.DateTimeFormat(locale, {
+        day: '2-digit',
+        month: '2-digit',
+        timeZone: timezone,
+        weekday: 'long',
+        year: 'numeric'
+      }),
+      hour: new Intl.DateTimeFormat('en-US', {
+        hour: '2-digit',
+        hour12: false,
+        timeZone: timezone
+      }),
+      meridiem: new Intl.DateTimeFormat(locale, {
+        hour: 'numeric',
+        hour12: true,
+        timeZone: timezone
+      }),
+      minute: new Intl.DateTimeFormat('en-US', {
+        minute: '2-digit',
+        timeZone: timezone
+      })
+    }),
+    [locale, timezone]
+  )
+  const hour = formatters.hour.format(now)
+  const minute = formatters.minute.format(now)
   const meridiem =
-    new Intl.DateTimeFormat(locale, {
-      hour: 'numeric',
-      hour12: true,
-      timeZone: timezone
-    })
-      .formatToParts(now)
-      .find(part => part.type === 'dayPeriod')?.value ?? ''
-  const date = new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    timeZone: timezone,
-    weekday: 'long',
-    year: 'numeric'
-  }).format(now)
+    formatters.meridiem.formatToParts(now).find(part => part.type === 'dayPeriod')?.value ?? ''
+  const date = formatters.date.format(now)
 
   /**
    * 进入锁屏解锁表单。

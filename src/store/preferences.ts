@@ -136,6 +136,7 @@ interface PreferenceStoreOptions {
 }
 
 const PREFERENCES_STORAGE_KEY = 'antd-react-admin:preferences'
+const PREFERENCES_STORAGE_VERSION = 1
 
 // 函数：clamp。把数值限制在给定范围内。
 function clamp(value: number, min: number, max: number) {
@@ -186,7 +187,20 @@ function readStoredPreferences(storageKey: string): Partial<AdminPreferences> | 
   return undefined
 }
 
-// 函数：writeStoredPreferences。把当前偏好设置写入本地存储。
+// 函数：diffFromDefaultPreferences。只保留与默认值不同的键，最小化本地存储体积。
+function diffFromDefaultPreferences(preferences: AdminPreferences): Partial<AdminPreferences> {
+  const diff: Partial<AdminPreferences> = {}
+
+  for (const key of Object.keys(preferences) as (keyof AdminPreferences)[]) {
+    if (preferences[key] !== DEFAULT_PREFERENCES[key]) {
+      ;(diff as Record<keyof AdminPreferences, unknown>)[key] = preferences[key]
+    }
+  }
+
+  return diff
+}
+
+// 函数：writeStoredPreferences。把与默认值的差异写入本地存储。
 function writeStoredPreferences(storageKey: string, preferences: AdminPreferences) {
   const storage = getLocalStorage()
 
@@ -195,7 +209,13 @@ function writeStoredPreferences(storageKey: string, preferences: AdminPreference
   }
 
   try {
-    storage.setItem(storageKey, JSON.stringify({ preferences }))
+    storage.setItem(
+      storageKey,
+      JSON.stringify({
+        preferences: diffFromDefaultPreferences(preferences),
+        version: PREFERENCES_STORAGE_VERSION
+      })
+    )
   } catch {
     // 忽略存储配额或隐私模式失败，内存状态仍可继续工作。
   }

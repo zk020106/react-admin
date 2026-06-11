@@ -1,4 +1,5 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { Button as AntdButton, Popconfirm, Space, Tag, type TableProps } from 'antd'
 import { useMemo, useState } from 'react'
 import {
   Building2,
@@ -6,6 +7,7 @@ import {
   CircleMinus,
   FolderTree,
   KeyRound,
+  Plus,
   Route,
   Search,
   Shield,
@@ -15,8 +17,12 @@ import {
   Users
 } from 'lucide-react'
 
+import { AdminTable } from '@/components/admin/table/admin-table'
 import { Page, PageSection } from '@/components/page'
+import { userMutations } from '@/pages/admin-mutations'
 import { systemQueries } from '@/pages/admin-queries'
+import { useUserFormModal } from '@/pages/user-form-modal'
+import { AdminConfigProvider } from '@/theme/antd-theme'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -59,7 +65,20 @@ const permissionLabels = [
 export function UsersPage() {
   const [keyword, setKeyword] = useState('')
   const [statusFilter, setStatusFilter] = useState<(typeof userStatusFilters)[number]>('全部')
-  const { data = emptyUsers } = useQuery(systemQueries.users())
+  const { data = emptyUsers, isLoading } = useQuery(systemQueries.users())
+  const createMutation = useMutation(userMutations.create())
+  const updateMutation = useMutation(userMutations.update())
+  const removeMutation = useMutation(userMutations.remove())
+  const {
+    modal: userFormModal,
+    openCreate,
+    openEdit
+  } = useUserFormModal({
+    onSubmit: (input, editing) =>
+      editing
+        ? updateMutation.mutateAsync({ id: editing.id, input })
+        : createMutation.mutateAsync(input)
+  })
   const filteredUsers = useMemo(() => {
     const normalizedKeyword = keyword.trim().toLowerCase()
 
@@ -75,9 +94,24 @@ export function UsersPage() {
     })
   }, [data, keyword, statusFilter])
   const userSummary = useMemo(() => {
-    const enabledCount = data.filter(user => user.status === '启用').length
-    const reviewCount = data.filter(user => user.status === '复核中').length
-    const riskCount = data.filter(user => user.riskLevel !== '低').length
+    // 单次遍历同时累计三类计数，避免对同一数组做多趟 filter。
+    let enabledCount = 0
+    let reviewCount = 0
+    let riskCount = 0
+
+    for (const user of data) {
+      if (user.status === '启用') {
+        enabledCount += 1
+      }
+
+      if (user.status === '复核中') {
+        reviewCount += 1
+      }
+
+      if (user.riskLevel !== '低') {
+        riskCount += 1
+      }
+    }
 
     return [
       { icon: Users, label: '账号总数', value: data.length },
@@ -87,94 +121,124 @@ export function UsersPage() {
     ]
   }, [data])
 
-  return (
-    <Page title="用户管理" description="查询用户账号、角色、部门、登录方式和风险状态。">
-      <PageSection contentClassName="grid gap-4 md:grid-cols-4">
-        {userSummary.map(item => {
-          const Icon = item.icon
+  const columns: TableProps<UserRecord>['columns'] = [
+    { dataIndex: 'name', key: 'name', title: '姓名' },
+    { dataIndex: 'email', key: 'email', title: '邮箱' },
+    { dataIndex: 'role', key: 'role', title: '角色' },
+    { dataIndex: 'department', key: 'department', title: '部门' },
+    { dataIndex: 'loginMethod', key: 'loginMethod', title: '登录方式' },
+    { dataIndex: 'lastLogin', key: 'lastLogin', title: '最近登录' },
+    {
+      key: 'riskLevel',
+      render: (_, record) => (
+        <Tag
+          color={record.riskLevel === '高' ? 'red' : record.riskLevel === '中' ? 'gold' : 'default'}
+        >
+          {record.riskLevel}
+        </Tag>
+      ),
+      title: '风险'
+    },
+    {
+      key: 'status',
+      render: (_, record) => (
+        <Tag color={record.status === '启用' ? 'blue' : 'default'}>{record.status}</Tag>
+      ),
+      title: '状态'
+    },
+    {
+      key: 'actions',
+      render: (_, record) => (
+        <Space size="small">
+          <AntdButton onClick={() => openEdit(record)} size="small" type="link">
+            编辑
+          </AntdButton>
+          <Popconfirm
+            cancelText="取消"
+            okText="确认删除"
+            onConfirm={() => removeMutation.mutate(record.id)}
+            title="确认删除该用户？"
+          >
+            <AntdButton danger size="small" type="link">
+              删除
+            </AntdButton>
+          </Popconfirm>
+        </Space>
+      ),
+      title: '操作'
+    }
+  ]
 
-          return (
-            <Card key={item.label}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardDescription>{item.label}</CardDescription>
-                  <CardTitle>{item.value}</CardTitle>
+  return (
+    <AdminConfigProvider>
+      <Page title="用户管理" description="查询用户账号、角色、部门、登录方式和风险状态。">
+        <PageSection contentClassName="grid gap-4 md:grid-cols-4">
+          {userSummary.map(item => {
+            const Icon = item.icon
+
+            return (
+              <Card key={item.label}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                  <div>
+                    <CardDescription>{item.label}</CardDescription>
+                    <CardTitle>{item.value}</CardTitle>
+                  </div>
+                  <Icon className="size-5 text-primary" />
+                </CardHeader>
+              </Card>
+            )
+          })}
+        </PageSection>
+        <PageSection>
+          <Card>
+            <CardContent className="grid gap-4">
+              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                <label className="relative block lg:w-80" htmlFor="user-search-input">
+                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                  <span className="sr-only">搜索用户</span>
+                  <Input
+                    className="pl-8"
+                    id="user-search-input"
+                    onChange={event => setKeyword(event.target.value)}
+                    placeholder="搜索姓名、邮箱、角色或部门"
+                    value={keyword}
+                  />
+                </label>
+                <div className="flex flex-wrap gap-2" role="group" aria-label="账号状态筛选">
+                  {userStatusFilters.map(status => (
+                    <Button
+                      aria-pressed={statusFilter === status}
+                      key={status}
+                      onClick={() => setStatusFilter(status)}
+                      size="sm"
+                      variant={statusFilter === status ? 'default' : 'outline'}
+                    >
+                      {status}
+                    </Button>
+                  ))}
                 </div>
-                <Icon className="size-5 text-primary" />
-              </CardHeader>
-            </Card>
-          )
-        })}
-      </PageSection>
-      <PageSection>
-        <Card>
-          <CardContent className="grid gap-4">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-              <label className="relative block lg:w-80" htmlFor="user-search-input">
-                <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                <span className="sr-only">搜索用户</span>
-                <Input
-                  className="pl-8"
-                  id="user-search-input"
-                  onChange={event => setKeyword(event.target.value)}
-                  placeholder="搜索姓名、邮箱、角色或部门"
-                  value={keyword}
-                />
-              </label>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="账号状态筛选">
-                {userStatusFilters.map(status => (
-                  <Button
-                    aria-pressed={statusFilter === status}
-                    key={status}
-                    onClick={() => setStatusFilter(status)}
-                    size="sm"
-                    variant={statusFilter === status ? 'default' : 'outline'}
-                  >
-                    {status}
-                  </Button>
-                ))}
               </div>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>姓名</TableHead>
-                  <TableHead>邮箱</TableHead>
-                  <TableHead>角色</TableHead>
-                  <TableHead>部门</TableHead>
-                  <TableHead>登录方式</TableHead>
-                  <TableHead>最近登录</TableHead>
-                  <TableHead>风险</TableHead>
-                  <TableHead>状态</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.map(user => (
-                  <TableRow key={user.email}>
-                    <TableCell className="font-medium">{user.name}</TableCell>
-                    <TableCell>{user.email}</TableCell>
-                    <TableCell>{user.role}</TableCell>
-                    <TableCell>{user.department}</TableCell>
-                    <TableCell>{user.loginMethod}</TableCell>
-                    <TableCell>{user.lastLogin}</TableCell>
-                    <TableCell>
-                      <Badge variant={user.riskLevel === '高' ? 'destructive' : 'outline'}>
-                        {user.riskLevel}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={user.status === '启用' ? 'default' : 'secondary'}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </PageSection>
-    </Page>
+              <AdminTable<UserRecord>
+                columns={columns}
+                dataSource={filteredUsers}
+                loading={isLoading}
+                rowKey="id"
+                toolbar={
+                  <AntdButton
+                    icon={<Plus className="size-4" />}
+                    onClick={openCreate}
+                    type="primary"
+                  >
+                    新增用户
+                  </AntdButton>
+                }
+              />
+            </CardContent>
+          </Card>
+        </PageSection>
+        {userFormModal}
+      </Page>
+    </AdminConfigProvider>
   )
 }
 

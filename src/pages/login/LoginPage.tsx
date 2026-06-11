@@ -1,17 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useStore } from 'zustand'
-import {
-  Button,
-  Checkbox,
-  ConfigProvider,
-  Divider,
-  Form,
-  Input,
-  theme as antdTheme,
-  type ThemeConfig
-} from 'antd'
-import zhCN from 'antd/locale/zh_CN'
+import { Button, Checkbox, Divider, Form, Input, type ThemeConfig } from 'antd'
 import {
   Eye,
   EyeOff,
@@ -24,11 +14,13 @@ import {
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 
 import { authApi } from '@/api/auth'
+import { useSystemDark } from '@/hooks/use-system-dark'
 import { cn } from '@/lib/utils'
 import { navigationKeys, notificationKeys } from '@/lib/query-keys'
 import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { applyAdminTheme } from '@/theme'
+import { AdminConfigProvider } from '@/theme/antd-theme'
 import type { AdminPreferences } from '@/types/admin'
 import { BrandMark } from './BrandMark'
 import { DashboardPreview } from './DashboardPreview'
@@ -44,12 +36,19 @@ interface LoginValues {
 
 type LoginLanguage = 'en-US' | 'zh-CN'
 
-function readSystemDarkPreference() {
-  if (typeof window === 'undefined' || !window.matchMedia) {
-    return false
+// 登录表单控件的视觉覆写：尺寸与圆角保持登录页的宽松手感，颜色跟随主题桥。
+const loginComponentTokens: ThemeConfig['components'] = {
+  Button: {
+    borderRadius: 12,
+    controlHeight: 48
+  },
+  Checkbox: {
+    borderRadiusSM: 5
+  },
+  Input: {
+    borderRadius: 14,
+    controlHeight: 52
   }
-
-  return window.matchMedia('(prefers-color-scheme: dark)').matches
 }
 
 function resolveLoginThemeMode(
@@ -68,7 +67,7 @@ export function LoginPage() {
   const navigate = useNavigate()
   const preferences = useStore(preferenceStore, state => state.preferences)
   const setPreferences = useStore(preferenceStore, state => state.setPreferences)
-  const [systemDark, setSystemDark] = useState(readSystemDarkPreference)
+  const systemDark = useSystemDark()
   const [language, setLanguage] = useState<LoginLanguage>('zh-CN')
   const [compactLayout, setCompactLayout] = useState(false)
   const [interactionStatus, setInteractionStatus] = useState('')
@@ -94,56 +93,6 @@ export function LoginPage() {
     }),
     [isDark]
   )
-  const antdThemeConfig = useMemo<ThemeConfig>(
-    () => ({
-      algorithm: isDark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
-      components: {
-        Button: {
-          borderRadius: 12,
-          controlHeight: 48
-        },
-        Checkbox: {
-          borderRadiusSM: 5
-        },
-        Input: {
-          activeBorderColor: '#1677ff',
-          activeShadow: '0 0 0 3px rgba(22,119,255,0.12)',
-          borderRadius: 14,
-          controlHeight: 52,
-          hoverBorderColor: '#1677ff'
-        }
-      },
-      token: {
-        borderRadius: 12,
-        colorBgBase: isDark ? '#020617' : '#ffffff',
-        colorBorder: isDark ? 'rgba(148,163,184,0.20)' : 'rgba(203,213,225,0.92)',
-        colorPrimary: '#1677ff',
-        colorText: isDark ? '#e5e7eb' : '#111827',
-        colorTextPlaceholder: isDark ? 'rgba(148,163,184,0.74)' : 'rgba(100,116,139,0.68)',
-        fontFamily:
-          "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif"
-      }
-    }),
-    [isDark]
-  )
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) {
-      return undefined
-    }
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-
-    function handleSystemThemeChange() {
-      setSystemDark(mediaQuery.matches)
-    }
-
-    handleSystemThemeChange()
-    mediaQuery.addEventListener('change', handleSystemThemeChange)
-
-    return () => mediaQuery.removeEventListener('change', handleSystemThemeChange)
-  }, [])
-
   useEffect(() => {
     applyAdminTheme({
       builtinType: preferences.themeBuiltinType,
@@ -196,7 +145,7 @@ export function LoginPage() {
   }
 
   return (
-    <ConfigProvider locale={zhCN} theme={antdThemeConfig}>
+    <AdminConfigProvider components={loginComponentTokens}>
       <main
         className={cn(
           'react-admin-login min-h-[100dvh] overflow-hidden text-slate-950 transition-all duration-[250ms] dark:text-white',
@@ -391,7 +340,7 @@ export function LoginPage() {
           </section>
         </div>
       </main>
-    </ConfigProvider>
+    </AdminConfigProvider>
   )
 }
 

@@ -74,6 +74,11 @@ export class FormApi {
     this.getMountedForm().reset()
   }
 
+  // 方法：setValue。写入宿主表单的单个字段值。
+  setValue(fieldName: string, value: unknown) {
+    this.getMountedForm().setValue(fieldName, value)
+  }
+
   // 方法：submit。校验通过后提交表单并返回转换后的值。
   async submit() {
     const form = this.getMountedForm()

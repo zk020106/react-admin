@@ -5,6 +5,36 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>antd-react-admin</title>
+    <script>
+      // 首帧前同步主题 class，避免暗色偏好下出现亮色闪烁。
+      // 存储键与默认值需与 src/store/preferences.ts 保持一致。
+      ;(function () {
+        var mode = 'dark'
+
+        try {
+          var raw = window.localStorage.getItem('antd-react-admin:preferences')
+
+          if (raw) {
+            var parsed = JSON.parse(raw)
+            var preferences = parsed && parsed.preferences ? parsed.preferences : parsed
+
+            if (preferences && typeof preferences.colorMode === 'string') {
+              mode = preferences.colorMode
+            }
+          }
+        } catch (error) {
+          /* 存储不可用时回退到默认主题。 */
+        }
+
+        var dark =
+          mode === 'dark' ||
+          (mode === 'system' &&
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches)
+
+        document.documentElement.classList.add(dark ? 'dark' : 'light')
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>

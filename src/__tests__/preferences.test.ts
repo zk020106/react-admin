@@ -77,17 +77,35 @@ describe('admin preferences', () => {
 
     store.getState().setPreferences({ colorMode: 'dark', themeRadius: '1' })
 
+    // 只持久化与默认值的差异：colorMode 改回默认后不再写入存储。
     expect(JSON.parse(window.localStorage.getItem('test-preferences') ?? '{}')).toEqual({
-      preferences: expect.objectContaining({
+      preferences: {
+        sidebarWidth: 320,
+        themeBuiltinType: 'green',
+        themeRadius: '1'
+      },
+      version: 1
+    })
+
+    const restoredStore = createPreferenceStore(undefined, {
+      persist: true,
+      storageKey: 'test-preferences'
+    })
+
+    expect(restoredStore.getState().preferences).toEqual(
+      expect.objectContaining({
         colorMode: 'dark',
+        sidebarWidth: 320,
+        themeBuiltinType: 'green',
         themeRadius: '1'
       })
-    })
+    )
 
     store.getState().resetPreferences()
 
     expect(JSON.parse(window.localStorage.getItem('test-preferences') ?? '{}')).toEqual({
-      preferences: DEFAULT_PREFERENCES
+      preferences: {},
+      version: 1
     })
   })
 })
