@@ -406,14 +406,17 @@ describe('admin app shell', () => {
     expect(await within(pageSurface).findByText('密码 + MFA')).toBeInTheDocument()
     expect(within(pageSurface).getByText('2026-06-10 09:24')).toBeInTheDocument()
 
-    const searchInput = within(pageSurface).getByLabelText('搜索用户')
+    const searchInput = within(pageSurface).getByLabelText('关键词')
     await userEvent.type(searchInput, 'audit')
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '查询' }))
 
     expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
     expect(within(pageSurface).queryByText('超级管理员')).not.toBeInTheDocument()
 
-    await userEvent.clear(searchInput)
-    await userEvent.click(within(pageSurface).getByRole('button', { name: '复核中' }))
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '重置' }))
+    await userEvent.click(within(pageSurface).getByRole('combobox', { name: '账号状态' }))
+    await userEvent.click(await screen.findByText('复核中'))
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '查询' }))
 
     expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
     expect(within(pageSurface).queryByText('运营账号')).not.toBeInTheDocument()

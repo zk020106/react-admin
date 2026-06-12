@@ -12,6 +12,7 @@ export function AdminModal({
   api,
   children,
   forceRender = false,
+  onCancel,
   onConfirm,
   width
 }: {
@@ -19,6 +20,8 @@ export function AdminModal({
   children?: ReactNode
   /** 弹窗未打开时也渲染内容，供表单实例提前挂载（编辑回填场景）。 */
   forceRender?: boolean
+  /** 覆盖取消行为；缺省时触发 api.onCancel()。 */
+  onCancel?: () => void
   /** 覆盖确认行为；缺省时触发 api.onConfirm() 走 options 回调。 */
   onConfirm?: () => void
   width?: number | string
@@ -39,7 +42,7 @@ export function AdminModal({
       forceRender={forceRender}
       {...modalMotionProps}
       okText={state.confirmText}
-      onCancel={() => api.onCancel()}
+      onCancel={() => (onCancel ? onCancel() : api.onCancel())}
       onOk={() => (onConfirm ? onConfirm() : api.onConfirm())}
       open={state.isOpen}
       title={state.title}

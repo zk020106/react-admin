@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Button as AntdButton, Popconfirm, Space, Tag, type TableProps } from 'antd'
+import { Button as AntdButton, Tag } from 'antd'
 import { useMemo, useState } from 'react'
 import {
   Building2,
@@ -9,7 +9,6 @@ import {
   KeyRound,
   Plus,
   Route,
-  Search,
   Shield,
   SlidersHorizontal,
   SquareMenu,
@@ -17,7 +16,9 @@ import {
   Users
 } from 'lucide-react'
 
+import { AdminSearchForm } from '@/components/admin/form/admin-search-form'
 import { AdminTable } from '@/components/admin/table/admin-table'
+import type { AdminColumn, AdminTableAction } from '@/components/admin/table/types'
 import { HasPermission } from '@/components/has-permission'
 import { Page, PageSection } from '@/components/page'
 import { userMutations } from '@/pages/admin-mutations'
@@ -25,9 +26,7 @@ import { systemQueries } from '@/pages/admin-queries'
 import { useUserFormModal } from '@/pages/user-form-modal'
 import { AdminConfigProvider } from '@/theme/antd-theme'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
 import {
   Table,
   TableBody,
@@ -42,12 +41,12 @@ import type {
   RoleRecord,
   UserRecord
 } from '@/mock/admin-mock'
+import type { FormSchema } from '@/types/admin'
 
 const emptyDepartments: DepartmentRecord[] = []
 const emptyMenus: MenuManagementRecord[] = []
 const emptyRoles: RoleRecord[] = []
 const emptyUsers: UserRecord[] = []
-const userStatusFilters = ['全部', '启用', '复核中'] as const
 const permissionLabels = [
   { label: '概览', value: 'overview:read' },
   { label: '工作台', value: 'workplace:read' },
@@ -57,6 +56,31 @@ const permissionLabels = [
   { label: '部门', value: 'system:department:read' },
   { label: '关于', value: 'about:read' }
 ]
+const userSearchSchema: FormSchema[] = [
+  {
+    component: 'input',
+    componentProps: { allowClear: true, placeholder: '搜索姓名、邮箱、角色或部门' },
+    fieldName: 'keyword',
+    label: '关键词',
+    span: 12
+  },
+  {
+    component: 'select',
+    componentProps: {
+      allowClear: true,
+      options: [
+        { label: '全部', value: '全部' },
+        { label: '启用', value: '启用' },
+        { label: '复核中', value: '复核中' }
+      ],
+      placeholder: '账号状态'
+    },
+    defaultValue: '全部',
+    fieldName: 'status',
+    label: '账号状态',
+    span: 6
+  }
+]
 
 /**
  * 展示用户账号、角色、部门和状态列表。
@@ -64,9 +88,9 @@ const permissionLabels = [
  * @returns 用户管理页面。
  */
 export function UsersPage() {
-  const [keyword, setKeyword] = useState('')
-  const [statusFilter, setStatusFilter] = useState<(typeof userStatusFilters)[number]>('全部')
-  const { data = emptyUsers, isLoading } = useQuery(systemQueries.users())
+  const [filters, setFilters] = useState({ keyword: '', status: '全部' })
+  const usersQuery = useQuery(systemQueries.users())
+  const { data = emptyUsers, isLoading } = usersQuery
   const createMutation = useMutation(userMutations.create())
   const updateMutation = useMutation(userMutations.update())
   const removeMutation = useMutation(userMutations.remove())
@@ -81,10 +105,10 @@ export function UsersPage() {
         : createMutation.mutateAsync(input)
   })
   const filteredUsers = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase()
+    const normalizedKeyword = filters.keyword.trim().toLowerCase()
 
     return data.filter(user => {
-      const matchesStatus = statusFilter === '全部' || user.status === statusFilter
+      const matchesStatus = filters.status === '全部' || user.status === filters.status
       const matchesKeyword =
         normalizedKeyword.length === 0 ||
         [user.name, user.email, user.role, user.department].some(value =>
@@ -93,7 +117,7 @@ export function UsersPage() {
 
       return matchesStatus && matchesKeyword
     })
-  }, [data, keyword, statusFilter])
+  }, [data, filters])
   const userSummary = useMemo(() => {
     // 单次遍历同时累计三类计数，避免对同一数组做多趟 filter。
     let enabledCount = 0
@@ -122,7 +146,7 @@ export function UsersPage() {
     ]
   }, [data])
 
-  const columns: TableProps<UserRecord>['columns'] = [
+  const columns: AdminColumn<UserRecord>[] = [
     { dataIndex: 'name', key: 'name', title: '姓名' },
     { dataIndex: 'email', key: 'email', title: '邮箱' },
     { dataIndex: 'role', key: 'role', title: '角色' },
@@ -130,6 +154,7 @@ export function UsersPage() {
     { dataIndex: 'loginMethod', key: 'loginMethod', title: '登录方式' },
     { dataIndex: 'lastLogin', key: 'lastLogin', title: '最近登录' },
     {
+      columnLabel: '风险',
       key: 'riskLevel',
       render: (_, record) => (
         <Tag
@@ -141,37 +166,28 @@ export function UsersPage() {
       title: '风险'
     },
     {
+      columnLabel: '状态',
       key: 'status',
       render: (_, record) => (
         <Tag color={record.status === '启用' ? 'blue' : 'default'}>{record.status}</Tag>
       ),
       title: '状态'
+    }
+  ]
+  const userActions: AdminTableAction<UserRecord>[] = [
+    {
+      key: 'edit',
+      label: '编辑',
+      onClick: record => openEdit(record),
+      permission: 'system:user:update'
     },
     {
-      key: 'actions',
-      render: (_, record) => (
-        <Space size="small">
-          <HasPermission permission="system:user:update">
-            <AntdButton onClick={() => openEdit(record)} size="small" type="link">
-              编辑
-            </AntdButton>
-          </HasPermission>
-          <HasPermission permission="system:user:delete">
-            <Popconfirm
-              cancelText="取消"
-              okButtonProps={{ danger: true }}
-              okText="确认删除"
-              onConfirm={() => removeMutation.mutateAsync(record.id)}
-              title="确认删除该用户？"
-            >
-              <AntdButton danger size="small" type="link">
-                删除
-              </AntdButton>
-            </Popconfirm>
-          </HasPermission>
-        </Space>
-      ),
-      title: '操作'
+      confirm: { danger: true, okText: '确认删除', title: '确认删除该用户？' },
+      danger: true,
+      key: 'delete',
+      label: '删除',
+      onClick: record => removeMutation.mutateAsync(record.id),
+      permission: 'system:user:delete'
     }
   ]
 
@@ -198,37 +214,29 @@ export function UsersPage() {
         <PageSection>
           <Card>
             <CardContent className="grid gap-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <label className="relative block lg:w-80" htmlFor="user-search-input">
-                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <span className="sr-only">搜索用户</span>
-                  <Input
-                    className="pl-8"
-                    id="user-search-input"
-                    onChange={event => setKeyword(event.target.value)}
-                    placeholder="搜索姓名、邮箱、角色或部门"
-                    value={keyword}
-                  />
-                </label>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="账号状态筛选">
-                  {userStatusFilters.map(status => (
-                    <Button
-                      aria-pressed={statusFilter === status}
-                      key={status}
-                      onClick={() => setStatusFilter(status)}
-                      size="sm"
-                      variant={statusFilter === status ? 'default' : 'outline'}
-                    >
-                      {status}
-                    </Button>
-                  ))}
-                </div>
-              </div>
+              <AdminSearchForm
+                defaultValues={filters}
+                onReset={() => setFilters({ keyword: '', status: '全部' })}
+                onSearch={values =>
+                  setFilters({
+                    keyword: typeof values.keyword === 'string' ? values.keyword : '',
+                    status: typeof values.status === 'string' ? values.status : '全部'
+                  })
+                }
+                schema={userSearchSchema}
+              />
               <AdminTable<UserRecord>
+                actionColumn={{ width: 140 }}
+                actions={userActions}
                 columns={columns}
                 dataSource={filteredUsers}
                 loading={isLoading}
+                onRefresh={async () => {
+                  await usersQuery.refetch()
+                }}
+                persistKey="system:user:table"
                 rowKey="id"
+                tools={{ columns: true, density: true, refresh: true }}
                 toolbar={
                   <HasPermission permission="system:user:create">
                     <AntdButton

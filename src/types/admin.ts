@@ -265,12 +265,17 @@ export interface TabRecord {
 // 类型：FormComponentType。定义 schema 表单支持的组件类型。
 export type FormComponentType =
   | 'checkbox'
+  | 'date'
   | 'date-range'
   | 'input'
+  | 'number'
   | 'password'
   | 'pin'
+  | 'radio'
   | 'select'
   | 'switch'
+  | 'textarea'
+  | 'tree-select'
   | (string & {})
 
 // 类型：FormValueFormat。描述表单字段提交前的自定义格式化函数。
@@ -288,12 +293,22 @@ export interface FormSchema {
   componentProps?: Record<string, unknown>
   // 参数：defaultValue。字段默认值。
   defaultValue?: unknown
+  // 参数：disabled。是否禁用字段，也可根据当前表单值动态判断。
+  disabled?: boolean | ((values: Record<string, unknown>) => boolean)
+  // 参数：extra。表单项附加说明。
+  extra?: ReactNode
   // 参数：fieldName。字段名，支持路径式字段。
   fieldName: string
+  // 参数：help。表单项帮助或校验提示。
+  help?: ReactNode
+  // 参数：hidden。是否隐藏字段，也可根据当前表单值动态判断。
+  hidden?: boolean | ((values: Record<string, unknown>) => boolean)
   // 参数：label。字段标签内容。
   label?: ReactNode
   // 参数：rules。字段校验规则。
   rules?: unknown
+  // 参数：span。响应式栅格占用列数，24 表示整行。
+  span?: number
   // 参数：valueFormat。字段提交前的格式化函数。
   valueFormat?: FormValueFormat
 }

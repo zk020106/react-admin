@@ -9,6 +9,15 @@ import { preferenceStore } from '@/store/preferences'
 import { resolveAdminPrimaryColor } from '@/theme'
 import type { AdminPreferences } from '@/types/admin'
 
+const ADMIN_TABLE_THEME_COMPONENTS: NonNullable<ThemeConfig['components']> = {
+  Table: {
+    borderColor: 'hsl(var(--border))',
+    headerBg: 'hsl(var(--muted) / 0.5)',
+    headerColor: 'hsl(var(--foreground))',
+    rowHoverBg: 'hsl(var(--muted) / 0.5)'
+  }
+}
+
 // 函数：toAntdColor。把空格分隔的 HSL 颜色转成逗号写法，保证 antd 颜色解析兼容。
 function toAntdColor(color: string) {
   const match = color.match(/^hsl\(\s*([\d.]+)\s+([\d.]+%)\s+([\d.]+%)\s*\)$/)
@@ -20,6 +29,7 @@ function toAntdColor(color: string) {
 export function buildAntdThemeConfig(preferences: AdminPreferences, dark: boolean): ThemeConfig {
   return {
     algorithm: dark ? antdTheme.darkAlgorithm : antdTheme.defaultAlgorithm,
+    components: ADMIN_TABLE_THEME_COMPONENTS,
     token: {
       borderRadius: Math.round(Number(preferences.themeRadius) * 16),
       colorError: toAntdColor(preferences.themeColorDestructive),
@@ -37,6 +47,26 @@ export function buildAntdThemeConfig(preferences: AdminPreferences, dark: boolea
       fontSize: preferences.themeFontSize
     }
   }
+}
+
+/** 合并默认 antd 组件主题与页面级覆盖，后者同组件 token 优先。 */
+export function mergeAntdThemeComponents(
+  base: ThemeConfig['components'],
+  override?: ThemeConfig['components']
+) {
+  if (!override) {
+    return base
+  }
+
+  return Object.fromEntries(
+    Object.entries({ ...base, ...override }).map(([component, tokens]) => [
+      component,
+      {
+        ...base?.[component as keyof typeof base],
+        ...tokens
+      }
+    ])
+  ) as ThemeConfig['components']
 }
 
 // 函数：isDarkPreference。结合偏好设置与系统颜色方案判定暗色模式。
@@ -60,7 +90,14 @@ export function AdminConfigProvider({
   return (
     <ConfigProvider
       locale={preferences.appLocale === 'en-US' ? enUS : zhCN}
-      theme={components ? { ...themeConfig, components } : themeConfig}
+      theme={
+        components
+          ? {
+              ...themeConfig,
+              components: mergeAntdThemeComponents(themeConfig.components, components)
+            }
+          : themeConfig
+      }
     >
       {children}
     </ConfigProvider>

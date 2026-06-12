@@ -1,7 +1,8 @@
-import { Form, type FormInstance } from 'antd'
+import { Col, Form, Row, type FormInstance } from 'antd'
 import type { Rule } from 'antd/es/form'
-import { useEffect, useSyncExternalStore } from 'react'
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 
+import type { FormSchema } from '@/types/admin'
 import type { FormApi } from '@/utils/form-api'
 import { renderFormField } from './form-field-registry'
 
@@ -17,12 +18,20 @@ const CHECKED_COMPONENTS = new Set(['checkbox', 'switch'])
  *  消费方需位于 AdminConfigProvider 内以获得主题与语言上下文。 */
 export function SchemaForm({
   api,
+  children,
+  disabled = false,
   form,
+  grid = false,
+  gutter = 16,
   layout = 'vertical',
   onFinish
 }: {
   api: FormApi
+  children?: ReactNode
+  disabled?: boolean
   form: FormInstance
+  grid?: boolean
+  gutter?: number
   layout?: 'horizontal' | 'inline' | 'vertical'
   onFinish?: (values: Record<string, unknown>) => void
 }) {
@@ -54,20 +63,56 @@ export function SchemaForm({
       .filter(item => item.defaultValue !== undefined)
       .map(item => [item.fieldName, item.defaultValue])
   )
+  const values = Form.useWatch([], form) ?? form.getFieldsValue(true)
+
+  function renderItem(item: FormSchema) {
+    const hidden =
+      typeof item.hidden === 'function'
+        ? item.hidden(values as Record<string, unknown>)
+        : item.hidden
+
+    if (hidden) {
+      return null
+    }
+
+    const itemDisabled =
+      disabled ||
+      (typeof item.disabled === 'function'
+        ? item.disabled(values as Record<string, unknown>)
+        : item.disabled)
+    const field = renderFormField({
+      ...item,
+      componentProps: {
+        ...item.componentProps,
+        disabled: itemDisabled ?? item.componentProps?.disabled
+      }
+    })
+    const formItem = (
+      <Form.Item
+        extra={item.extra}
+        help={item.help}
+        label={item.label}
+        name={toNamePath(item.fieldName)}
+        rules={item.rules as Rule[] | undefined}
+        valuePropName={CHECKED_COMPONENTS.has(item.component) ? 'checked' : 'value'}
+      >
+        {field}
+      </Form.Item>
+    )
+
+    return grid ? (
+      <Col key={item.fieldName} span={item.span ?? 8}>
+        {formItem}
+      </Col>
+    ) : (
+      <div key={item.fieldName}>{formItem}</div>
+    )
+  }
 
   return (
     <Form form={form} initialValues={initialValues} layout={layout} onFinish={onFinish}>
-      {schema.map(item => (
-        <Form.Item
-          key={item.fieldName}
-          label={item.label}
-          name={toNamePath(item.fieldName)}
-          rules={item.rules as Rule[] | undefined}
-          valuePropName={CHECKED_COMPONENTS.has(item.component) ? 'checked' : 'value'}
-        >
-          {renderFormField(item)}
-        </Form.Item>
-      ))}
+      {grid ? <Row gutter={gutter}>{schema.map(renderItem)}</Row> : schema.map(renderItem)}
+      {children}
     </Form>
   )
 }

@@ -1,12 +1,8 @@
-import type { ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 
-import { SchemaForm } from '@/components/admin/form/schema-form'
-import { useAdminForm } from '@/components/admin/form/use-admin-form'
-import { AdminModal } from '@/components/admin/popup/admin-modal'
-import { useModalApi } from '@/components/admin/popup/use-popup'
+import { AdminFormModal } from '@/components/admin/form/admin-form-modal'
 import type { UserInput, UserRecord } from '@/mock/admin-mock'
 import type { FormSchema } from '@/types/admin'
-import { ModalApi } from '@/utils/popup-api'
 
 // 用户表单的字段清单：新增与编辑共用，默认值兜底下拉项。
 const USER_FORM_FIELDS: FormSchema[] = [
@@ -69,57 +65,50 @@ export function useUserFormModal({
 }: {
   onSubmit: (input: UserInput, editing?: UserRecord) => Promise<unknown>
 }): UseUserFormModalResult {
-  const modalApi = useModalApi(() => new ModalApi({ title: '新增用户' }))
-  const [formApi, form] = useAdminForm({ schema: USER_FORM_FIELDS })
+  const [open, setOpen] = useState(false)
+  const [editing, setEditing] = useState<UserRecord>()
+  const initialValues = useMemo(
+    () =>
+      editing
+        ? {
+            department: editing.department,
+            email: editing.email,
+            name: editing.name,
+            riskLevel: editing.riskLevel,
+            role: editing.role,
+            status: editing.status
+          }
+        : undefined,
+    [editing]
+  )
 
   // 函数：openCreate。重置表单并以新增模式打开弹窗。
   function openCreate() {
-    modalApi.setData(undefined)
-    modalApi.setState({ title: '新增用户' })
-    form.resetFields()
-    modalApi.open()
+    setEditing(undefined)
+    setOpen(true)
   }
 
   // 函数：openEdit。以编辑模式打开弹窗并回填用户记录。
   function openEdit(record: UserRecord) {
-    modalApi.setData(record)
-    modalApi.setState({ title: '编辑用户' })
-    form.setFieldsValue({
-      department: record.department,
-      email: record.email,
-      name: record.name,
-      riskLevel: record.riskLevel,
-      role: record.role,
-      status: record.status
-    })
-    modalApi.open()
+    setEditing(record)
+    setOpen(true)
   }
 
-  // 函数：handleConfirm。校验、提交并按结果关闭或保持弹窗。
-  async function handleConfirm() {
-    modalApi.lock()
-
-    try {
-      const values = await formApi.submit()
-
-      if (!values) {
-        modalApi.unlock()
-        return
-      }
-
-      await onSubmit(values as unknown as UserInput, modalApi.getData<UserRecord | undefined>())
-      await modalApi.close()
-      form.resetFields()
-    } catch {
-      // 提交失败：保持弹窗打开，错误提示由 MutationCache 统一处理。
-      modalApi.unlock()
-    }
+  function closeModal() {
+    setOpen(false)
   }
 
   const modal = (
-    <AdminModal api={modalApi} forceRender onConfirm={() => void handleConfirm()}>
-      <SchemaForm api={formApi} form={form} />
-    </AdminModal>
+    <AdminFormModal<UserInput>
+      initialValues={initialValues}
+      onCancel={closeModal}
+      onSubmit={async input => {
+        await onSubmit(input, editing)
+      }}
+      open={open}
+      schema={USER_FORM_FIELDS}
+      title={editing ? '编辑用户' : '新增用户'}
+    />
   )
 
   return { modal, openCreate, openEdit }

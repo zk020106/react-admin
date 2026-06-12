@@ -2,7 +2,11 @@ import { theme as antdTheme } from 'antd'
 import { describe, expect, it } from 'vitest'
 
 import { DEFAULT_PREFERENCES } from '@/store/preferences'
-import { buildAntdThemeConfig, isDarkPreference } from '@/theme/antd-theme'
+import {
+  buildAntdThemeConfig,
+  isDarkPreference,
+  mergeAntdThemeComponents
+} from '@/theme/antd-theme'
 
 describe('antd theme bridge', () => {
   it('maps preference radius and font size to antd tokens', () => {
@@ -38,6 +42,37 @@ describe('antd theme bridge', () => {
     )
 
     expect(config.token?.colorPrimary).toBe('#ff5500')
+  })
+
+  it('maps antd table tokens to admin theme variables', () => {
+    const config = buildAntdThemeConfig(DEFAULT_PREFERENCES, false)
+
+    expect(config.components?.Table).toMatchObject({
+      borderColor: 'hsl(var(--border))',
+      headerBg: 'hsl(var(--muted) / 0.5)',
+      headerColor: 'hsl(var(--foreground))',
+      rowHoverBg: 'hsl(var(--muted) / 0.5)'
+    })
+  })
+
+  it('keeps default table tokens when component overrides are merged', () => {
+    const config = buildAntdThemeConfig(DEFAULT_PREFERENCES, false)
+
+    expect(
+      mergeAntdThemeComponents(config.components, {
+        Button: {
+          borderRadius: 12
+        }
+      })
+    ).toMatchObject({
+      Button: {
+        borderRadius: 12
+      },
+      Table: {
+        borderColor: 'hsl(var(--border))',
+        headerBg: 'hsl(var(--muted) / 0.5)'
+      }
+    })
   })
 
   it('resolves dark preference from explicit and system modes', () => {
