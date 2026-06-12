@@ -53,3 +53,14 @@ export interface MCSearchFormProps {
   onReset?: () => Promise<void> | void
   onSearch: (values: Record<string, unknown>) => Promise<void> | void
 }
+
+export interface MCFormModalProps<TValues extends object> {
+  control?: MCFormControl
+  fields: MCFormField[]
+  initialValues?: Partial<TValues>
+  open: boolean
+  title: string
+  width?: number | string
+  onCancel: () => void
+  onSubmit: (values: TValues) => Promise<void> | void
+}

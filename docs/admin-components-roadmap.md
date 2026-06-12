@@ -8,18 +8,18 @@
 
 ## 功能清单
 
-| 模块 | 功能 |
-| --- | --- |
-| `AdminTable` | 表格列配置、分页、loading、toolbar、刷新、密度、列显隐、列固定、批量选择、操作列 |
-| `AdminSearchForm` | 查询表单、重置、展开/收起、响应式栅格、默认值、提交参数转换 |
-| `AdminForm` | Schema 表单、字段类型注册、校验、禁用/隐藏、默认值、回填、异步 options、字段联动 |
-| `AdminFormModal` | 新增/编辑弹窗、自动回填、提交 loading、校验失败不关闭、提交成功关闭 |
-| `AdminFormDrawer` | 详情/编辑抽屉，逻辑与 `AdminFormModal` 保持一致 |
-| `AdminPageLayout` | 搜索区、工具栏、内容区、左树右表布局 |
-| `useCrudTable` | 查询参数、分页、刷新、重置、TanStack Query 封装 |
-| `createCrudApi` | 标准接口：列表、详情、新增、编辑、删除、批量删除 |
-| `SelectDialog` | 选择用户、选择角色、选择部门等通用选择弹窗 |
-| 示例页面 | 用用户管理、字典管理或操作日志验证整套组件 |
+| 模块              | 功能                                                                             |
+| ----------------- | -------------------------------------------------------------------------------- |
+| `AdminTable`      | 表格列配置、分页、loading、toolbar、刷新、密度、列显隐、列固定、批量选择、操作列 |
+| `AdminSearchForm` | 查询表单、重置、展开/收起、响应式栅格、默认值、提交参数转换                      |
+| `AdminForm`       | Schema 表单、字段类型注册、校验、禁用/隐藏、默认值、回填、异步 options、字段联动 |
+| `AdminFormModal`  | 新增/编辑弹窗、自动回填、提交 loading、校验失败不关闭、提交成功关闭              |
+| `AdminFormDrawer` | 详情/编辑抽屉，逻辑与 `AdminFormModal` 保持一致                                  |
+| `AdminPageLayout` | 搜索区、工具栏、内容区、左树右表布局                                             |
+| `useCrudTable`    | 查询参数、分页、刷新、重置、TanStack Query 封装                                  |
+| `createCrudApi`   | 标准接口：列表、详情、新增、编辑、删除、批量删除                                 |
+| `SelectDialog`    | 选择用户、选择角色、选择部门等通用选择弹窗                                       |
+| 示例页面          | 用用户管理、字典管理或操作日志验证整套组件                                       |
 
 ## 实施计划
 
@@ -74,6 +74,124 @@
 - `admin-table`、`admin-search-form`、`admin-form-modal`、`schema-form`、`antd-theme` 定向测试通过。
 
 ### 第 1 阶段组件用法
+
+### MC 组件层
+
+新增业务侧组件命名使用 `MC` 前缀，代表莫愁组件层。`MCTable`、`MCForm`、
+`MCSearchForm` 和 `MCFormModal` 的能力参考 `gi-component` 的 table/form 思路，但对外属性采用 React 和
+Ant Design 习惯命名，例如 `dataSource`、`fields`、`name`、`component`、
+`componentProps` 和 `control`。现有 `Admin*` 组件继续作为底层实现和兼容层保留。
+
+MC 组件层已完成基础封装：
+- ✅ `MCTable` - 表格组件，支持工具栏、刷新、列设置、操作列等
+- ✅ `MCForm` - 表单组件，基于 fields 配置，支持 control 动态控制
+- ✅ `MCSearchForm` - 搜索表单组件，支持展开/收起、重置等
+- ✅ `MCFormModal` - 表单弹窗组件，支持新增/编辑模式、校验、提交 loading
+
+#### MC 组件使用示例
+
+`MCTable` 示例：
+
+```tsx
+import { MCTable } from '@/components/mc'
+import type { MCTableColumn } from '@/components/mc'
+
+<MCTable<UserRecord>
+  columns={columns}
+  dataSource={users}
+  loading={isLoading}
+  onRefresh={async () => await refetch()}
+  rowKey="id"
+  tools={{ columns: true, density: true, refresh: true }}
+  toolbar={<Button type="primary">新增用户</Button>}
+/>
+```
+
+`MCSearchForm` 示例：
+
+```tsx
+import { MCSearchForm } from '@/components/mc'
+import type { MCFormField } from '@/components/mc'
+
+const searchFields: MCFormField[] = [
+  { component: 'input', label: '关键词', name: 'keyword' },
+  {
+    component: 'select',
+    componentProps: {
+      options: [
+        { label: '全部', value: '' },
+        { label: '启用', value: 'enabled' },
+        { label: '禁用', value: 'disabled' }
+      ]
+    },
+    label: '状态',
+    name: 'status'
+  }
+]
+
+<MCSearchForm
+  defaultValues={{ keyword: '', status: '' }}
+  fields={searchFields}
+  onReset={() => setFilters({ keyword: '', status: '' })}
+  onSearch={values => setFilters(values)}
+/>
+```
+
+`MCFormModal` 示例：
+
+```tsx
+import { MCFormModal } from '@/components/mc'
+import type { MCFormField } from '@/components/mc'
+
+const formFields: MCFormField[] = [
+  { component: 'input', label: '姓名', name: 'name', required: true },
+  { component: 'input', label: '邮箱', name: 'email', required: '请输入有效的邮箱' },
+  {
+    component: 'select',
+    componentProps: {
+      options: [
+        { label: '管理员', value: 'admin' },
+        { label: '普通用户', value: 'user' }
+      ]
+    },
+    label: '角色',
+    name: 'role',
+    required: true
+  }
+]
+
+<MCFormModal<UserInput>
+  fields={formFields}
+  initialValues={editingUser}
+  onCancel={() => setOpen(false)}
+  onSubmit={async input => {
+    await saveUser(input)
+  }}
+  open={open}
+  title={editingUser ? '编辑用户' : '新增用户'}
+/>
+```
+
+动态控制字段状态（通过 `control` 属性）：
+
+```tsx
+<MCFormModal<UserInput>
+  control={{
+    email: { disabled: true },    // 禁用邮箱字段
+    role: { hidden: true }         // 隐藏角色字段
+  }}
+  fields={formFields}
+  initialValues={editingUser}
+  onCancel={() => setOpen(false)}
+  onSubmit={async input => {
+    await saveUser(input)
+  }}
+  open={open}
+  title="编辑用户"
+/>
+```
+
+#### Admin 组件层示例（兼容层）
 
 `AdminSearchForm` 示例：
 
