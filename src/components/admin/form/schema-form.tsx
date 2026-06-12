@@ -23,8 +23,10 @@ export function SchemaForm({
   form,
   grid = false,
   gutter = 16,
+  initialValues,
   layout = 'vertical',
-  onFinish
+  onFinish,
+  onValuesChange
 }: {
   api: FormApi
   children?: ReactNode
@@ -32,8 +34,10 @@ export function SchemaForm({
   form: FormInstance
   grid?: boolean
   gutter?: number
+  initialValues?: Record<string, unknown>
   layout?: 'horizontal' | 'inline' | 'vertical'
   onFinish?: (values: Record<string, unknown>) => void
+  onValuesChange?: (changedValues: Record<string, unknown>, values: Record<string, unknown>) => void
 }) {
   // 订阅 FormApi 的 schema 快照，使 updateSchema() 后表单能响应式重渲染。
   const schema = useSyncExternalStore(api.subscribe, api.getSchema, api.getSchema)
@@ -58,11 +62,12 @@ export function SchemaForm({
     })
   }, [api, form])
 
-  const initialValues = Object.fromEntries(
+  const schemaInitialValues = Object.fromEntries(
     schema
       .filter(item => item.defaultValue !== undefined)
       .map(item => [item.fieldName, item.defaultValue])
   )
+  const resolvedInitialValues = { ...schemaInitialValues, ...initialValues }
   const values = Form.useWatch([], form) ?? form.getFieldsValue(true)
 
   function renderItem(item: FormSchema) {
@@ -89,6 +94,7 @@ export function SchemaForm({
     })
     const formItem = (
       <Form.Item
+        {...item.formItemProps}
         extra={item.extra}
         help={item.help}
         label={item.label}
@@ -110,7 +116,13 @@ export function SchemaForm({
   }
 
   return (
-    <Form form={form} initialValues={initialValues} layout={layout} onFinish={onFinish}>
+    <Form
+      form={form}
+      initialValues={resolvedInitialValues}
+      layout={layout}
+      onFinish={onFinish}
+      onValuesChange={onValuesChange}
+    >
       {grid ? <Row gutter={gutter}>{schema.map(renderItem)}</Row> : schema.map(renderItem)}
       {children}
     </Form>

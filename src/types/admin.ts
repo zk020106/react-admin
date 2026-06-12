@@ -1,3 +1,4 @@
+import type { FormItemProps } from 'antd'
 import type { ReactNode } from 'react'
 
 // 类型：LayoutMode。定义后台外壳可用的整体布局模式。
@@ -299,6 +300,8 @@ export interface FormSchema {
   extra?: ReactNode
   // 参数：fieldName。字段名，支持路径式字段。
   fieldName: string
+  // 参数：formItemProps。透传给 Ant Design Form.Item 的额外属性。
+  formItemProps?: Omit<FormItemProps, 'children' | 'help' | 'label' | 'name' | 'rules'>
   // 参数：help。表单项帮助或校验提示。
   help?: ReactNode
   // 参数：hidden。是否隐藏字段，也可根据当前表单值动态判断。
