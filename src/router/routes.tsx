@@ -27,6 +27,9 @@ const WorkplacePage = lazy(() => import('@/pages/workplace-page'))
 const UsersPage = lazy(() =>
   import('@/pages/system-pages').then(module => ({ default: module.UsersPage }))
 )
+const UsersPageMC = lazy(() =>
+  import('@/pages/system-pages-mc').then(module => ({ default: module.UsersPageMC }))
+)
 const RolesPage = lazy(() =>
   import('@/pages/system-pages').then(module => ({ default: module.RolesPage }))
 )
@@ -57,6 +60,12 @@ export const adminPages: AdminPageDefinition[] = [
     component: UsersPage,
     icon: Users,
     path: '/system/users',
+    permission: 'system:user:read'
+  },
+  {
+    component: UsersPageMC,
+    icon: Users,
+    path: '/system/users-mc',
     permission: 'system:user:read'
   },
   {
