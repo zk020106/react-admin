@@ -7,6 +7,7 @@ export interface AuthApi {
   login: (credentials: LoginCredentials) => Promise<AuthSession>
   logout: (signal?: AbortSignal) => Promise<void>
   me: (signal?: AbortSignal) => Promise<AuthUser>
+  refresh: (refreshToken: string) => Promise<AuthSession>
 }
 
 export interface AuthApiHttpClient {
@@ -18,7 +19,9 @@ export function createHttpAuthApi(client: AuthApiHttpClient = http): AuthApi {
   return {
     login: credentials => client.post<AuthSession>('/auth/login', credentials),
     logout: signal => client.post<void>('/auth/logout', undefined, { signal }),
-    me: signal => client.get<AuthUser>('/auth/me', { signal })
+    me: signal => client.get<AuthUser>('/auth/me', { signal }),
+    refresh: refreshToken =>
+      client.post<AuthSession>('/auth/refresh', { refreshToken }, { skipAuthRefresh: true })
   }
 }
 

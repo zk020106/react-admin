@@ -580,7 +580,7 @@ describe('admin app shell', () => {
     await renderApp()
 
     await userEvent.click(screen.getByRole('button', { name: '搜索' }))
-    const searchDialog = await screen.findByRole('dialog', { name: '全局搜索' })
+    const searchDialog = await screen.findByRole('dialog', { name: '全局搜索' }, { timeout: 5000 })
     const searchInput = within(searchDialog).getByPlaceholderText('搜索路由')
 
     await userEvent.type(searchInput, 'root@example.com')

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 
 import { AdminTable } from '@/components/admin/table/admin-table'
+import { HasPermission } from '@/components/has-permission'
 import { Page, PageSection } from '@/components/page'
 import { userMutations } from '@/pages/admin-mutations'
 import { systemQueries } from '@/pages/admin-queries'
@@ -150,20 +151,24 @@ export function UsersPage() {
       key: 'actions',
       render: (_, record) => (
         <Space size="small">
-          <AntdButton onClick={() => openEdit(record)} size="small" type="link">
-            编辑
-          </AntdButton>
-          <Popconfirm
-            cancelText="取消"
-            okButtonProps={{ danger: true }}
-            okText="确认删除"
-            onConfirm={() => removeMutation.mutateAsync(record.id)}
-            title="确认删除该用户？"
-          >
-            <AntdButton danger size="small" type="link">
-              删除
+          <HasPermission permission="system:user:update">
+            <AntdButton onClick={() => openEdit(record)} size="small" type="link">
+              编辑
             </AntdButton>
-          </Popconfirm>
+          </HasPermission>
+          <HasPermission permission="system:user:delete">
+            <Popconfirm
+              cancelText="取消"
+              okButtonProps={{ danger: true }}
+              okText="确认删除"
+              onConfirm={() => removeMutation.mutateAsync(record.id)}
+              title="确认删除该用户？"
+            >
+              <AntdButton danger size="small" type="link">
+                删除
+              </AntdButton>
+            </Popconfirm>
+          </HasPermission>
         </Space>
       ),
       title: '操作'
@@ -225,13 +230,15 @@ export function UsersPage() {
                 loading={isLoading}
                 rowKey="id"
                 toolbar={
-                  <AntdButton
-                    icon={<Plus className="size-4" />}
-                    onClick={openCreate}
-                    type="primary"
-                  >
-                    新增用户
-                  </AntdButton>
+                  <HasPermission permission="system:user:create">
+                    <AntdButton
+                      icon={<Plus className="size-4" />}
+                      onClick={openCreate}
+                      type="primary"
+                    >
+                      新增用户
+                    </AntdButton>
+                  </HasPermission>
                 }
               />
             </CardContent>

@@ -10,6 +10,9 @@ export const mockAuthUser: AuthUser = {
     'overview:read',
     'workplace:read',
     'system:user:read',
+    'system:user:create',
+    'system:user:update',
+    'system:user:delete',
     'system:role:read',
     'system:menu:read',
     'system:department:read',
@@ -21,6 +24,7 @@ export const mockAuthUser: AuthUser = {
 
 export const mockAuthSession: AuthSession = {
   accessToken: 'mock-access-token',
+  refreshToken: 'mock-refresh-token',
   user: mockAuthUser
 }
 
@@ -34,6 +38,22 @@ export const mockAuthApi = {
       new HttpError({
         code: 401,
         message: '账号或密码不正确',
+        status: 401
+      })
+    )
+  },
+  refresh: (refreshToken: string) => {
+    if (refreshToken === mockAuthSession.refreshToken) {
+      return delay({
+        ...mockAuthSession,
+        accessToken: 'mock-access-token-rotated'
+      })
+    }
+
+    return Promise.reject(
+      new HttpError({
+        code: 401,
+        message: '登录已过期，请重新登录',
         status: 401
       })
     )

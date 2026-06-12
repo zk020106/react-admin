@@ -1,7 +1,7 @@
 import { QueryClientProvider } from '@tanstack/react-query'
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router'
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { queryClient } from '@/lib/query-client'
 import { RouteErrorPage } from '@/pages/error-boundary-page'
@@ -98,5 +98,22 @@ describe('admin route tree', () => {
     const router = createAppRouter(createMemoryHistory({ initialEntries: ['/overview'] }))
 
     expect(router.options.defaultErrorComponent).toBe(RouteErrorPage)
+  })
+
+  it('renders the in-shell error boundary for route errors', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const consoleWarn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+
+    try {
+      renderAt('/__preview/500')
+
+      expect(await screen.findByText('500')).toBeInTheDocument()
+      expect(document.querySelector("[data-slot='route-error-page']")).toBeInTheDocument()
+      expect(document.querySelector("[data-slot='sidebar']")).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: '重试' })).toBeInTheDocument()
+    } finally {
+      consoleError.mockRestore()
+      consoleWarn.mockRestore()
+    }
   })
 })

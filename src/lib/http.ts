@@ -5,8 +5,13 @@ import { runtimeEnv } from '@/config/env'
 // 统一 HTTP 客户端：只处理传输、鉴权头和错误归一化，UI 提示交给调用层。
 type ApiCode = number | string
 type AccessTokenResolver = () => string | null | undefined
+type TokenRefreshHandler = () => Promise<string | undefined>
 type UnauthorizedHandler = (error: HttpError) => void
 type SuccessCodePredicate = (code: ApiCode) => boolean
+type InternalHttpRequestConfig = AxiosRequestConfig & {
+  __retried?: boolean
+  skipAuthRefresh?: boolean
+}
 
 // 兼容常见后端响应包裹格式：{ code/status, message, data }。
 export interface ApiEnvelope<T> {
@@ -19,6 +24,7 @@ export interface ApiEnvelope<T> {
 export interface HttpConfig {
   getAccessToken?: AccessTokenResolver
   isSuccessCode?: SuccessCodePredicate
+  onTokenRefresh?: TokenRefreshHandler
   onUnauthorized?: UnauthorizedHandler
 }
 
@@ -43,9 +49,10 @@ export class HttpError extends Error {
   }
 }
 
-export type HttpRequestConfig = Omit<AxiosRequestConfig, 'method' | 'url'>
+export type HttpRequestConfig = Omit<InternalHttpRequestConfig, 'method' | 'url'>
 
 let accessTokenResolver: AccessTokenResolver | undefined
+let tokenRefreshHandler: TokenRefreshHandler | undefined
 let unauthorizedHandler: UnauthorizedHandler | undefined
 let successCodePredicate: SuccessCodePredicate = code =>
   code === 0 || code === '0' || code === 200 || code === '200'
@@ -53,6 +60,7 @@ let successCodePredicate: SuccessCodePredicate = code =>
 // 在应用启动或登录模块中注入 token 获取和 401 处理逻辑，避免 http 层直接依赖 store。
 export function configureHttp(config: HttpConfig) {
   accessTokenResolver = config.getAccessToken
+  tokenRefreshHandler = config.onTokenRefresh
   unauthorizedHandler = config.onUnauthorized
 
   if (config.isSuccessCode) {
@@ -81,8 +89,28 @@ httpInstance.interceptors.request.use(config => {
 
 httpInstance.interceptors.response.use(
   response => response,
-  (error: AxiosError<unknown>) => {
+  async (error: AxiosError<unknown>) => {
     const normalizedError = normalizeAxiosError(error)
+    const config = error.config as InternalHttpRequestConfig | undefined
+
+    if (
+      normalizedError.status === 401 &&
+      config &&
+      !config.__retried &&
+      !config.skipAuthRefresh &&
+      tokenRefreshHandler
+    ) {
+      try {
+        const token = await tokenRefreshHandler()
+
+        if (token) {
+          config.__retried = true
+          return httpInstance.request(config)
+        }
+      } catch {
+        // Fall through to the normal unauthorized handler below.
+      }
+    }
 
     if (normalizedError.status === 401) {
       unauthorizedHandler?.(normalizedError)
@@ -92,7 +120,7 @@ httpInstance.interceptors.response.use(
   }
 )
 
-async function request<T>(config: AxiosRequestConfig): Promise<T> {
+async function request<T>(config: InternalHttpRequestConfig): Promise<T> {
   const response = await httpInstance.request<unknown>(config)
   return unwrapResponse<T>(response.data, response.status)
 }
