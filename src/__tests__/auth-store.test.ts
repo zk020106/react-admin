@@ -9,6 +9,16 @@ const session: AuthSession = {
     id: 'root',
     name: 'Root Admin',
     permissions: ['overview:read'],
+    roles: ['viewer']
+  }
+}
+
+const ownerSession: AuthSession = {
+  accessToken: 'owner-token',
+  user: {
+    id: 'root',
+    name: 'Root Admin',
+    permissions: ['overview:read'],
     roles: ['owner']
   }
 }
@@ -48,5 +58,11 @@ describe('auth store', () => {
 
     expect(store.getState().session).toBeUndefined()
     expect(window.localStorage.getItem(AUTH_STORAGE_KEY)).toBeNull()
+  })
+
+  it('treats owner sessions as unrestricted for permission checks', () => {
+    const store = createAuthStore(ownerSession)
+
+    expect(store.getState().hasPermission('system:user:delete')).toBe(true)
   })
 })

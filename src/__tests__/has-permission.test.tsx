@@ -15,6 +15,16 @@ const limitedSession: AuthSession = {
   }
 }
 
+const ownerSession: AuthSession = {
+  accessToken: 'owner-token',
+  user: {
+    id: 'root',
+    name: 'Root Admin',
+    permissions: ['system:user:read'],
+    roles: ['owner']
+  }
+}
+
 describe('HasPermission', () => {
   afterEach(() => {
     cleanup()
@@ -51,5 +61,13 @@ describe('HasPermission', () => {
     )
 
     expect(screen.getByText('read action')).toBeInTheDocument()
+  })
+
+  it('allows owner sessions to pass write permissions for persisted mock users', () => {
+    authStore.getState().setSession(ownerSession)
+
+    render(<HasPermission permission="system:user:delete">delete action</HasPermission>)
+
+    expect(screen.getByText('delete action')).toBeInTheDocument()
   })
 })

@@ -8,7 +8,7 @@ import { useStore } from 'zustand'
 import { authApi } from '@/api/auth'
 import { runtimeEnv } from '@/config/env'
 import { getAdminMessages } from '@/i18n/admin-i18n'
-import { filterAuthorizedMenu, hasPermission } from '@/lib/permissions'
+import { filterAuthorizedMenu, hasPermission, resolveSessionPermissions } from '@/lib/permissions'
 import { getRouteRefreshQueryKeys, navigationKeys } from '@/lib/query-keys'
 import {
   affixTabs,
@@ -145,7 +145,7 @@ function AdminWorkspace() {
   const routerNavigate = useNavigate()
   const navigationMenu = menuQuery.data ?? emptyMenu
   const userPermissions =
-    authSession?.user.permissions ??
+    resolveSessionPermissions(authSession) ??
     (runtimeEnv.authRequired ? anonymousPermissions : unrestrictedPermissions)
   const activeMenu = useMemo(
     () => filterAuthorizedMenu(navigationMenu, userPermissions),

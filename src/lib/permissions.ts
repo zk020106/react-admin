@@ -1,6 +1,21 @@
 import type { MenuRecord } from '@/types/admin'
+import type { AuthSession } from '@/types/auth'
 
 export type PermissionInput = string | string[] | undefined
+
+const unrestrictedPermissions: readonly string[] = ['*']
+
+export function resolveSessionPermissions(session: AuthSession | undefined) {
+  if (!session) {
+    return undefined
+  }
+
+  if (session.user.permissions.includes('*') || session.user.roles.includes('owner')) {
+    return unrestrictedPermissions
+  }
+
+  return session.user.permissions
+}
 
 export function hasPermission(userPermissions: readonly string[], permission: PermissionInput) {
   if (!permission || (Array.isArray(permission) && permission.length === 0)) {

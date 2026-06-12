@@ -1,6 +1,10 @@
 import { createStore } from 'zustand/vanilla'
 
-import { hasPermission as hasUserPermission, type PermissionInput } from '@/lib/permissions'
+import {
+  hasPermission as hasUserPermission,
+  resolveSessionPermissions,
+  type PermissionInput
+} from '@/lib/permissions'
 import type { AuthSession, AuthUser } from '@/types/auth'
 
 export interface AuthStoreState {
@@ -168,7 +172,7 @@ export function createAuthStore(initial?: AuthSession, options: AuthStoreOptions
     },
     getAccessToken: () => get().session?.accessToken,
     hasPermission: permission =>
-      hasUserPermission(get().session?.user.permissions ?? [], permission),
+      hasUserPermission(resolveSessionPermissions(get().session) ?? [], permission),
     session: initialSession,
     setSession: session => {
       const normalized = normalizeSession(session)

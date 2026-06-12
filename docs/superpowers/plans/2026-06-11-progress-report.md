@@ -71,6 +71,7 @@
 
 - **C2 HasPermission 组件** ✅
   - 新增 `src/components/has-permission.tsx`。
+  - 权限解析层将 `owner` 角色视为全权限，兼容旧持久化 mock session 只带 read 权限导致操作按钮隐藏的问题。
   - UsersPage 新增、编辑、删除按钮分别接入：
     - `system:user:create`
     - `system:user:update`
