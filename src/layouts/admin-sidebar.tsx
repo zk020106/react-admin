@@ -35,13 +35,9 @@ import { getAdminMessages } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 import { getMenuRecordIcon, isMenuRecordActive } from '@/layouts/navigation'
 import { getDefaultMenuPath } from '@/router/app-data'
-import type { AdminPreferences, MenuRecord } from '@/types/admin'
-
-type SetPreferences = (
-  updater:
-    | ((preferences: AdminPreferences) => Partial<AdminPreferences>)
-    | Partial<AdminPreferences>
-) => void
+import { preferenceStore } from '@/store/preferences'
+import { usePreferencesSlice, useSetPreferences } from '@/store/use-preferences'
+import type { MenuRecord } from '@/types/admin'
 
 // 函数：clampNumber。把数值约束在最小值和最大值之间。
 function clampNumber(value: number, min: number, max: number) {
@@ -175,8 +171,6 @@ function startDeferredSidebarResize({
  * @param props.ariaLabel - 侧边栏导航区域的可访问标签。
  * @param props.menu - 当前侧边栏菜单树。
  * @param props.navigate - 菜单跳转回调。
- * @param props.preferences - 当前偏好设置。
- * @param props.setPreferences - 更新偏好设置回调。
  * @param props.title - 侧边栏标题。
  * @param props.variant - 侧边栏展示类型。
  * @returns 主侧边导航。
@@ -186,8 +180,6 @@ export function AdminSidebar({
   ariaLabel,
   menu,
   navigate,
-  preferences,
-  setPreferences,
   title,
   variant = 'primary'
 }: {
@@ -195,11 +187,22 @@ export function AdminSidebar({
   ariaLabel?: string
   menu: MenuRecord[]
   navigate: (path: string) => void
-  preferences: AdminPreferences
-  setPreferences: SetPreferences
   title?: string
   variant?: 'primary' | 'secondary'
 }) {
+  const preferences = usePreferencesSlice(preferences => ({
+    appLocale: preferences.appLocale,
+    layout: preferences.layout,
+    navigationAccordion: preferences.navigationAccordion,
+    navigationStyleType: preferences.navigationStyleType,
+    sidebarAutoActivateChild: preferences.sidebarAutoActivateChild,
+    sidebarCollapsed: preferences.sidebarCollapsed,
+    sidebarCollapsedButton: preferences.sidebarCollapsedButton,
+    sidebarDraggable: preferences.sidebarDraggable,
+    sidebarExpandOnHover: preferences.sidebarExpandOnHover,
+    widgetSidebarToggle: preferences.widgetSidebarToggle
+  }))
+  const setPreferences = useSetPreferences()
   const messages = getAdminMessages(preferences.appLocale)
   const sidebarAriaLabel = ariaLabel ?? messages.navigation.sidebar
   const sidebarTitle = title ?? messages.navigation.navigationMenu
@@ -253,7 +256,7 @@ export function AdminSidebar({
     startDeferredSidebarResize({
       event,
       onCommit: sidebarWidth => setPreferences({ sidebarWidth }),
-      startWidth: preferences.sidebarWidth,
+      startWidth: preferenceStore.getState().preferences.sidebarWidth,
       targets
     })
   }
@@ -352,11 +355,9 @@ export function AdminSidebar({
  * @param props.activeRootPath - 当前激活的一级菜单路径。
  * @param props.navigate - 菜单跳转回调。
  * @param props.onSelectRoot - 根菜单选择回调。
- * @param props.preferences - 当前偏好设置。
  * @param props.rootAriaLabel - 根菜单导航区域的可访问标签。
  * @param props.rootMenus - 混合侧栏根菜单列表。
  * @param props.selectedRoot - 当前选中的根菜单。
- * @param props.setPreferences - 更新偏好设置回调。
  * @returns 混合侧栏框架。
  */
 export function MixedSidebarFrame({
@@ -364,22 +365,30 @@ export function MixedSidebarFrame({
   activeRootPath,
   navigate,
   onSelectRoot,
-  preferences,
   rootAriaLabel,
   rootMenus = [],
-  selectedRoot,
-  setPreferences
+  selectedRoot
 }: {
   activePath: string
   activeRootPath: string
   navigate: (path: string) => void
   onSelectRoot: (item: MenuRecord) => void
-  preferences: AdminPreferences
   rootAriaLabel?: string
   rootMenus?: MenuRecord[]
   selectedRoot: MenuRecord
-  setPreferences: SetPreferences
 }) {
+  const preferences = usePreferencesSlice(preferences => ({
+    appLocale: preferences.appLocale,
+    navigationAccordion: preferences.navigationAccordion,
+    navigationStyleType: preferences.navigationStyleType,
+    sidebarAutoActivateChild: preferences.sidebarAutoActivateChild,
+    sidebarDraggable: preferences.sidebarDraggable,
+    sidebarExpandOnHover: preferences.sidebarExpandOnHover,
+    sidebarExtraCollapsed: preferences.sidebarExtraCollapsed,
+    sidebarMixedWidth: preferences.sidebarMixedWidth,
+    sidebarWidth: preferences.sidebarWidth
+  }))
+  const setPreferences = useSetPreferences()
   const messages = getAdminMessages(preferences.appLocale)
   const [hoveredRoot, setHoveredRoot] = useState<MenuRecord | null>(null)
   const [accordionOpenKey, setAccordionOpenKey] = useState<string | null>()

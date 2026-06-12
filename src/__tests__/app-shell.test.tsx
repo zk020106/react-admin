@@ -64,6 +64,7 @@ describe('admin app shell', () => {
     queryClient.clear()
     resizeViewport(1024)
     window.history.replaceState(null, '', '/')
+    window.sessionStorage.clear()
     document.body.style.pointerEvents = ''
     document.body.removeAttribute('data-scroll-locked')
   })
@@ -632,6 +633,31 @@ describe('admin app shell', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog', { name: 'Lock screen' })).not.toBeInTheDocument()
+    })
+  })
+
+  it('keeps the screen locked after the app remounts', async () => {
+    preferenceStore.getState().resetPreferences()
+    const { unmount } = await renderApp()
+
+    await userEvent.click(screen.getByRole('button', { name: '用户菜单' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: '锁定屏幕' }))
+    const lockSetupDialog = await screen.findByRole('dialog', { name: '锁定屏幕' })
+    await userEvent.type(within(lockSetupDialog).getByLabelText('锁屏密码'), '123456')
+    await userEvent.click(within(lockSetupDialog).getByRole('button', { name: '锁定屏幕' }))
+
+    expect(await screen.findByRole('dialog', { name: '锁屏界面' })).toBeInTheDocument()
+
+    unmount()
+    await renderApp()
+
+    const lockScreen = await screen.findByRole('dialog', { name: '锁屏界面' })
+    await userEvent.click(within(lockScreen).getByRole('button', { name: '解锁' }))
+    await userEvent.type(within(lockScreen).getByLabelText('锁屏密码'), '123456')
+    await userEvent.click(within(lockScreen).getByRole('button', { name: '进入系统' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: '锁屏界面' })).not.toBeInTheDocument()
     })
   })
 

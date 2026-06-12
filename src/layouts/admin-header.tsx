@@ -56,14 +56,9 @@ import {
 import type { NotificationRecord } from '@/mock/admin-mock'
 import { notificationQueries } from '@/pages/admin-queries'
 import { ADMIN_DEFAULT_PATH, getDefaultMenuPath, getMenuTitle } from '@/router/app-data'
+import { usePreferencesSlice, useSetPreferences } from '@/store/use-preferences'
 import type { AdminPreferences, MenuRecord } from '@/types/admin'
 import { findMenuTrail } from '@/utils/menu'
-
-type SetPreferences = (
-  updater:
-    | ((preferences: AdminPreferences) => Partial<AdminPreferences>)
-    | Partial<AdminPreferences>
-) => void
 
 type AdminHeaderProps = {
   activePath: string
@@ -79,9 +74,7 @@ type AdminHeaderProps = {
   openLock: () => void
   openPreferences: () => void
   openSearch: () => void
-  preferences: AdminPreferences
   preferencesButtonPlacement: PreferencesButtonPlacement
-  setPreferences: SetPreferences
   sidebarEnabled: boolean
 }
 
@@ -152,9 +145,7 @@ const emptyNotifications: NotificationRecord[] = []
  * @param props.openLock - 打开锁屏设置入口。
  * @param props.openPreferences - 打开偏好设置入口。
  * @param props.openSearch - 打开全局搜索入口。
- * @param props.preferences - 当前偏好设置。
  * @param props.preferencesButtonPlacement - 偏好设置按钮展示位置。
- * @param props.setPreferences - 更新偏好设置回调。
  * @param props.sidebarEnabled - 当前布局是否启用侧边栏。
  * @returns 后台顶栏。
  */
@@ -172,11 +163,34 @@ export function AdminHeader({
   openLock,
   openPreferences,
   openSearch,
-  preferences,
   preferencesButtonPlacement,
-  setPreferences,
   sidebarEnabled
 }: AdminHeaderProps) {
+  const preferences = usePreferencesSlice(preferences => ({
+    appLocale: preferences.appLocale,
+    appTimezone: preferences.appTimezone,
+    breadcrumbEnable: preferences.breadcrumbEnable,
+    breadcrumbHideOnlyOne: preferences.breadcrumbHideOnlyOne,
+    breadcrumbShowHome: preferences.breadcrumbShowHome,
+    breadcrumbShowIcon: preferences.breadcrumbShowIcon,
+    breadcrumbStyleType: preferences.breadcrumbStyleType,
+    colorMode: preferences.colorMode,
+    headerHeight: preferences.headerHeight,
+    headerMenuAlign: preferences.headerMenuAlign,
+    headerMode: preferences.headerMode,
+    navigationSplit: preferences.navigationSplit,
+    sidebarEnable: preferences.sidebarEnable,
+    sidebarHidden: preferences.sidebarHidden,
+    widgetFullscreen: preferences.widgetFullscreen,
+    widgetGlobalSearch: preferences.widgetGlobalSearch,
+    widgetLanguageToggle: preferences.widgetLanguageToggle,
+    widgetLockScreen: preferences.widgetLockScreen,
+    widgetNotification: preferences.widgetNotification,
+    widgetRefresh: preferences.widgetRefresh,
+    widgetThemeToggle: preferences.widgetThemeToggle,
+    widgetTimezone: preferences.widgetTimezone
+  }))
+  const setPreferences = useSetPreferences()
   const messages = getAdminMessages(preferences.appLocale)
   const [browserFullscreen, setBrowserFullscreen] = useState(false)
   const rawTrail = findMenuTrail(menu, activePath) ?? [

@@ -31,9 +31,13 @@ export interface FormApiOptions {
   schema?: FormSchema[]
 }
 
+// 缺省空 schema 用模块级常量，保证 getSchema 在无字段时仍返回稳定引用。
+const EMPTY_SCHEMA: readonly FormSchema[] = []
+
 // 类：FormApi。封装表单挂载、校验、提交和字段转换能力。
 export class FormApi {
   private form?: MountedForm
+  private listeners = new Set<() => void>()
   private state: FormApiOptions
 
   // 方法：constructor。初始化表单 API 配置并填充默认数组字段。
@@ -49,6 +53,18 @@ export class FormApi {
   // 方法：getState。读取当前表单 API 配置。
   getState() {
     return this.state
+  }
+
+  // 方法：getSchema。读取当前 schema 快照，供 useSyncExternalStore 订阅；引用随 updateSchema 变化。
+  // 用箭头字段保证实例上引用稳定，避免 useSyncExternalStore 反复重订阅。
+  getSchema = () => this.state.schema ?? EMPTY_SCHEMA
+
+  // 方法：subscribe。订阅 schema 变更，返回取消订阅函数；同样用箭头字段保持引用稳定。
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener)
+    return () => {
+      this.listeners.delete(listener)
+    }
   }
 
   // 方法：getValues。获取表单值并按提交规则转换字段。
@@ -111,6 +127,14 @@ export class FormApi {
       ...this.state,
       schema: schema.map(item => ({ ...item, ...updateMap.get(item.fieldName) }))
     }
+
+    // 通知订阅者（SchemaForm）schema 已变化，触发重渲染。
+    this.emitChange()
+  }
+
+  // 方法：emitChange。逐一通知 schema 订阅者。
+  private emitChange() {
+    this.listeners.forEach(listener => listener())
   }
 
   // 方法：applyArrayToString。把指定数组字段转换成分隔字符串。

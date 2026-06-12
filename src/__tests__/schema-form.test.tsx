@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -107,5 +107,21 @@ describe('schema form', () => {
     api.setValue('name', 'after')
 
     await expect(api.getValues()).resolves.toEqual({ name: 'after' })
+  })
+
+  it('re-renders fields when updateSchema changes the schema', async () => {
+    const api = renderSchemaForm({
+      schema: [{ component: 'input', fieldName: 'email', label: 'Email' }]
+    })
+
+    expect(screen.getByLabelText('Email')).toBeInTheDocument()
+
+    // updateSchema 应触发响应式重渲染，新标签随之出现。
+    await act(async () => {
+      api.updateSchema([{ fieldName: 'email', label: 'Work email' }])
+    })
+
+    expect(screen.getByLabelText('Work email')).toBeInTheDocument()
+    expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
   })
 })

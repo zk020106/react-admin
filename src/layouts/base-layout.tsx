@@ -59,6 +59,86 @@ const LockScreenOverlay = lazy(() =>
 const emptyMenu: MenuRecord[] = []
 const anonymousPermissions: readonly string[] = []
 const unrestrictedPermissions: readonly string[] = ['*']
+const lockScreenSessionKey = 'antd-react-admin:lock-screen'
+
+type LockScreenSessionState = {
+  password: string
+  screenLocked: boolean
+}
+
+const emptyLockScreenSession: LockScreenSessionState = {
+  password: '',
+  screenLocked: false
+}
+
+function getSessionStorage() {
+  if (typeof window === 'undefined') {
+    return undefined
+  }
+
+  try {
+    return window.sessionStorage
+  } catch {
+    return undefined
+  }
+}
+
+function readLockScreenSession(): LockScreenSessionState {
+  const storage = getSessionStorage()
+
+  if (!storage) {
+    return emptyLockScreenSession
+  }
+
+  try {
+    const raw = storage.getItem(lockScreenSessionKey)
+
+    if (!raw) {
+      return emptyLockScreenSession
+    }
+
+    const parsed = JSON.parse(raw) as Partial<LockScreenSessionState>
+
+    if (parsed.screenLocked !== true || typeof parsed.password !== 'string' || !parsed.password) {
+      return emptyLockScreenSession
+    }
+
+    return {
+      password: parsed.password,
+      screenLocked: true
+    }
+  } catch {
+    return emptyLockScreenSession
+  }
+}
+
+function persistLockScreenSession(password: string) {
+  const storage = getSessionStorage()
+
+  if (!storage) {
+    return
+  }
+
+  try {
+    storage.setItem(
+      lockScreenSessionKey,
+      JSON.stringify({
+        password,
+        screenLocked: true
+      })
+    )
+  } catch {
+    // Ignore unavailable session storage; the in-memory lock state still works for this render.
+  }
+}
+
+function clearLockScreenSession() {
+  try {
+    getSessionStorage()?.removeItem(lockScreenSessionKey)
+  } catch {
+    // Ignore unavailable session storage.
+  }
+}
 
 // 函数：resolveInitialWorkspaceTabs。合并固定标签和恢复的标签，并用菜单刷新标题。
 function resolveInitialWorkspaceTabs(currentTabs: TabRecord[], menu: MenuRecord[]) {
@@ -172,10 +252,11 @@ function AdminWorkspace() {
   const preferencesMounted = useEverTrue(preferencesOpen)
   const searchMounted = useEverTrue(searchOpen)
   const lockSetupMounted = useEverTrue(lockOpen)
-  const [screenLocked, setScreenLocked] = useState(false)
-  const [lockScreenPassword, setLockScreenPassword] = useState('')
+  const [lockScreenSession, setLockScreenSession] = useState(readLockScreenSession)
   const isMobile = useIsMobile()
   const messages = useMemo(() => getAdminMessages(preferences.appLocale), [preferences.appLocale])
+  const screenLocked = lockScreenSession.screenLocked
+  const lockScreenPassword = lockScreenSession.password
   const effectiveLayout: AdminPreferences['layout'] =
     isMobile && preferences.layout !== 'full-content' ? 'sidebar-nav' : preferences.layout
   const headerHidden =
@@ -473,6 +554,7 @@ function AdminWorkspace() {
   // 函数：logout。退出登录并刷新依赖登录态的查询缓存。
   function logout() {
     void authApi.logout().finally(() => {
+      clearLockScreenSession()
       authStore.getState().clearSession()
       tabsStore.getState().closeAll()
       void queryClient.invalidateQueries({ queryKey: navigationKeys.all })
@@ -482,15 +564,17 @@ function AdminWorkspace() {
 
   // 函数：lockScreen。保存锁屏密码并进入锁屏状态。
   function lockScreen(password: string) {
-    setLockScreenPassword(password)
-    setScreenLocked(true)
+    const nextSession = { password, screenLocked: true }
+
+    persistLockScreenSession(password)
+    setLockScreenSession(nextSession)
     lockActions.setFalse()
   }
 
   // 函数：unlockScreen。退出锁屏并清除锁屏密码。
   function unlockScreen() {
-    setScreenLocked(false)
-    setLockScreenPassword('')
+    clearLockScreenSession()
+    setLockScreenSession(emptyLockScreenSession)
   }
 
   const rootMenu = getWorkspaceRootMenu(activePath, activeMenu)
@@ -615,7 +699,6 @@ function AdminWorkspace() {
           onSelectRoot={
             effectiveLayout === 'header-mixed-nav' ? selectHeaderMixedSideRoot : selectMixedRoot
           }
-          preferences={preferences}
           rootAriaLabel={
             effectiveLayout === 'header-mixed-nav'
               ? messages.navigation.headerMixedSidebar
@@ -627,17 +710,10 @@ function AdminWorkspace() {
               ? selectedHeaderMixedSideRoot
               : displayedMixedRoot
           }
-          setPreferences={setPreferences}
         />
       )}
       {primarySidebarEnabled && (
-        <AdminSidebar
-          activePath={activePath}
-          menu={sidebarMenu}
-          navigate={navigate}
-          preferences={preferences}
-          setPreferences={setPreferences}
-        />
+        <AdminSidebar activePath={activePath} menu={sidebarMenu} navigate={navigate} />
       )}
       <SidebarInset>
         {headerEnabled && (
@@ -654,10 +730,8 @@ function AdminWorkspace() {
             onRefresh={refreshActiveTab}
             onLogout={logout}
             onSelectRoot={selectMixedRoot}
-            preferences={preferences}
             preferencesButtonPlacement={preferencesButtonPlacement}
             sidebarEnabled={sidebarEnabled}
-            setPreferences={setPreferences}
             hidden={headerHidden}
           />
         )}
@@ -673,7 +747,6 @@ function AdminWorkspace() {
             navigate={navigate}
             onRefresh={refreshActiveTab}
             onToggleMaximize={() => setContentMaximized(current => !current)}
-            preferences={preferences}
             tabs={tabs}
             toggleTabPin={toggleTabPin}
           />
@@ -705,7 +778,7 @@ function AdminWorkspace() {
               </div>
             </div>
           )}
-          <PageSurface activePath={activePath} key={activePath} preferences={preferences}>
+          <PageSurface activePath={activePath} key={activePath}>
             {routeAllowed ? undefined : <ForbiddenPage permission={routePermission} />}
           </PageSurface>
         </main>

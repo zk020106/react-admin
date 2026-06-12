@@ -17,27 +17,45 @@ export function resolveSessionPermissions(session: AuthSession | undefined) {
   return session.user.permissions
 }
 
-export function hasPermission(userPermissions: readonly string[], permission: PermissionInput) {
+// 基于 Set 的权限判定：调用方已持有权限集合时复用，避免对权限数组重复线性扫描。
+function hasPermissionInSet(permissionSet: ReadonlySet<string>, permission: PermissionInput) {
   if (!permission || (Array.isArray(permission) && permission.length === 0)) {
     return true
   }
 
-  if (userPermissions.includes('*')) {
+  if (permissionSet.has('*')) {
     return true
   }
 
   const requiredPermissions = Array.isArray(permission) ? permission : [permission]
 
-  return requiredPermissions.some(item => userPermissions.includes(item))
+  return requiredPermissions.some(item => permissionSet.has(item))
+}
+
+export function hasPermission(userPermissions: readonly string[], permission: PermissionInput) {
+  // 短路廉价分支，无需为空权限或无要求的检查构建 Set。
+  if (!permission || (Array.isArray(permission) && permission.length === 0)) {
+    return true
+  }
+
+  return hasPermissionInSet(new Set(userPermissions), permission)
 }
 
 export function filterAuthorizedMenu(
   menu: readonly MenuRecord[],
   userPermissions: readonly string[]
 ): MenuRecord[] {
+  // 整棵菜单树只构建一次权限集合，递归各节点共用，每次判定降到 O(1)。
+  return filterAuthorizedMenuWithSet(menu, new Set(userPermissions))
+}
+
+function filterAuthorizedMenuWithSet(
+  menu: readonly MenuRecord[],
+  permissionSet: ReadonlySet<string>
+): MenuRecord[] {
   return menu.flatMap(item => {
-    const children = filterAuthorizedMenu(item.children ?? [], userPermissions)
-    const selfAllowed = hasPermission(userPermissions, item.permission)
+    const children = filterAuthorizedMenuWithSet(item.children ?? [], permissionSet)
+    const selfAllowed = hasPermissionInSet(permissionSet, item.permission)
 
     if (!selfAllowed && children.length === 0) {
       return []

@@ -35,7 +35,8 @@ import { getAdminMessages } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 import { getTabIcon } from '@/layouts/navigation'
 import { tabsStore } from '@/store/tabs'
-import type { AdminPreferences, TabRecord } from '@/types/admin'
+import { usePreferencesSlice } from '@/store/use-preferences'
+import type { TabRecord } from '@/types/admin'
 
 type TabbarProps = {
   activePath: string
@@ -48,7 +49,6 @@ type TabbarProps = {
   navigate: (path: string) => void
   onRefresh: () => void
   onToggleMaximize: () => void
-  preferences: AdminPreferences
   tabs: TabRecord[]
   toggleTabPin: (key: string) => void
 }
@@ -67,7 +67,6 @@ type TabbarProps = {
  * @param props.navigate - 标签切换导航回调。
  * @param props.onRefresh - 刷新当前页面回调。
  * @param props.onToggleMaximize - 切换内容区最大化回调。
- * @param props.preferences - 当前完整偏好设置。
  * @param props.tabs - 当前标签页列表。
  * @param props.toggleTabPin - 切换标签固定状态的回调。
  * @returns 后台页面标签栏。
@@ -83,11 +82,23 @@ export function Tabbar({
   navigate,
   onRefresh,
   onToggleMaximize,
-  preferences,
   tabs,
   toggleTabPin
 }: TabbarProps) {
   const listRef = useRef<HTMLDivElement | null>(null)
+  const preferences = usePreferencesSlice(preferences => ({
+    appLocale: preferences.appLocale,
+    tabbarDraggable: preferences.tabbarDraggable,
+    tabbarHeight: preferences.tabbarHeight,
+    tabbarMaxCount: preferences.tabbarMaxCount,
+    tabbarMiddleClickToClose: preferences.tabbarMiddleClickToClose,
+    tabbarShowIcon: preferences.tabbarShowIcon,
+    tabbarShowMaximize: preferences.tabbarShowMaximize,
+    tabbarShowMore: preferences.tabbarShowMore,
+    tabbarShowRefresh: preferences.tabbarShowRefresh,
+    tabbarStyleType: preferences.tabbarStyleType,
+    tabbarWheelable: preferences.tabbarWheelable
+  }))
   const messages = getAdminMessages(preferences.appLocale)
   const tabbarClass =
     preferences.tabbarStyleType === 'card'

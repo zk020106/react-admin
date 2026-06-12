@@ -1,6 +1,6 @@
 import { Form, type FormInstance } from 'antd'
 import type { Rule } from 'antd/es/form'
-import { useEffect } from 'react'
+import { useEffect, useSyncExternalStore } from 'react'
 
 import type { FormApi } from '@/utils/form-api'
 import { renderFormField } from './form-field-registry'
@@ -26,7 +26,8 @@ export function SchemaForm({
   layout?: 'horizontal' | 'inline' | 'vertical'
   onFinish?: (values: Record<string, unknown>) => void
 }) {
-  const schema = api.getState().schema ?? []
+  // 订阅 FormApi 的 schema 快照，使 updateSchema() 后表单能响应式重渲染。
+  const schema = useSyncExternalStore(api.subscribe, api.getSchema, api.getSchema)
 
   useEffect(() => {
     // 把 antd FormInstance 适配成 FormApi 的宿主表单契约；values 用 getter 保证读到活值。
