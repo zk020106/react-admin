@@ -81,13 +81,23 @@ function buildDepartmentTreeData(departments: DepartmentRecord[]): DataNode[] {
 }
 
 function getTreeNodeTitle(node: DataNode) {
-  return typeof node.title === 'string' ? node.title : String(node.title ?? '')
+  if (typeof node.title === 'string') {
+    return node.title
+  }
+  if (node.title === null || node.title === undefined) {
+    return ''
+  }
+  return String(node.title)
 }
 
 function normalizeKeyword(value: unknown) {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
+  if (typeof value === 'string') {
+    return value.trim().toLowerCase()
+  }
+  if (value === null || value === undefined) {
+    return ''
+  }
+  return String(value).trim().toLowerCase()
 }
 
 function filterTreeData(nodes: DataNode[], keyword: string): DataNode[] {
@@ -225,9 +235,10 @@ function userMatchesFilters(
 
   if (
     userKeyword &&
-    ![record.name, record.account, record.email, record.id, record.phone].some(value =>
-      normalizeKeyword(value).includes(userKeyword)
-    )
+    ![record.name, record.account, record.email, record.id, record.phone].some(value => {
+      const strValue = typeof value === 'string' ? value : String(value)
+      return normalizeKeyword(strValue).includes(userKeyword)
+    })
   ) {
     return false
   }

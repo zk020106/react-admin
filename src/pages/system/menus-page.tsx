@@ -51,9 +51,13 @@ const buildMenuTree = (menus: MenuManagementRecord[]): MenuTreeRecord[] => {
 }
 
 function normalizeKeyword(value: unknown) {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
+  if (typeof value === 'string') {
+    return value.trim().toLowerCase()
+  }
+  if (value === null || value === undefined) {
+    return ''
+  }
+  return String(value).trim().toLowerCase()
 }
 
 function buildMenuRelations(menus: MenuManagementRecord[]): MenuRelations {

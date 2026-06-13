@@ -29,9 +29,13 @@ type PermissionRow =
     }
 
 function normalizeKeyword(value: unknown) {
-  return String(value ?? '')
-    .trim()
-    .toLowerCase()
+  if (typeof value === 'string') {
+    return value.trim().toLowerCase()
+  }
+  if (value === null || value === undefined) {
+    return ''
+  }
+  return String(value).trim().toLowerCase()
 }
 
 function roleMatchesFilters(role: RoleRecord, filters: RoleTableFilters) {
