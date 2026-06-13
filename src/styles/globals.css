@@ -793,6 +793,25 @@
   animation: admin-fade-down 180ms ease-out;
 }
 
+.mc-table-fill.ant-table-wrapper,
+.mc-table-fill .ant-spin-nested-loading,
+.mc-table-fill .ant-spin-container {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.mc-table-fill .ant-table {
+  min-height: 0;
+  flex: 1 1 auto;
+}
+
+.mc-table-fill .ant-pagination {
+  flex-shrink: 0;
+  margin-top: auto;
+}
+
 .transition-preview-fade {
   animation: admin-fade 1.4s ease-in-out infinite alternate;
 }

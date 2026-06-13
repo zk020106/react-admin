@@ -10,11 +10,35 @@ import { resolveAdminPrimaryColor } from '@/theme'
 import type { AdminPreferences } from '@/types/admin'
 
 const ADMIN_TABLE_THEME_COMPONENTS: NonNullable<ThemeConfig['components']> = {
+  Button: {
+    controlHeight: 32,
+    controlHeightSM: 28
+  },
+  Input: {
+    controlHeight: 32,
+    controlHeightSM: 28
+  },
+  Select: {
+    controlHeight: 32,
+    controlHeightSM: 28
+  },
   Table: {
     borderColor: 'hsl(var(--border))',
-    headerBg: 'hsl(var(--muted) / 0.5)',
-    headerColor: 'hsl(var(--foreground))',
-    rowHoverBg: 'hsl(var(--muted) / 0.5)'
+    cellPaddingBlock: 12,
+    cellPaddingInline: 12,
+    colorBgContainer: 'hsl(var(--card))',
+    colorText: 'hsl(var(--card-foreground))',
+    headerBg: 'hsl(var(--card))',
+    headerColor: 'hsl(var(--muted-foreground))',
+    headerSplitColor: 'hsl(var(--border))',
+    rowHoverBg: 'hsl(var(--accent))'
+  },
+  Tree: {
+    colorBgContainer: 'hsl(var(--card))',
+    directoryNodeSelectedBg: 'hsl(var(--accent))',
+    directoryNodeSelectedColor: 'hsl(var(--accent-foreground))',
+    nodeHoverBg: 'hsl(var(--accent))',
+    nodeSelectedBg: 'hsl(var(--accent))'
   }
 }
 

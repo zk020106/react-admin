@@ -1,4 +1,4 @@
-import type { FormInstance, FormItemProps } from 'antd'
+import type { FormInstance, FormItemProps, FormProps } from 'antd'
 import type { Rule } from 'antd/es/form'
 import type { ReactNode } from 'react'
 
@@ -23,23 +23,27 @@ export interface MCFormField {
   help?: ReactNode
   hidden?: boolean | ((values: Record<string, unknown>) => boolean)
   label?: ReactNode
+  lg?: number
+  md?: number
   name: string
   required?: boolean | string
   rules?: Rule[]
+  sm?: number
   span?: number
   valueFormat?: FormValueFormat
+  xl?: number
+  xs?: number
+  xxl?: number
 }
 
-export interface MCFormProps {
-  children?: ReactNode
+export interface MCFormProps extends Omit<FormProps, 'onFinish' | 'onValuesChange'> {
+  // MC 扩展属性
   control?: MCFormControl
-  disabled?: boolean
   fields: MCFormField[]
-  form?: FormInstance
   grid?: boolean
   gutter?: number
-  initialValues?: Record<string, unknown>
-  layout?: 'horizontal' | 'inline' | 'vertical'
+
+  // 重写的属性（改变类型签名）
   onFinish?: (values: Record<string, unknown>) => void
   onValuesChange?: (changedValues: Record<string, unknown>, values: Record<string, unknown>) => void
 }
@@ -50,6 +54,7 @@ export interface MCSearchFormProps {
   defaultValues?: Record<string, unknown>
   fields: MCFormField[]
   form?: FormInstance
+  mode?: 'manual' | 'auto'
   onReset?: () => Promise<void> | void
   onSearch: (values: Record<string, unknown>) => Promise<void> | void
 }
@@ -59,6 +64,18 @@ export interface MCFormModalProps<TValues extends object> {
   fields: MCFormField[]
   initialValues?: Partial<TValues>
   open: boolean
+  title: string
+  width?: number | string
+  onCancel: () => void
+  onSubmit: (values: TValues) => Promise<void> | void
+}
+
+export interface MCDrawerFormProps<TValues extends object> {
+  control?: MCFormControl
+  fields: MCFormField[]
+  initialValues?: Partial<TValues>
+  open: boolean
+  placement?: 'left' | 'right' | 'top' | 'bottom'
   title: string
   width?: number | string
   onCancel: () => void

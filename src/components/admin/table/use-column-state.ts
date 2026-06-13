@@ -93,17 +93,34 @@ export function useColumnState<RecordType extends AnyObject>({
     })
   }, [baseColumns, orderedKeys, state.fixed, state.hidden])
 
-  const resolvedColumns = useMemo(
-    () =>
-      metas
-        .filter(meta => !meta.hidden)
-        .map(meta => {
-          const fixed = meta.fixed ?? (meta.column.fixed as ColumnFixed | undefined)
-          // 显式 undefined 会覆盖列原有 fixed，故仅在有值时写入。
-          return fixed ? { ...meta.column, fixed } : meta.column
-        }),
-    [metas]
-  )
+  const resolvedColumns = useMemo(() => {
+    const visible = metas.filter(meta => !meta.hidden)
+
+    // 分组：左固定、未固定、右固定
+    const leftFixed: typeof visible = []
+    const notFixed: typeof visible = []
+    const rightFixed: typeof visible = []
+
+    for (const meta of visible) {
+      const fixed = meta.fixed ?? (meta.column.fixed as ColumnFixed | undefined)
+      if (fixed === 'left') {
+        leftFixed.push(meta)
+      } else if (fixed === 'right') {
+        rightFixed.push(meta)
+      } else {
+        notFixed.push(meta)
+      }
+    }
+
+    // 按 左固定、未固定、右固定 的顺序排列
+    const sorted = [...leftFixed, ...notFixed, ...rightFixed]
+
+    return sorted.map(meta => {
+      const fixed = meta.fixed ?? (meta.column.fixed as ColumnFixed | undefined)
+      // 显式 undefined 会覆盖列原有 fixed，故仅在有值时写入。
+      return fixed ? { ...meta.column, fixed } : meta.column
+    })
+  }, [metas])
 
   const dirty =
     state.order.length > 0 || state.hidden.length > 0 || Object.keys(state.fixed).length > 0

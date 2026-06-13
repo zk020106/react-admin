@@ -57,6 +57,7 @@ export function Page({
   title
 }: PageProps) {
   const headerVisible = Boolean(title || description || actions)
+  const fillContent = !headerVisible && !footer
 
   return (
     <div
@@ -91,7 +92,13 @@ export function Page({
           ) : null}
         </div>
       ) : null}
-      <div className={cn('grid gap-4', contentClassName)} data-slot="page-content">
+      <div
+        className={cn(
+          fillContent ? 'grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-4' : 'grid gap-4',
+          contentClassName
+        )}
+        data-slot="page-content"
+      >
         {children}
       </div>
       {footer ? (

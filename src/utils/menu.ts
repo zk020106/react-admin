@@ -53,6 +53,7 @@ export function buildWorkspaceSearchItems(
   users: UserRecord[],
   permissions: MenuManagementRecord[]
 ): WorkspaceSearchItem[] {
+  const permissionPathByName = new Map(permissions.map(item => [item.name, item.path]))
   const menuItems = flattenMenu(menu).map(item => ({
     description: item.path,
     keyword: [item.title, item.path, item.badge].filter(Boolean).join(' '),
@@ -62,9 +63,9 @@ export function buildWorkspaceSearchItems(
   }))
 
   const permissionItems = permissions.map(item => ({
-    description: `${item.name} / ${item.path}`,
+    description: `${item.name} / ${item.path || permissionPathByName.get(item.parentName) || '-'}`,
     keyword: [item.name, item.path, item.permission, item.component].join(' '),
-    path: item.path,
+    path: item.path || permissionPathByName.get(item.parentName) || '/overview',
     title: item.permission,
     type: 'permission' as const
   }))

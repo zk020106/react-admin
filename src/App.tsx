@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 import { queryClient } from '@/lib/query-client'
 import { createAppRouter } from './router'
+import { AdminConfigProvider } from '@/theme/antd-theme'
 
 import '@/styles/globals.css'
 
@@ -12,8 +13,10 @@ export default function App() {
   const [router] = useState(() => createAppRouter())
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
-    </QueryClientProvider>
+    <AdminConfigProvider>
+      <QueryClientProvider client={queryClient}>
+        <RouterProvider router={router} />
+      </QueryClientProvider>
+    </AdminConfigProvider>
   )
 }

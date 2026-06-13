@@ -25,19 +25,16 @@ export interface AdminPageDefinition {
 const OverviewPage = lazy(() => import('@/pages/overview-page'))
 const WorkplacePage = lazy(() => import('@/pages/workplace-page'))
 const UsersPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.UsersPage }))
-)
-const UsersPageMC = lazy(() =>
-  import('@/pages/system-pages-mc').then(module => ({ default: module.UsersPageMC }))
+  import('@/pages/system/users-page').then(m => ({ default: m.UsersPage }))
 )
 const RolesPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.RolesPage }))
+  import('@/pages/system/roles-page').then(m => ({ default: m.RolesPage }))
 )
 const MenusPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.MenusPage }))
+  import('@/pages/system/menus-page').then(m => ({ default: m.MenusPage }))
 )
 const DepartmentsPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.DepartmentsPage }))
+  import('@/pages/system/departments-page').then(m => ({ default: m.DepartmentsPage }))
 )
 const AboutPage = lazy(() => import('@/pages/about-page'))
 const EffectsPage = lazy(() => import('@/pages/effects-pages'))
@@ -60,12 +57,6 @@ export const adminPages: AdminPageDefinition[] = [
     component: UsersPage,
     icon: Users,
     path: '/system/users',
-    permission: 'system:user:read'
-  },
-  {
-    component: UsersPageMC,
-    icon: Users,
-    path: '/system/users-mc',
     permission: 'system:user:read'
   },
   {

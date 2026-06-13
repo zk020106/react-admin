@@ -308,12 +308,24 @@ export interface FormSchema {
   hidden?: boolean | ((values: Record<string, unknown>) => boolean)
   // 参数：label。字段标签内容。
   label?: ReactNode
+  // 参数：lg。≥992px 响应式栅格，可为栅格数或一个包含其他属性的对象。
+  lg?: number
+  // 参数：md。≥768px 响应式栅格，可为栅格数或一个包含其他属性的对象。
+  md?: number
   // 参数：rules。字段校验规则。
   rules?: unknown
+  // 参数：sm。≥576px 响应式栅格，可为栅格数或一个包含其他属性的对象。
+  sm?: number
   // 参数：span。响应式栅格占用列数，24 表示整行。
   span?: number
   // 参数：valueFormat。字段提交前的格式化函数。
   valueFormat?: FormValueFormat
+  // 参数：xl。≥1200px 响应式栅格，可为栅格数或一个包含其他属性的对象。
+  xl?: number
+  // 参数：xs。<576px 响应式栅格，可为栅格数或一个包含其他属性的对象。
+  xs?: number
+  // 参数：xxl。≥1600px 响应式栅格，可为栅格数或一个包含其他属性的对象。
+  xxl?: number
 }
 
 // 类型：FieldMappingFormatter。定义时间映射字段的格式化方式。

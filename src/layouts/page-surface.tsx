@@ -22,7 +22,7 @@ export function PageSurface({
 
   return (
     <div
-      className={cn('flex w-full flex-col gap-4', compactContent && 'mx-auto')}
+      className={cn('flex min-h-0 w-full flex-1 flex-col gap-4', compactContent && 'mx-auto')}
       data-route-key={activePath}
       data-slot="page-surface"
       style={compactContent ? { maxWidth: contentCompactWidth } : undefined}

@@ -385,41 +385,36 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/users']"
     ) as HTMLElement
 
-    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
+    // system users 懒 chunk 含 antd，测试环境首次转换耗时较长。
     expect(
-      await within(pageSurface).findByText('用户管理', undefined, { timeout: 30000 })
+      await within(pageSurface).findByText('华信云科集团', undefined, { timeout: 30000 })
     ).toBeInTheDocument()
     const page = pageSurface.querySelector("[data-slot='page']") as HTMLElement
-    const pageHeader = pageSurface.querySelector("[data-slot='page-header']") as HTMLElement
-    const pageSections = pageSurface.querySelectorAll("[data-slot='page-section']")
-    const summarySectionContent = pageSections[0]?.querySelector(
-      "[data-slot='page-section-content']"
-    ) as HTMLElement
+    const pageLayout = pageSurface.querySelector("[data-slot='page-layout']") as HTMLElement
+    const table = pageSurface.querySelector("[data-slot='mc-table']") as HTMLElement
 
     expect(page).toHaveClass('p-4')
     expect(page).toHaveClass('gap-4')
-    expect(pageHeader).toHaveClass('rounded-lg')
-    expect(pageSections).toHaveLength(2)
-    expect(summarySectionContent).toHaveClass('grid')
-    expect(summarySectionContent).toHaveClass('md:grid-cols-4')
-    expect(within(pageSurface).getByText('风险关注')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('密码 + MFA')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('2026-06-10 09:24')).toBeInTheDocument()
+    expect(pageLayout).toHaveClass('h-full')
+    expect(table).toHaveClass('h-full')
+    expect(within(pageSurface).getByText('凌远运营中心')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('赵宇')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('平台管理员')).toBeInTheDocument()
+    expect((await within(pageSurface).findAllByText('zhaoyu@example.com')).length).toBeGreaterThan(
+      0
+    )
+    expect(within(pageSurface).getByText('2026-06-13 10:36:18')).toBeInTheDocument()
 
-    const searchInput = within(pageSurface).getByLabelText('关键词')
-    await userEvent.type(searchInput, 'audit')
+    const searchInput = within(pageSurface).getByLabelText('用户信息')
+    await userEvent.type(searchInput, 'linran')
     await userEvent.click(within(pageSurface).getByRole('button', { name: '查询' }))
 
-    expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
-    expect(within(pageSurface).queryByText('超级管理员')).not.toBeInTheDocument()
+    expect(await within(pageSurface).findByText('林然')).toBeInTheDocument()
+    expect(within(pageSurface).queryByText('赵宇')).not.toBeInTheDocument()
 
     await userEvent.click(within(pageSurface).getByRole('button', { name: '重置' }))
-    await userEvent.click(within(pageSurface).getByRole('combobox', { name: '账号状态' }))
-    await userEvent.click(await screen.findByText('复核中'))
-    await userEvent.click(within(pageSurface).getByRole('button', { name: '查询' }))
-
-    expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
-    expect(within(pageSurface).queryByText('运营账号')).not.toBeInTheDocument()
+    expect(await within(pageSurface).findByText('赵宇')).toBeInTheDocument()
+    expect(within(pageSurface).queryByText('林然')).not.toBeInTheDocument()
   })
 
   it('creates a user from the users page', { timeout: 45000 }, async () => {
@@ -430,8 +425,8 @@ describe('admin app shell', () => {
     const { usersLink } = await openSystemMenu(sidebarNavigation)
 
     await userEvent.click(usersLink)
-    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
-    expect(await screen.findByText('超级管理员', undefined, { timeout: 30000 })).toBeInTheDocument()
+    // system users 懒 chunk 含 antd，测试环境首次转换耗时较长。
+    expect(await screen.findByText('赵宇', undefined, { timeout: 30000 })).toBeInTheDocument()
 
     // 新增用户：弹窗表单提交后列表自动失效刷新。
     await userEvent.click(screen.getByRole('button', { name: /新增用户/ }))
@@ -474,10 +469,10 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/menus']"
     ) as HTMLElement
 
-    expect((await within(pageSurface).findAllByText('菜单管理')).length).toBeGreaterThan(0)
-    expect(within(pageSurface).getByText('路由记录')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('目录节点')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('DepartmentsPage')).toBeInTheDocument()
+    expect((await within(pageSurface).findAllByText('菜单标题')).length).toBeGreaterThan(0)
+    expect(within(pageSurface).getByText('清除缓存')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('活动配置')).toBeInTheDocument()
+    expect((await within(pageSurface).findAllByText('DepartmentsPage')).length).toBeGreaterThan(0)
     expect(within(pageSurface).getAllByText('系统管理').length).toBeGreaterThan(0)
     expect(within(pageSurface).getByText('system:department:read')).toBeInTheDocument()
   })
@@ -503,11 +498,15 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/roles']"
     ) as HTMLElement
 
-    expect(await within(pageSurface).findByText('权限矩阵')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('授权成员')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('全部数据')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('功能权限')).toBeInTheDocument()
+    expect(within(pageSurface).getByText('角色用户')).toBeInTheDocument()
+    expect(within(pageSurface).getByText('菜单')).toBeInTheDocument()
+    expect(within(pageSurface).getByText('权限')).toBeInTheDocument()
+    expect(within(pageSurface).getByText('保存权限')).toBeInTheDocument()
+    expect((await within(pageSurface).findAllByText('全部数据')).length).toBeGreaterThan(0)
     expect(within(pageSurface).getByText('只读审计数据')).toBeInTheDocument()
-    expect(within(pageSurface).getAllByText('system:menu:read').length).toBeGreaterThan(0)
+    expect(within(pageSurface).getByText('清除缓存')).toBeInTheDocument()
+    expect(within(pageSurface).getByText('分配权限')).toBeInTheDocument()
     expect(within(pageSurface).getByText('auditor')).toBeInTheDocument()
   })
 
@@ -532,12 +531,12 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/departments']"
     ) as HTMLElement
 
-    expect(await within(pageSurface).findByText('组织明细')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('成员总数')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('全部部门')).toBeInTheDocument()
+    expect(within(pageSurface).getByText('组织部门树')).toBeInTheDocument()
     expect(
       await within(pageSurface).findByText('负责后台基础能力、权限体系和工程框架。')
     ).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('dept-risk')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('平台部')).toBeInTheDocument()
     expect(
       within(pageSurface).getByText('负责风险复核、审计追踪和异常流程处置。')
     ).toBeInTheDocument()
@@ -587,7 +586,7 @@ describe('admin app shell', () => {
     const searchDialog = await screen.findByRole('dialog', { name: '全局搜索' }, { timeout: 5000 })
     const searchInput = within(searchDialog).getByPlaceholderText('搜索路由')
 
-    await userEvent.type(searchInput, 'root@example.com')
+    await userEvent.type(searchInput, 'ouyang@example.com')
     expect(await within(searchDialog).findByText('超级管理员')).toBeInTheDocument()
 
     await userEvent.clear(searchInput)

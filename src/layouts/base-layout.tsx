@@ -753,7 +753,7 @@ function AdminWorkspace() {
         )}
         <main
           className={cn(
-            'relative min-h-0 flex-1 overflow-auto bg-background-deep',
+            'relative flex min-h-0 flex-1 flex-col overflow-auto bg-background-deep',
             preferences.transitionEnable && `admin-transition-${preferences.transitionName}`
           )}
           data-slot="admin-content"

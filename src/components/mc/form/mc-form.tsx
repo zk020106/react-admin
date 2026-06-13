@@ -9,15 +9,13 @@ import type { MCFormProps } from './types'
 export function MCForm({
   children,
   control,
-  disabled,
   fields,
   form: externalForm,
   grid,
   gutter,
-  initialValues,
-  layout,
   onFinish,
-  onValuesChange
+  onValuesChange,
+  ...antdFormProps
 }: MCFormProps) {
   const [internalForm] = Form.useForm()
   const form = externalForm ?? internalForm
@@ -26,17 +24,15 @@ export function MCForm({
 
   return (
     <SchemaForm
+      {...antdFormProps}
       api={api}
-      disabled={disabled}
       form={form}
       grid={grid}
       gutter={gutter}
-      initialValues={initialValues}
-      layout={layout}
       onFinish={onFinish}
       onValuesChange={onValuesChange}
     >
-      {children}
+      {typeof children === 'function' ? null : children}
     </SchemaForm>
   )
 }

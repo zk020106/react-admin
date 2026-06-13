@@ -46,9 +46,15 @@ export function toFormSchema(fields: MCFormField[], control: MCFormControl = {})
       help: field.help,
       hidden: mergeBooleanControl(field.hidden, fieldControl?.hidden),
       label: field.label,
+      lg: field.lg,
+      md: field.md,
       rules: requiredRule ? [requiredRule, ...(field.rules ?? [])] : field.rules,
+      sm: field.sm,
       span: field.span,
-      valueFormat: field.valueFormat
+      valueFormat: field.valueFormat,
+      xl: field.xl,
+      xs: field.xs,
+      xxl: field.xxl
     }
   })
 }

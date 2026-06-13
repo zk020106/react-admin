@@ -1,4 +1,4 @@
-import { Col, Form, Row, type FormInstance } from 'antd'
+import { Col, Form, Row, type FormInstance, type FormProps } from 'antd'
 import type { Rule } from 'antd/es/form'
 import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 
@@ -19,26 +19,21 @@ const CHECKED_COMPONENTS = new Set(['checkbox', 'switch'])
 export function SchemaForm({
   api,
   children,
-  disabled = false,
   form,
   grid = false,
   gutter = 16,
-  initialValues,
-  layout = 'vertical',
   onFinish,
-  onValuesChange
+  onValuesChange,
+  ...antdFormProps
 }: {
   api: FormApi
   children?: ReactNode
-  disabled?: boolean
   form: FormInstance
   grid?: boolean
   gutter?: number
-  initialValues?: Record<string, unknown>
-  layout?: 'horizontal' | 'inline' | 'vertical'
   onFinish?: (values: Record<string, unknown>) => void
   onValuesChange?: (changedValues: Record<string, unknown>, values: Record<string, unknown>) => void
-}) {
+} & Omit<FormProps, 'form' | 'onFinish' | 'onValuesChange'>) {
   // 订阅 FormApi 的 schema 快照，使 updateSchema() 后表单能响应式重渲染。
   const schema = useSyncExternalStore(api.subscribe, api.getSchema, api.getSchema)
 
@@ -67,7 +62,10 @@ export function SchemaForm({
       .filter(item => item.defaultValue !== undefined)
       .map(item => [item.fieldName, item.defaultValue])
   )
-  const resolvedInitialValues = { ...schemaInitialValues, ...initialValues }
+  const resolvedInitialValues = {
+    ...schemaInitialValues,
+    ...antdFormProps.initialValues
+  }
   const values = Form.useWatch([], form) ?? form.getFieldsValue(true)
 
   function renderItem(item: FormSchema) {
@@ -81,7 +79,7 @@ export function SchemaForm({
     }
 
     const itemDisabled =
-      disabled ||
+      antdFormProps.disabled ||
       (typeof item.disabled === 'function'
         ? item.disabled(values as Record<string, unknown>)
         : item.disabled)
@@ -107,7 +105,16 @@ export function SchemaForm({
     )
 
     return grid ? (
-      <Col key={item.fieldName} span={item.span ?? 8}>
+      <Col
+        key={item.fieldName}
+        lg={item.lg}
+        md={item.md}
+        sm={item.sm}
+        span={item.span ?? 24}
+        xl={item.xl}
+        xs={item.xs}
+        xxl={item.xxl}
+      >
         {formItem}
       </Col>
     ) : (
@@ -117,9 +124,9 @@ export function SchemaForm({
 
   return (
     <Form
+      {...antdFormProps}
       form={form}
       initialValues={resolvedInitialValues}
-      layout={layout}
       onFinish={onFinish}
       onValuesChange={onValuesChange}
     >

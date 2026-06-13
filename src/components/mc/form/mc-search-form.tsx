@@ -8,6 +8,7 @@ export function MCSearchForm({
   defaultValues,
   fields,
   form,
+  mode,
   onReset,
   onSearch
 }: MCSearchFormProps) {
@@ -17,6 +18,7 @@ export function MCSearchForm({
       defaultCollapsed={defaultCollapsed}
       defaultValues={defaultValues}
       form={form}
+      mode={mode}
       onReset={onReset}
       onSearch={onSearch}
       schema={toFormSchema(fields)}

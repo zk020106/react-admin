@@ -1,6 +1,6 @@
 import type { AnyObject } from 'antd/es/_util/type'
 import { Button, Checkbox, Tooltip } from 'antd'
-import { ArrowLeftToLine, ArrowRightToLine, GripVertical, PinOff } from 'lucide-react'
+import { Pin } from 'lucide-react'
 import { useState } from 'react'
 
 import { cn } from '@/lib/utils'
@@ -23,35 +23,37 @@ export function ColumnSettingPanel<RecordType extends AnyObject>({
 
   return (
     <div
-      className="w-64 rounded-md border bg-popover p-2 shadow-md"
+      className="w-56 rounded-md border bg-popover shadow-lg"
       data-slot="admin-table-column-setting"
     >
-      <div className="flex items-center justify-between border-b px-1 pb-2">
+      <div className="flex items-center justify-between border-b px-3 py-2">
         <Checkbox
           checked={allChecked}
           indeterminate={indeterminate}
           onChange={event => setAllHidden(!event.target.checked)}
         >
-          列展示
+          <span className="text-sm font-medium">列展示</span>
         </Checkbox>
         <Button disabled={!dirty} onClick={() => reset()} size="small" type="link">
           重置
         </Button>
       </div>
-      <ul className="grid gap-0.5 pt-1">
-        {metas.map(meta => (
-          <ColumnSettingRow
-            dragging={draggingKey === meta.key}
-            key={meta.key}
-            meta={meta}
-            onDragEnd={() => setDraggingKey(null)}
-            onDragStart={() => setDraggingKey(meta.key)}
-            onDrop={fromKey => move(fromKey, meta.key)}
-            onSetFixed={fixed => setFixed(meta.key, meta.fixed === fixed ? undefined : fixed)}
-            onToggle={checked => setHidden(meta.key, !checked)}
-          />
-        ))}
-      </ul>
+      <div className="max-h-96 overflow-y-auto p-2">
+        <ul className="space-y-0.5">
+          {metas.map(meta => (
+            <ColumnSettingRow
+              dragging={draggingKey === meta.key}
+              key={meta.key}
+              meta={meta}
+              onDragEnd={() => setDraggingKey(null)}
+              onDragStart={() => setDraggingKey(meta.key)}
+              onDrop={fromKey => move(fromKey, meta.key)}
+              onSetFixed={fixed => setFixed(meta.key, meta.fixed === fixed ? undefined : fixed)}
+              onToggle={checked => setHidden(meta.key, !checked)}
+            />
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }
@@ -84,7 +86,7 @@ function ColumnSettingRow<RecordType extends AnyObject>({
   return (
     <li
       className={cn(
-        'flex items-center gap-1 rounded px-1 py-1 transition-colors',
+        'group flex items-center gap-2 rounded px-2 py-1.5 transition-colors hover:bg-accent',
         over && 'bg-accent',
         dragging && 'opacity-50'
       )}
@@ -110,37 +112,65 @@ function ColumnSettingRow<RecordType extends AnyObject>({
       }}
       onDragStartCapture={event => event.dataTransfer.setData('text/plain', meta.key)}
     >
-      <GripVertical className="size-4 cursor-grab text-muted-foreground" />
+      {/* 拖拽手柄 */}
+      <div className="flex cursor-grab items-center text-muted-foreground">
+        <svg
+          className="size-4"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          viewBox="0 0 24 24"
+        >
+          <circle cx="9" cy="5" r="1" />
+          <circle cx="9" cy="12" r="1" />
+          <circle cx="9" cy="19" r="1" />
+          <circle cx="15" cy="5" r="1" />
+          <circle cx="15" cy="12" r="1" />
+          <circle cx="15" cy="19" r="1" />
+        </svg>
+      </div>
+
+      {/* 显示/隐藏 Checkbox */}
       <Checkbox
         checked={!meta.hidden}
         className="flex-1"
         onChange={event => onToggle(event.target.checked)}
       >
-        <span className="truncate">{meta.label}</span>
+        <span className="truncate text-sm">{meta.label}</span>
       </Checkbox>
-      <Tooltip title="固定到左侧">
-        <Button
-          aria-label={`固定 ${meta.label} 到左侧`}
-          icon={<ArrowLeftToLine className="size-3.5" />}
-          onClick={() => onSetFixed('left')}
-          size="small"
-          type={meta.fixed === 'left' ? 'primary' : 'text'}
-        />
-      </Tooltip>
-      <Tooltip title="固定到右侧">
-        <Button
-          aria-label={`固定 ${meta.label} 到右侧`}
-          icon={<ArrowRightToLine className="size-3.5" />}
-          onClick={() => onSetFixed('right')}
-          size="small"
-          type={meta.fixed === 'right' ? 'primary' : 'text'}
-        />
-      </Tooltip>
-      {meta.fixed ? (
-        <span className="text-muted-foreground" title="已固定">
-          <PinOff className="size-3.5" />
-        </span>
-      ) : null}
+
+      {/* 操作按钮组 */}
+      <div className="flex items-center gap-1">
+        {/* 固定到左侧 */}
+        <Tooltip title="固定到左侧">
+          <Button
+            icon={
+              <Pin
+                className={cn('size-3.5', meta.fixed === 'left' && '!text-blue-500')}
+                style={{ transform: 'rotate(-45deg)' }}
+              />
+            }
+            onClick={() => onSetFixed('left')}
+            size="small"
+            type="text"
+          />
+        </Tooltip>
+
+        {/* 固定到右侧 */}
+        <Tooltip title="固定到右侧">
+          <Button
+            icon={
+              <Pin
+                className={cn('size-3.5', meta.fixed === 'right' && '!text-blue-500')}
+                style={{ transform: 'rotate(45deg)' }}
+              />
+            }
+            onClick={() => onSetFixed('right')}
+            size="small"
+            type="text"
+          />
+        </Tooltip>
+      </div>
     </li>
   )
 }
