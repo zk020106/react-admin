@@ -1,126 +1,257 @@
-import { Button, Popover, Space, Table } from 'antd'
+import { Button, Dropdown, Segmented, Space, Table, Tooltip, type TableProps } from 'antd'
 import type { AnyObject } from 'antd/es/_util/type'
-import { RefreshCw, Settings } from 'lucide-react'
-import { useMemo } from 'react'
+import type { TableRowSelection } from 'antd/es/table/interface'
+import { Columns3, RefreshCw, Rows3, Settings2, X, type LucideIcon } from 'lucide-react'
+import { useMemo, useState, type Key } from 'react'
 
-import { ColumnSettingPanel } from '@/components/admin/table/column-setting-panel'
-import { useColumnState } from '@/components/admin/table/use-column-state'
+import { usePermissions } from '@/components/has-permission'
 import { cn } from '@/lib/utils'
-import type { MCTableColumn, MCTableProps } from './types'
-import { ensureColumnLabel } from './utils'
+import { buildActionColumn } from './action-column'
+import { ColumnSettingPanel } from './column-setting-panel'
+import type { MCTableColumn, MCTableProps, MCTableBatchContext } from './types'
+import { useColumnState } from './use-column-state'
 
-/**
- * 构建操作列配置
- */
-function buildActionColumn<T extends AnyObject>(
-  actions: MCTableProps<T>['actions'],
-  title: string,
-  width: number
-): MCTableColumn<T> {
-  return {
-    fixed: 'right',
-    key: 'actions',
-    render: (_: unknown, record: T) => (
-      <Space size="small">
-        {actions!
-          .filter(action => {
-            if (typeof action.visible === 'function') {
-              return action.visible(record)
-            }
-            return action.visible !== false
-          })
-          .map((action, index) => (
-            <Button
-              key={index}
-              danger={action.danger}
-              onClick={() => action.onClick(record)}
-              size="small"
-              type={action.type ?? 'link'}
-            >
-              {action.label}
-            </Button>
-          ))}
-      </Space>
-    ),
-    title,
-    width
-  }
+type TableSize = NonNullable<TableProps<AnyObject>['size']>
+
+interface MCActionColumnCompact {
+  title?: string
+  width?: number
 }
 
-/**
- * MCTable 组件 - 基于 Ant Design Table 的封装
+/** MCTable 组件 - 基于 Ant Design Table 的封装。
  *
  * 特性：
  * 1. 完全继承 Ant Design Table 的所有原生属性
- * 2. 扩展了操作列（actions）的便捷配置
- * 3. 支持列标签（columnLabel）用于列设置面板
- * 4. 集成工具栏（刷新、列设置、全屏）
- */
+ * 2. 强类型操作列（permission 过滤 / 二次确认 / loading / 更多折叠）
+ * 3. 工具栏（刷新 / 密度 / 列设置 / 自定义入口）
+ * 4. 行批量选择工具栏
+ * 5. 列状态持久化（顺序、显隐、固定） */
 export function MCTable<RecordType extends AnyObject>({
+  actionColumn,
   actions,
-  actionColumnTitle = '操作',
-  actionColumnWidth = 150,
+  actionColumnTitle,
+  actionColumnWidth,
+  batchToolbar,
   columns,
+  onRefresh,
+  pagination,
   persistKey,
   rootClassName,
+  rowSelection,
+  size = 'middle',
+  table,
   toolbar,
-  ...antdTableProps
+  toolbarLeft,
+  tools,
+  ...tableProps
 }: MCTableProps<RecordType>) {
-  // 准备列配置（确保每列都有 columnLabel）
-  const preparedColumns = useMemo(() => columns.map(ensureColumnLabel), [columns])
+  const [tableSize, setTableSize] = useState<TableSize>(size)
+  const [refreshing, setRefreshing] = useState(false)
+  const [selectedRowKeys, setSelectedRowKeys] = useState<Key[]>([])
+  const [selectedRows, setSelectedRows] = useState<RecordType[]>([])
+  const permissions = usePermissions()
 
-  // 列状态管理（用于列设置）
-  const columnStateController = useColumnState({
-    columns: preparedColumns as any,
-    persistKey
-  })
+  // useTable 接入：table prop 的字段作为默认值，显式 prop 优先（允许覆盖）。
+  const binding = table ?? {}
+  const resolvedLoading = tableProps.loading ?? binding.loading
+  const resolvedDataSource = tableProps.dataSource ?? binding.tableData
+  const resolvedPagination = pagination ?? binding.pagination
+  const resolvedRowSelectionProp = rowSelection ?? binding.rowSelection
+  const resolvedOnRefresh = onRefresh ?? binding.refresh
 
-  // 构建最终的列配置（包含操作列）
-  const finalColumns = useMemo(() => {
-    const cols: MCTableColumn<RecordType>[] = [...(columnStateController.columns as any)]
-
-    // 如果有 actions，添加操作列
-    if (actions && actions.length > 0) {
-      cols.push(buildActionColumn(actions, actionColumnTitle, actionColumnWidth))
+  // 把 actionColumnTitle/actionColumnWidth 合并进 actionColumn，统一单一入口。
+  const resolvedActionColumn = useMemo(() => {
+    if (actionColumn) {
+      return actionColumn
     }
 
-    return cols
-  }, [actions, actionColumnTitle, actionColumnWidth, columnStateController.columns])
+    const compact: MCActionColumnCompact = {}
+    if (actionColumnTitle !== undefined) {
+      compact.title = actionColumnTitle
+    }
+    if (actionColumnWidth !== undefined) {
+      compact.width = actionColumnWidth
+    }
+    return Object.keys(compact).length > 0 ? compact : undefined
+  }, [actionColumn, actionColumnTitle, actionColumnWidth])
 
-  // 是否显示工具栏
-  const showToolbar = toolbar && (toolbar.refresh || toolbar.columnSetting || toolbar.fullscreen)
+  // 操作列在进入列状态前追加，使其顺序、固定也能被统一管理。
+  const sourceColumns = useMemo<MCTableColumn<RecordType>[]>(() => {
+    if (!actions || actions.length === 0) {
+      return columns
+    }
+
+    const actionCol: MCTableColumn<RecordType> = {
+      ...buildActionColumn(actions, permissions, resolvedActionColumn),
+      hideInSetting: true
+    }
+    return [...columns, actionCol]
+  }, [actions, columns, permissions, resolvedActionColumn])
+
+  const columnState = useColumnState({ columns: sourceColumns, persistKey })
+
+  const selectionEnabled = Boolean(resolvedRowSelectionProp)
+  const clearSelection = () => {
+    setSelectedRowKeys([])
+    setSelectedRows([])
+  }
+
+  const resolvedRowSelection = useMemo<TableRowSelection<RecordType> | undefined>(() => {
+    if (!selectionEnabled) {
+      return undefined
+    }
+
+    const overrides =
+      typeof resolvedRowSelectionProp === 'object' ? resolvedRowSelectionProp : undefined
+    // 受控模式：外部传入 selectedRowKeys 时优先使用（配合 useTable 的跨页选择）；
+    // 否则退回内部 state（MCTable 自管选择的兼容模式）。
+    const isControlled = overrides?.selectedRowKeys !== undefined
+    return {
+      ...overrides,
+      selectedRowKeys: isControlled ? overrides?.selectedRowKeys : selectedRowKeys,
+      onChange: (keys, rows, info) => {
+        if (!isControlled) {
+          setSelectedRowKeys(keys)
+          setSelectedRows(rows)
+        }
+        overrides?.onChange?.(keys, rows, info)
+      }
+    }
+  }, [resolvedRowSelectionProp, selectedRowKeys, selectionEnabled])
+
+  const showBatchToolbar = Boolean(batchToolbar && selectedRowKeys.length > 0)
+  const showTools = Boolean(
+    tools?.columns || tools?.density || (tools?.refresh && resolvedOnRefresh)
+  )
+  const showToolbar = Boolean(toolbar || toolbarLeft || showTools || showBatchToolbar)
+
+  async function handleRefresh() {
+    if (!resolvedOnRefresh || refreshing) {
+      return
+    }
+
+    setRefreshing(true)
+    try {
+      await resolvedOnRefresh()
+    } finally {
+      setRefreshing(false)
+    }
+  }
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-2" data-slot="mc-table">
-      {/* 工具栏 */}
+    <div className="flex h-full min-h-0 flex-col gap-3" data-slot="mc-table">
       {showToolbar ? (
-        <div className="flex shrink-0 justify-end gap-2">
-          {toolbar.refresh ? (
-            <Button
-              icon={<RefreshCw className="size-4" />}
-              onClick={toolbar.onRefresh}
-              size="small"
-              type="text"
-            />
-          ) : null}
-          {toolbar.columnSetting ? (
-            <Popover
-              content={<ColumnSettingPanel controller={columnStateController} />}
-              placement="bottomRight"
-              trigger="click"
-            >
-              <Button icon={<Settings className="size-4" />} size="small" type="text" />
-            </Popover>
-          ) : null}
+        <div
+          className="flex min-h-8 flex-wrap items-center justify-between gap-2"
+          data-slot="mc-table-toolbar"
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            {showBatchToolbar ? (
+              <Space size="small" wrap>
+                <span className="text-sm text-muted-foreground">
+                  已选 {selectedRowKeys.length} 项
+                </span>
+                {batchToolbar?.({
+                  clearSelection,
+                  selectedRowKeys,
+                  selectedRows
+                } as MCTableBatchContext<RecordType>)}
+                <Button
+                  icon={<X className="size-4" />}
+                  onClick={clearSelection}
+                  size="small"
+                  type="text"
+                >
+                  取消选择
+                </Button>
+              </Space>
+            ) : (
+              toolbarLeft
+            )}
+          </div>
+          <Space size="small" wrap>
+            {toolbar}
+            {tools?.refresh && resolvedOnRefresh ? (
+              <TableToolButton
+                icon={RefreshCw}
+                label="刷新表格"
+                loading={refreshing}
+                onClick={() => void handleRefresh()}
+              />
+            ) : null}
+            {tools?.density ? (
+              <Dropdown
+                popupRender={() => (
+                  <div className="rounded-md border bg-popover p-2 shadow-md">
+                    <Segmented<TableSize>
+                      onChange={setTableSize}
+                      options={[
+                        { label: '紧凑', value: 'small' },
+                        { label: '默认', value: 'middle' },
+                        { label: '宽松', value: 'large' }
+                      ]}
+                      value={tableSize}
+                    />
+                  </div>
+                )}
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <span>
+                  <TableToolButton icon={Rows3} label="表格密度" />
+                </span>
+              </Dropdown>
+            ) : null}
+            {tools?.columns ? (
+              <Dropdown
+                popupRender={() => <ColumnSettingPanel controller={columnState} />}
+                placement="bottomRight"
+                trigger={['click']}
+              >
+                <span>
+                  <TableToolButton icon={Columns3} label="列设置" />
+                </span>
+              </Dropdown>
+            ) : null}
+          </Space>
         </div>
       ) : null}
-
-      {/* 表格 */}
       <Table<RecordType>
-        {...antdTableProps}
-        columns={finalColumns}
+        className="min-h-0 flex-1"
         rootClassName={cn('mc-table-fill', rootClassName)}
+        columns={columnState.columns}
+        rowSelection={resolvedRowSelection}
+        size={tableSize}
+        {...tableProps}
+        dataSource={resolvedDataSource}
+        loading={resolvedLoading}
+        pagination={resolvedPagination ?? { pageSize: 10, showSizeChanger: false }}
       />
     </div>
+  )
+}
+
+function TableToolButton({
+  icon: Icon = Settings2,
+  label,
+  loading,
+  onClick
+}: {
+  icon?: LucideIcon
+  label: string
+  loading?: boolean
+  onClick?: () => void
+}) {
+  return (
+    <Tooltip title={label}>
+      <Button
+        aria-label={label}
+        icon={<Icon className="size-4" />}
+        loading={loading}
+        onClick={onClick}
+        size="small"
+        type="text"
+      />
+    </Tooltip>
   )
 }

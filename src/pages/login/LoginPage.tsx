@@ -16,7 +16,6 @@ import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from
 import { authApi } from '@/api/auth'
 import { useSystemDark } from '@/hooks/use-system-dark'
 import { cn } from '@/lib/utils'
-import { navigationKeys, notificationKeys } from '@/lib/query-keys'
 import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { applyAdminTheme } from '@/theme'
@@ -77,8 +76,8 @@ export function LoginPage() {
     mutationFn: authApi.login,
     onSuccess: session => {
       authStore.getState().setSession(session)
-      void queryClient.invalidateQueries({ queryKey: navigationKeys.all })
-      void queryClient.invalidateQueries({ queryKey: notificationKeys.all })
+      // 清空上一个会话可能残留的业务缓存，再让目标页按需重新拉取。
+      queryClient.clear()
       void navigate({ to: '/' })
     }
   })

@@ -1,0 +1,284 @@
+
+[31m⎯⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 1 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/__tests__/app-shell.test.tsx[2m > [22madmin app shell[2m > [22mopens the role management page from the sidebar
+[31m[1mTestingLibraryElementError[22m[39m: Found multiple elements with the text: 菜单
+
+Here are the matching elements:
+
+Ignored nodes: comments, script, style
+[36m<th[39m
+  [33mclass[39m=[32m"w-[260px] border-b px-3 py-2 text-left font-medium"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</th>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+Ignored nodes: comments, script, style
+[36m<span[39m
+  [33mclass[39m=[32m"ant-badge-status-text"[39m
+[36m>[39m
+  [0m菜单[0m
+[36m</span>[39m
+
+(If this is intentional, then use the `*AllBy*` variant of the query (like `queryAllByText`, `getAllByText`, or `findAllByText`)).
+
+Ignored nodes: comments, script, style
+[36m<div[39m
+  [33mclass[39m=[32m"flex min-h-0 w-full flex-1 flex-col gap-4"[39m
+  [33mdata-route-key[39m=[32m"/system/roles"[39m
+  [33mdata-slot[39m=[32m"page-surface"[39m
+[36m>[39m
+  [36m<div[39m
+    [33mclass[39m=[32m"relative flex min-h-full flex-col gap-4 p-4"[39m
+    [33mdata-slot[39m=[32m"page"[39m
+  [36m>[39m
+    [36m<div[39m
+      [33mclass[39m=[32m"grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)] gap-4"[39m
+      [33mdata-slot[39m=[32m"page-content"[39m
+    [36m>[39m
+      [36m<div[39m
+        [33mclass[39m=[32m"flex h-full w-full overflow-hidden bg-background"[39m
+        [33mdata-slot[39m=[32m"page-layout"[39m
+      [36m>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"relative h-full min-w-0 shrink-0 overflow-hidden"[39m
+          [33mstyle[39m=[32m"border-right: 1px solid var(--border); background-color: var(--card); width: 280px; flex-basis: 280px; max-width: 280px;"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"h-full w-full overflow-auto"[39m
+            [33mstyle[39m=[32m"min-width: 280px;"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex h-full min-h-0 flex-col gap-3 p-4"[39m
+            [36m>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex shrink-0 items-center justify-between"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-sm font-semibold"[39m
+                [36m>[39m
+                  [0m角色名称[0m
+                [36m</span>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"text-xs text-muted-foreground"[39m
+                [36m>[39m
+                  [0m9[0m
+                  [0m 个[0m
+                [36m</span>[39m
+              [36m</div>[39m
+              [36m<div[39m
+                [33mclass[39m=[32m"flex shrink-0 gap-2"[39m
+              [36m>[39m
+                [36m<span[39m
+                  [33mclass[39m=[32m"ant-input-affix-wrapper ant-input-affix-wrapper-sm css-dev-only-do-not-override-ypkju9 ant-input-outlined css-var-_r_0_ ant-input-css-var"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ant-input-prefix"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-search size-4"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[39m
+                      [33mstroke-linejoin[39m=[32m"round"[39m
+                      [33mstroke-width[39m=[32m"2"[39m
+                      [33mviewBox[39m=[32m"0 0 24 24"[39m
+                      [33mwidth[39m=[32m"24"[39m
+                      [33mxmlns[39m=[32m"http://www.w3.org/2000/svg"[39m
+                    [36m>[39m
+                      [36m<path[39m
+                        [33md[39m=[32m"m21 21-4.34-4.34"[39m
+                      [36m/>[39m
+                      [36m<circle[39m
+                        [33mcx[39m=[32m"11"[39m
+                        [33mcy[39m=[32m"11"[39m
+                        [33mr[39m=[32m"8"[39m
+                      [36m/>[39m
+                    [36m</svg>[39m
+                  [36m</span>[39m
+                  [36m<input[39m
+                    [33mclass[39m=[32m"ant-input ant-input-sm css-dev-only-do-not-override-ypkju9"[39m
+                    [33mplaceholder[39m=[32m"搜索名称/编码"[39m
+                    [33mtype[39m=[32m"text"[39m
+                    [33mvalue[39m=[32m""[39m
+                  [36m/>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ant-input-suffix"[39m
+                  [36m>[39m
+                    [36m<button[39m
+                      [33mclass[39m=[32m"ant-input-clear-icon ant-input-clear-icon-hidden"[39m
+                      [33mtype[39m=[32m"button"[39m
+                    [36m>[39m
+                      [36m<span[39m
+                        [33maria-label[39m=[32m"close-circle"[39m
+                        [33mclass[39m=[32m"anticon anticon-close-circle"[39m
+                        [33mrole[39m=[32m"img"[39m
+                      [36m>[39m
+                        [36m<svg[39m
+                          [33maria-hidden[39m=[32m"true"[39m
+                          [33mdata-icon[39m=[32m"close-circle"[39m
+                          [33mfill[39m=[32m"currentColor"[39m
+                          [33mfill-rule[39m=[32m"evenodd"[39m
+                          [33mfocusable[39m=[32m"false"[39m
+                          [33mheight[39m=[32m"1em"[39m
+                          [33mviewBox[39m=[32m"64 64 896 896"[39m
+                          [33mwidth[39m=[32m"1em"[39m
+                        [36m>[39m
+                          [36m<path[39m
+                            [33md[39m=[32m"M512 64c247.4 0 448 200.6 448 448S759.4 960 512 960 64 759.4 64 512 264.6 64 512 64zm127.98 274.82h-.04l-.08.06L512 466.75 384.14 338.88c-.04-.05-.06-.06-.08-.06a.12.12 0 00-.07 0c-.03 0-.05.01-.09.05l-45.02 45.02a.2.2 0 00-.05.09.12.12 0 000 .07v.02a.27.27 0 00.06.06L466.75 512 338.88 639.86c-.05.04-.06.06-.06.08a.12.12 0 000 .07c0 .03.01.05.05.09l45.02 45.02a.2.2 0 00.09.05.12.12 0 00.07 0c.02 0 .04-.01.08-.05L512 557.25l127.86 127.87c.04.04.06.05.08.05a.12.12 0 00.07 0c.03 0 .05-.01.09-.05l45.02-45.02a.2.2 0 00.05-.09.12.12 0 000-.07v-.02a.27.27 0 00-.05-.06L557.25 512l127.87-127.86c.04-.04.05-.06.05-.08a.12.12 0 000-.07c0-.03-.01-.05-.05-.09l-45.02-45.02a.2.2 0 00-.09-.05.12.12 0 00-.07 0z"[39m
+                          [36m/>[39m
+                        [36m</svg>[39m
+                      [36m</span>[39m
+                    [36m</button>[39m
+                  [36m</span>[39m
+                [36m</span>[39m
+                [36m<button[39m
+                  [33mclass[39m=[32m"ant-btn css-dev-only-do-not-override-ypkju9 css-var-_r_0_ ant-btn-primary ant-btn-color-primary ant-btn-variant-solid ant-btn-sm ant-btn-icon-only"[39m
+                  [33mtype[39m=[32m"button"[39m
+                [36m>[39m
+                  [36m<span[39m
+                    [33mclass[39m=[32m"ant-btn-icon"[39m
+                  [36m>[39m
+                    [36m<svg[39m
+                      [33maria-hidden[39m=[32m"true"[39m
+                      [33mclass[39m=[32m"lucide lucide-plus size-4"[39m
+                      [33mfill[39m=[32m"none"[39m
+                      [33mheight[39m=[32m"24"[39m
+                      [33mstroke[39m=[32m"currentColor"[39m
+                      [33mstroke-linecap[39m=[32m"round"[...
+[90m [2m❯[22m Object.getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/config.js:[2m37:19[22m[39m
+[90m [2m❯[22m getElementError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m20:35[22m[39m
+[90m [2m❯[22m getMultipleElementsFoundError node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m23:10[22m[39m
+[90m [2m❯[22m node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m55:13[22m[39m
+[90m [2m❯[22m getByText node_modules/.pnpm/@testing-library+dom@10.4.1/node_modules/@testing-library/dom/dist/query-helpers.js:[2m95:19[22m[39m
+[36m [2m❯[22m src/__tests__/app-shell.test.tsx:[2m500:32[22m[39m
+    [90m498|[39m     expect(await within(pageSurface).findByText('功能权限')).toBeInTheDocu…
+    [90m499|[39m     [34mexpect[39m([34mwithin[39m(pageSurface)[33m.[39m[34mgetByText[39m([32m'角色用户'[39m))[33m.[39m[34mtoBeInTheDocument[39m()
+    [90m500|[39m     [34mexpect[39m([34mwithin[39m(pageSurface)[33m.[39m[34mgetByText[39m([32m'菜单'[39m))[33m.[39m[34mtoBeInTheDocument[39m()
+    [90m   |[39m                                [31m^[39m
+    [90m501|[39m     [34mexpect[39m([34mwithin[39m(pageSurface)[33m.[39m[34mgetByText[39m([32m'权限'[39m))[33m.[39m[34mtoBeInTheDocument[39m()
+    [90m502|[39m     [34mexpect[39m([34mwithin[39m(pageSurface)[33m.[39m[34mgetByText[39m([32m'保存权限'[39m))[33m.[39m[34mtoBeInTheDocument[39m()
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯[22m[39m
+

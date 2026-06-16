@@ -4,9 +4,9 @@ import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 
 import type { FormSchema } from '@/types/admin'
 import type { FormApi } from '@/utils/form-api'
-import { renderFormField } from './form-field-registry'
+import { renderFormField } from './field-registry'
 
-// 函数：toNamePath。把点路径字段名转换为 antd 的 namePath 数组。
+// 把点路径字段名转换为 antd 的 namePath 数组。
 function toNamePath(fieldName: string) {
   return fieldName.includes('.') ? fieldName.split('.') : fieldName
 }
@@ -14,8 +14,17 @@ function toNamePath(fieldName: string) {
 // 勾选类控件的受控属性是 checked 而不是 value。
 const CHECKED_COMPONENTS = new Set(['checkbox', 'switch'])
 
-/** schema 驱动的 antd 表单：挂载 FormApi 并按字段清单渲染。
- *  消费方需位于 AdminConfigProvider 内以获得主题与语言上下文。 */
+interface SchemaFormProps extends Omit<FormProps, 'form' | 'onFinish' | 'onValuesChange'> {
+  api: FormApi
+  children?: ReactNode
+  form: FormInstance
+  grid?: boolean
+  gutter?: number
+  onFinish?: (values: Record<string, unknown>) => void
+  onValuesChange?: (changedValues: Record<string, unknown>, values: Record<string, unknown>) => void
+}
+
+/** schema 驱动的 antd 表单：挂载 FormApi 并按字段清单渲染。 */
 export function SchemaForm({
   api,
   children,
@@ -25,21 +34,16 @@ export function SchemaForm({
   onFinish,
   onValuesChange,
   ...antdFormProps
-}: {
-  api: FormApi
-  children?: ReactNode
-  form: FormInstance
-  grid?: boolean
-  gutter?: number
-  onFinish?: (values: Record<string, unknown>) => void
-  onValuesChange?: (changedValues: Record<string, unknown>, values: Record<string, unknown>) => void
-} & Omit<FormProps, 'form' | 'onFinish' | 'onValuesChange'>) {
-  // 订阅 FormApi 的 schema 快照，使 updateSchema() 后表单能响应式重渲染。
+}: SchemaFormProps) {
+  // 订阅 FormApi 的 schema 快照，updateSchema() 后表单能响应式重渲染。
   const schema = useSyncExternalStore(api.subscribe, api.getSchema, api.getSchema)
 
   useEffect(() => {
     // 把 antd FormInstance 适配成 FormApi 的宿主表单契约；values 用 getter 保证读到活值。
     api.mount({
+      get values() {
+        return form.getFieldsValue(true) as Record<string, unknown>
+      },
       reset: () => form.resetFields(),
       setValue: (fieldName, value) => form.setFieldValue(toNamePath(fieldName), value),
       submit: () => {},
@@ -50,9 +54,6 @@ export function SchemaForm({
         } catch (errorInfo) {
           return { errors: errorInfo as Record<string, unknown>, valid: false }
         }
-      },
-      get values() {
-        return form.getFieldsValue(true) as Record<string, unknown>
       }
     })
   }, [api, form])

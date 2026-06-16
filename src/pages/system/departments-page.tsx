@@ -9,6 +9,7 @@ import { Page } from '@/components/page'
 import { useTable } from '@/hooks/use-table'
 import { systemQueries } from '@/pages/admin-queries'
 import type { DepartmentRecord } from '@/mock/admin-mock'
+import { normalizeKeyword } from '@/utils/filter'
 
 type DepartmentTableFilters = {
   name?: unknown
@@ -46,16 +47,6 @@ const buildDepartmentTree = (departments: DepartmentRecord[]): DepartmentTreeRec
   })
 
   return roots
-}
-
-function normalizeKeyword(value: unknown) {
-  if (typeof value === 'string') {
-    return value.trim().toLowerCase()
-  }
-  if (value === null || value === undefined) {
-    return ''
-  }
-  return String(value).trim().toLowerCase()
 }
 
 function buildDepartmentRelations(departments: DepartmentRecord[]): DepartmentRelations {

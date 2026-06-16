@@ -9,6 +9,7 @@ import { useTable } from '@/hooks/use-table'
 import { Page } from '@/components/page'
 import { systemQueries } from '@/pages/admin-queries'
 import type { MenuManagementRecord } from '@/mock/admin-mock'
+import { normalizeKeyword } from '@/utils/filter'
 
 type MenuTableFilters = {
   menuCode?: unknown
@@ -48,16 +49,6 @@ const buildMenuTree = (menus: MenuManagementRecord[]): MenuTreeRecord[] => {
   })
 
   return roots
-}
-
-function normalizeKeyword(value: unknown) {
-  if (typeof value === 'string') {
-    return value.trim().toLowerCase()
-  }
-  if (value === null || value === undefined) {
-    return ''
-  }
-  return String(value).trim().toLowerCase()
 }
 
 function buildMenuRelations(menus: MenuManagementRecord[]): MenuRelations {

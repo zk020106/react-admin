@@ -3,11 +3,11 @@ import userEvent from '@testing-library/user-event'
 import { act } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { AdminDrawer } from '@/components/admin/popup/admin-drawer'
-import { AdminModal } from '@/components/admin/popup/admin-modal'
+import { MCDrawer } from '@/components/mc/popup/mc-drawer'
+import { MCModal } from '@/components/mc/popup/mc-modal'
 import { DrawerApi, ModalApi } from '@/utils/popup-api'
 
-describe('admin modal', () => {
+describe('mc modal', () => {
   afterEach(() => {
     cleanup()
   })
@@ -15,7 +15,7 @@ describe('admin modal', () => {
   it('opens with title and payload content', async () => {
     const api = new ModalApi({ title: '新增用户' })
 
-    render(<AdminModal api={api}>表单内容</AdminModal>)
+    render(<MCModal api={api}>表单内容</MCModal>)
     act(() => {
       api.setData({ id: 'user-root' }).open()
     })
@@ -29,7 +29,7 @@ describe('admin modal', () => {
   it('blocks closing when onBeforeClose returns false', async () => {
     const api = new ModalApi({ onBeforeClose: () => false, title: '受守卫弹窗' })
 
-    render(<AdminModal api={api} />)
+    render(<MCModal api={api} />)
     act(() => {
       api.open()
     })
@@ -43,7 +43,7 @@ describe('admin modal', () => {
   it('marks the confirm button as loading while submitting', async () => {
     const api = new ModalApi({ title: '提交中弹窗' })
 
-    render(<AdminModal api={api} />)
+    render(<MCModal api={api} />)
     act(() => {
       api.open()
       api.lock()
@@ -60,7 +60,7 @@ describe('admin modal', () => {
     const onConfirm = vi.fn()
     const api = new ModalApi({ title: '确认弹窗' })
 
-    render(<AdminModal api={api} onConfirm={onConfirm} />)
+    render(<MCModal api={api} onConfirm={onConfirm} />)
     act(() => {
       api.open()
     })
@@ -72,7 +72,7 @@ describe('admin modal', () => {
   })
 })
 
-describe('admin drawer', () => {
+describe('mc drawer', () => {
   afterEach(() => {
     cleanup()
   })
@@ -82,9 +82,9 @@ describe('admin drawer', () => {
     const api = new DrawerApi({ title: '抽屉表单' })
 
     render(
-      <AdminDrawer api={api} onConfirm={onConfirm}>
+      <MCDrawer api={api} onConfirm={onConfirm}>
         抽屉内容
-      </AdminDrawer>
+      </MCDrawer>
     )
     act(() => {
       api.open()

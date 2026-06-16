@@ -1,5 +1,4 @@
-import { Modal } from 'antd'
-import type { ModalFuncProps } from 'antd'
+import { Modal, type ModalFuncProps } from 'antd'
 
 /** 统一的确认对话框配置 */
 export interface ConfirmOptions {

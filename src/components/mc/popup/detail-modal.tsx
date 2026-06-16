@@ -28,7 +28,41 @@ export interface DetailModalProps<T extends Record<string, unknown>> {
 const modalMotionProps =
   import.meta.env.MODE === 'test' ? { maskTransitionName: '', transitionName: '' } : undefined
 
-/** 详情展示弹窗：用于只读数据展示 */
+function renderFieldValue(field: DetailField, data: Record<string, unknown> | null): ReactNode {
+  if (!data) {
+    return '-'
+  }
+
+  if (typeof field.value === 'function') {
+    return field.value(data)
+  }
+
+  const value = data[field.value]
+
+  if (field.render) {
+    return field.render(value, data)
+  }
+
+  if (value === null || value === undefined || value === '') {
+    return '-'
+  }
+
+  if (typeof value === 'object') {
+    return JSON.stringify(value)
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  return '-'
+}
+
+/** 详情展示弹窗：用于只读数据展示。 */
 export function DetailModal<T extends Record<string, unknown>>({
   data,
   fields,
@@ -37,32 +71,6 @@ export function DetailModal<T extends Record<string, unknown>>({
   title = '详情',
   width = 600
 }: DetailModalProps<T>) {
-  function renderFieldValue(field: DetailField) {
-    if (!data) {
-      return '-'
-    }
-
-    if (typeof field.value === 'function') {
-      return field.value(data)
-    }
-
-    const value = data[field.value]
-
-    if (field.render) {
-      return field.render(value, data)
-    }
-
-    if (value === null || value === undefined || value === '') {
-      return '-'
-    }
-
-    if (typeof value === 'object') {
-      return JSON.stringify(value)
-    }
-
-    return String(value)
-  }
-
   return (
     <Modal
       {...modalMotionProps}
@@ -78,7 +86,7 @@ export function DetailModal<T extends Record<string, unknown>>({
             <div className="text-right text-sm font-medium text-muted-foreground">
               {field.label}:
             </div>
-            <div className="col-span-2 text-sm">{renderFieldValue(field)}</div>
+            <div className="col-span-2 text-sm">{renderFieldValue(field, data)}</div>
           </div>
         ))}
       </div>

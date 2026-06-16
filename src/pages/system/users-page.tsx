@@ -1,11 +1,11 @@
+import { useDebounceFn } from 'ahooks'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button, Input, Tree } from 'antd'
 import type { DataNode } from 'antd/es/tree'
 import { Plus, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState, type Key } from 'react'
 
-import { confirmDelete } from '@/components/admin/popup'
-import { MCSearchForm, MCTable } from '@/components/mc'
+import { MCSearchForm, MCTable, confirmDelete } from '@/components/mc'
 import type { MCFormField, MCTableColumn } from '@/components/mc'
 import { Page } from '@/components/page'
 import { PageLayout } from '@/components/page-layout'
@@ -15,6 +15,7 @@ import { userMutations } from '@/pages/admin-mutations'
 import { useUserDetailDrawer } from '@/pages/user-detail-drawer'
 import { useUserFormDrawer } from '@/pages/user-form-drawer'
 import type { DepartmentRecord, UserRecord } from '@/mock/admin-mock'
+import { normalizeKeyword } from '@/utils/filter'
 
 type UserTableFilters = {
   dateRange?: unknown
@@ -81,23 +82,7 @@ function buildDepartmentTreeData(departments: DepartmentRecord[]): DataNode[] {
 }
 
 function getTreeNodeTitle(node: DataNode) {
-  if (typeof node.title === 'string') {
-    return node.title
-  }
-  if (node.title === null || node.title === undefined) {
-    return ''
-  }
-  return String(node.title)
-}
-
-function normalizeKeyword(value: unknown) {
-  if (typeof value === 'string') {
-    return value.trim().toLowerCase()
-  }
-  if (value === null || value === undefined) {
-    return ''
-  }
-  return String(value).trim().toLowerCase()
+  return typeof node.title === 'string' ? node.title : ''
 }
 
 function filterTreeData(nodes: DataNode[], keyword: string): DataNode[] {
@@ -207,6 +192,10 @@ function toTimestamp(value: unknown) {
     }
   }
 
+  if (typeof value !== 'string' && typeof value !== 'number') {
+    return undefined
+  }
+
   const timestamp = Date.parse(String(value).replace(' ', 'T'))
   return Number.isFinite(timestamp) ? timestamp : undefined
 }
@@ -312,9 +301,12 @@ const searchFields: MCFormField[] = [
 export function UsersPage() {
   const [selectedOrg, setSelectedOrg] = useState<Key[]>([])
   const [orgExpandedKeys, setOrgExpandedKeys] = useState<Key[]>([])
+  // orgSearchInput 即时跟随输入框；orgSearch 防抖后才更新，避免每次按键重算树过滤。
+  const [orgSearchInput, setOrgSearchInput] = useState('')
   const [orgSearch, setOrgSearch] = useState('')
+  const { run: debouncedSetOrgSearch } = useDebounceFn(setOrgSearch, { wait: 200 })
 
-  const usersQuery = useQuery(systemQueries.users())
+  const usersQuery = useQuery(systemQueries.usersAll())
   const { data: users = [], isLoading } = usersQuery
   const departmentsQuery = useQuery(systemQueries.departments())
   const { data: departments = [] } = departmentsQuery
@@ -357,13 +349,17 @@ export function UsersPage() {
         record,
         filters,
         selectedDepartmentSet,
-        new Set(getMatchedDepartmentTitles(orgTreeData, String(filters.searchText ?? '')))
+        new Set(getMatchedDepartmentTitles(orgTreeData, normalizeKeyword(filters.searchText)))
       ),
     [orgTreeData, selectedDepartmentSet]
   )
   const usersTable = useTable<UserRecord, UserTableFilters>({
     dataSource: users,
-    filter: filterUsers
+    filter: filterUsers,
+    // 客户端模式删除后需重新拉取全量数据，否则表格不刷新。
+    onChanged: () => {
+      void usersQuery.refetch()
+    }
   })
 
   const handleSearch = (values: Record<string, unknown>) => {
@@ -380,10 +376,10 @@ export function UsersPage() {
     usersTable.setPage(1)
   }
 
+  // 部门数据变化后，剔除已不存在的选中项。用 Set 做 O(1) 查找而非数组的 some。
   useEffect(() => {
-    setSelectedOrg(keys =>
-      keys.filter(key => allOrgKeys.some(orgKey => String(orgKey) === String(key)))
-    )
+    const knownKeys = new Set(allOrgKeys.map(key => String(key)))
+    setSelectedOrg(keys => keys.filter(key => knownKeys.has(String(key))))
   }, [allOrgKeys])
 
   useEffect(() => {
@@ -506,11 +502,14 @@ export function UsersPage() {
             <div className="shrink-0">
               <Input
                 allowClear
-                onChange={event => setOrgSearch(event.target.value)}
+                onChange={event => {
+                  setOrgSearchInput(event.target.value)
+                  debouncedSetOrgSearch(event.target.value)
+                }}
                 placeholder="搜索部门/公司"
                 prefix={<Search className="size-4" />}
                 size="small"
-                value={orgSearch}
+                value={orgSearchInput}
               />
             </div>
             <div className="min-h-0 flex-1 overflow-auto rounded-md border border-border/60 bg-background/40 p-2">
@@ -548,17 +547,20 @@ export function UsersPage() {
           <MCTable
             actions={[
               {
+                key: 'detail',
                 label: '详情',
                 onClick: openDetail,
                 type: 'link'
               },
               {
+                key: 'edit',
                 label: '修改',
                 onClick: openEdit,
                 type: 'link'
               },
               {
                 danger: true,
+                key: 'delete',
                 label: '删除',
                 onClick: async record => {
                   const confirmed = await confirmDelete(
@@ -573,24 +575,19 @@ export function UsersPage() {
               }
             ]}
             columns={columns}
-            dataSource={usersTable.pagedData}
+            // 客户端模式：分页与数据来自 useTable；loading 显式传 useQuery 的状态。
+            table={usersTable}
             loading={isLoading}
-            pagination={{
-              current: usersTable.pagination.current,
-              onChange: usersTable.setPage,
-              pageSize: usersTable.pagination.pageSize,
-              showQuickJumper: true,
-              showSizeChanger: true,
-              showTotal: total => `共 ${total} 条`,
-              total: usersTable.total
+            onRefresh={async () => {
+              await Promise.all([usersQuery.refetch(), departmentsQuery.refetch()])
             }}
             persistKey="users-table"
             rowKey="id"
             scroll={{ x: 1600 }}
             size="small"
-            toolbar={{
-              columnSetting: true,
-              onRefresh: () => usersQuery.refetch(),
+            tools={{
+              columns: true,
+              density: false,
               refresh: true
             }}
           />

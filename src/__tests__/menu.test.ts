@@ -43,7 +43,7 @@ describe('menu helpers', () => {
   })
 
   it('builds workspace search candidates from menus permissions and users', async () => {
-    const [users, menus] = await Promise.all([adminMockApi.users(), adminMockApi.menus()])
+    const [users, menus] = await Promise.all([adminMockApi.usersAll(), adminMockApi.menus()])
 
     expect(buildWorkspaceSearchItems(mockAdminMenu, users, menus)).toEqual(
       expect.arrayContaining([

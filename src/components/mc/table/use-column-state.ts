@@ -1,15 +1,15 @@
-import type { AnyObject } from 'antd/es/_util/type'
 import { useLocalStorageState, useMemoizedFn } from 'ahooks'
+import type { AnyObject } from 'antd/es/_util/type'
 import { useMemo, useState } from 'react'
 
-import { getColumnKey, getColumnLabel } from './column-utils'
-import type { AdminColumn, AdminTableColumnState, ColumnFixed } from './types'
+import { getColumnKey, getColumnLabel } from './utils'
+import type { ColumnFixed, MCTableColumn, MCTableColumnState } from './types'
 
-const emptyState: AdminTableColumnState = { fixed: {}, hidden: [], order: [] }
+const emptyState: MCTableColumnState = { fixed: {}, hidden: [], order: [] }
 
 /** 列设置面板使用的单列元信息。 */
 export interface ColumnMeta<RecordType extends AnyObject> {
-  column: AdminColumn<RecordType>
+  column: MCTableColumn<RecordType>
   fixed?: ColumnFixed
   hidden: boolean
   key: string
@@ -19,14 +19,14 @@ export interface ColumnMeta<RecordType extends AnyObject> {
 }
 
 export interface UseColumnStateOptions<RecordType extends AnyObject> {
-  columns: AdminColumn<RecordType>[]
+  columns: MCTableColumn<RecordType>[]
   /** 提供后列状态持久化到 localStorage，并以此为存储键。 */
   persistKey?: string
 }
 
 export interface ColumnStateController<RecordType extends AnyObject> {
   /** 按当前顺序、可见性和固定方向计算出的最终 antd 列。 */
-  columns: AdminColumn<RecordType>[]
+  columns: MCTableColumn<RecordType>[]
   /** 列设置面板用的全部列元信息，按当前顺序排列。 */
   metas: ColumnMeta<RecordType>[]
   /** 是否存在任何与默认值不同的列状态。 */
@@ -44,11 +44,13 @@ export function useColumnState<RecordType extends AnyObject>({
   persistKey
 }: UseColumnStateOptions<RecordType>): ColumnStateController<RecordType> {
   // 持久化与内存态共用同一份结构，仅存储介质不同。
-  const persisted = useLocalStorageState<AdminTableColumnState>(
-    persistKey ?? 'admin-table-columns:__noop__',
-    { defaultValue: emptyState, listenStorageChange: true }
-  )
-  const memoryState = useState<AdminTableColumnState>(emptyState)
+  // persistKey 带 v1 版本前缀：结构变更时可升版本号让旧数据自然失效。
+  const storageKey = persistKey ? `mc-table-columns:v1:${persistKey}` : 'mc-table-columns:__noop__'
+  const persisted = useLocalStorageState<MCTableColumnState>(storageKey, {
+    defaultValue: emptyState,
+    listenStorageChange: true
+  })
+  const memoryState = useState<MCTableColumnState>(emptyState)
   const state = persistKey ? (persisted[0] ?? emptyState) : memoryState[0]
   const setState = persistKey ? persisted[1] : memoryState[1]
 
@@ -69,9 +71,11 @@ export function useColumnState<RecordType extends AnyObject>({
 
   const orderedKeys = useMemo(() => {
     const known = new Set(baseKeys)
+    const orderSet = new Set(state.order)
     // 先按已保存顺序排列存在的列，再补上新增列，丢弃不存在的旧 key。
     const kept = state.order.filter(key => known.has(key))
-    const appended = baseKeys.filter(key => !state.order.includes(key))
+    // 复用 orderSet 做 O(1) 查找，避免对每个 baseKey 线性扫描 state.order。
+    const appended = baseKeys.filter(key => !orderSet.has(key))
     return [...kept, ...appended]
   }, [baseKeys, state.order])
 
@@ -162,7 +166,8 @@ export function useColumnState<RecordType extends AnyObject>({
 
     setState(current => {
       const base = current ?? emptyState
-      const order = orderedKeys.slice()
+      // 重新从最新 baseKeys 派生当前顺序，避免闭包捕获过期快照。
+      const order = baseKeys.slice()
       const fromIndex = order.indexOf(fromKey)
       const toIndex = order.indexOf(toKey)
       if (fromIndex === -1 || toIndex === -1) {

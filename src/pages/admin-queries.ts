@@ -51,26 +51,39 @@ export const workplaceQueries = {
 }
 
 // 系统管理查询：按资源拆分 query key，便于刷新当前页时精准失效。
+// 参考/低频数据（departments/menus/roles/usersAll）设 10 分钟 staleTime，与 navigation/about 对齐；
+// users 分页查询保持默认 1 分钟（用户数据变化频繁，且 mutation 的 invalidate 会主动失效）。
+const REF_STALE_TIME = 10 * 60 * 1000
+
 export const systemQueries = {
   departments: () =>
     queryOptions({
       queryFn: ({ signal }) => adminApi.departments(signal),
-      queryKey: systemKeys.departments()
+      queryKey: systemKeys.departments(),
+      staleTime: REF_STALE_TIME
     }),
   menus: () =>
     queryOptions({
       queryFn: ({ signal }) => adminApi.menus(signal),
-      queryKey: systemKeys.menus()
+      queryKey: systemKeys.menus(),
+      staleTime: REF_STALE_TIME
     }),
   roles: () =>
     queryOptions({
       queryFn: ({ signal }) => adminApi.roles(signal),
-      queryKey: systemKeys.roles()
+      queryKey: systemKeys.roles(),
+      staleTime: REF_STALE_TIME
     }),
-  users: () =>
+  users: (params: { page: number; size: number } & Record<string, unknown>) =>
     queryOptions({
-      queryFn: ({ signal }) => adminApi.users(signal),
-      queryKey: systemKeys.users()
+      queryFn: ({ signal }) => adminApi.users(params, signal),
+      queryKey: systemKeys.users(params)
+    }),
+  usersAll: () =>
+    queryOptions({
+      queryFn: ({ signal }) => adminApi.usersAll(signal),
+      queryKey: systemKeys.usersAll(),
+      staleTime: REF_STALE_TIME
     })
 }
 

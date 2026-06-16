@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Button as AntdButton, Tag } from 'antd'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   Building2,
   CheckCircle2,
@@ -16,10 +16,12 @@ import {
   Users
 } from 'lucide-react'
 
-import { AdminSearchForm } from '@/components/admin/form/admin-search-form'
-import { AdminTable } from '@/components/admin/table/admin-table'
-import type { AdminColumn, AdminTableAction } from '@/components/admin/table/types'
+import { adminApi } from '@/api/admin'
 import { HasPermission } from '@/components/has-permission'
+import { MCSearchForm, MCTable } from '@/components/mc'
+import type { MCTableAction, MCTableColumn } from '@/components/mc'
+import { useTable } from '@/hooks/use-table'
+import { systemKeys } from '@/lib/query-keys'
 import { Page, PageSection } from '@/components/page'
 import { userMutations } from '@/pages/admin-mutations'
 import { systemQueries } from '@/pages/admin-queries'
@@ -56,6 +58,12 @@ const permissionLabels = [
   { label: '部门', value: 'system:department:read' },
   { label: '关于', value: 'about:read' }
 ]
+type UserTableFilters = {
+  keyword?: string
+  status?: string
+  [key: string]: unknown
+}
+
 const userSearchSchema: FormSchema[] = [
   {
     component: 'input',
@@ -88,12 +96,10 @@ const userSearchSchema: FormSchema[] = [
  * @returns 用户管理页面。
  */
 export function UsersPage() {
-  const [filters, setFilters] = useState({ keyword: '', status: '全部' })
-  const usersQuery = useQuery(systemQueries.users())
-  const { data = emptyUsers, isLoading } = usersQuery
+  // 概览统计需要全量用户（不受分页/筛选影响）。
+  const { data: allUsers = emptyUsers } = useQuery(systemQueries.usersAll())
   const createMutation = useMutation(userMutations.create())
   const updateMutation = useMutation(userMutations.update())
-  const removeMutation = useMutation(userMutations.remove())
   const {
     modal: userFormModal,
     openCreate,
@@ -104,27 +110,21 @@ export function UsersPage() {
         ? updateMutation.mutateAsync({ id: editing.id, input })
         : createMutation.mutateAsync(input)
   })
-  const filteredUsers = useMemo(() => {
-    const normalizedKeyword = filters.keyword.trim().toLowerCase()
-
-    return data.filter(user => {
-      const matchesStatus = filters.status === '全部' || user.status === filters.status
-      const matchesKeyword =
-        normalizedKeyword.length === 0 ||
-        [user.name, user.email, user.role, user.department].some(value =>
-          value.toLowerCase().includes(normalizedKeyword)
-        )
-
-      return matchesStatus && matchesKeyword
-    })
-  }, [data, filters])
+  // 列表数据获取、分页、筛选、删除统一交给 useTable；过滤逻辑已下沉到 mock/服务端。
+  const usersTable = useTable<UserRecord, UserTableFilters>({
+    queryFn: (params, signal) => adminApi.users(params, signal),
+    queryKey: systemKeys.users,
+    invalidateKey: systemKeys.users(),
+    defaultFilters: { keyword: '', status: '全部' },
+    deleteFn: id => adminApi.deleteUser(id)
+  })
   const userSummary = useMemo(() => {
     // 单次遍历同时累计三类计数，避免对同一数组做多趟 filter。
     let enabledCount = 0
     let reviewCount = 0
     let riskCount = 0
 
-    for (const user of data) {
+    for (const user of allUsers) {
       if (user.status === '启用') {
         enabledCount += 1
       }
@@ -139,14 +139,14 @@ export function UsersPage() {
     }
 
     return [
-      { icon: Users, label: '账号总数', value: data.length },
+      { icon: Users, label: '账号总数', value: allUsers.length },
       { icon: UserCheck, label: '启用账号', value: enabledCount },
       { icon: Shield, label: '复核账号', value: reviewCount },
       { icon: SlidersHorizontal, label: '风险关注', value: riskCount }
     ]
-  }, [data])
+  }, [allUsers])
 
-  const columns: AdminColumn<UserRecord>[] = [
+  const columns: MCTableColumn<UserRecord>[] = [
     { dataIndex: 'name', key: 'name', title: '姓名' },
     { dataIndex: 'email', key: 'email', title: '邮箱' },
     { dataIndex: 'role', key: 'role', title: '角色' },
@@ -174,7 +174,7 @@ export function UsersPage() {
       title: '状态'
     }
   ]
-  const userActions: AdminTableAction<UserRecord>[] = [
+  const userActions: MCTableAction<UserRecord>[] = [
     {
       key: 'edit',
       label: '编辑',
@@ -182,12 +182,11 @@ export function UsersPage() {
       permission: 'system:user:update'
     },
     {
-      confirm: { danger: true, okText: '确认删除', title: '确认删除该用户？' },
-      danger: true,
       key: 'delete',
       label: '删除',
-      onClick: record => removeMutation.mutateAsync(record.id),
-      permission: 'system:user:delete'
+      danger: true,
+      permission: 'system:user:delete',
+      onClick: record => usersTable.onDelete(record)
     }
   ]
 
@@ -214,26 +213,17 @@ export function UsersPage() {
         <PageSection>
           <Card>
             <CardContent className="grid gap-4">
-              <AdminSearchForm
-                defaultValues={filters}
-                onReset={() => setFilters({ keyword: '', status: '全部' })}
-                onSearch={values =>
-                  setFilters({
-                    keyword: typeof values.keyword === 'string' ? values.keyword : '',
-                    status: typeof values.status === 'string' ? values.status : '全部'
-                  })
-                }
+              <MCSearchForm
+                defaultValues={{ keyword: '', status: '全部' }}
+                onReset={() => usersTable.reset()}
+                onSearch={values => usersTable.search(values as UserTableFilters)}
                 schema={userSearchSchema}
               />
-              <AdminTable<UserRecord>
+              <MCTable<UserRecord>
+                table={usersTable}
                 actionColumn={{ width: 140 }}
                 actions={userActions}
                 columns={columns}
-                dataSource={filteredUsers}
-                loading={isLoading}
-                onRefresh={async () => {
-                  await usersQuery.refetch()
-                }}
                 persistKey="system:user:table"
                 rowKey="id"
                 tools={{ columns: true, density: true, refresh: true }}

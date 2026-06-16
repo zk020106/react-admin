@@ -10,12 +10,13 @@ import {
   confirm,
   confirmBatchDelete,
   confirmDelete,
+  MCDrawerForm,
+  MCFormModal,
   message,
   notification,
   useDetailModal,
   withMessage
-} from '@/components/admin/popup'
-import { MCDrawerForm, MCFormModal } from '@/components/mc'
+} from '@/components/mc'
 import type { MCFormField } from '@/components/mc'
 import { Page, PageSection } from '@/components/page'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'

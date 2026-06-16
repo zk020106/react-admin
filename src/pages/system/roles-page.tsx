@@ -8,6 +8,7 @@ import { PageLayout } from '@/components/page-layout'
 import { useTable } from '@/hooks/use-table'
 import { systemQueries } from '@/pages/admin-queries'
 import type { MenuManagementRecord, RoleRecord, UserRecord } from '@/mock/admin-mock'
+import { normalizeKeyword } from '@/utils/filter'
 
 type PermissionMode = 'linked' | 'strict'
 
@@ -27,16 +28,6 @@ type PermissionRow =
       menu: MenuManagementRecord
       type: 'menu'
     }
-
-function normalizeKeyword(value: unknown) {
-  if (typeof value === 'string') {
-    return value.trim().toLowerCase()
-  }
-  if (value === null || value === undefined) {
-    return ''
-  }
-  return String(value).trim().toLowerCase()
-}
 
 function roleMatchesFilters(role: RoleRecord, filters: RoleTableFilters) {
   const keyword = normalizeKeyword(filters.keyword)
@@ -160,7 +151,7 @@ export function RolesPage() {
 
   const rolesQuery = useQuery(systemQueries.roles())
   const menusQuery = useQuery(systemQueries.menus())
-  const usersQuery = useQuery(systemQueries.users())
+  const usersQuery = useQuery(systemQueries.usersAll())
   const { data: roles = [], isLoading: rolesLoading } = rolesQuery
   const { data: menus = [], isLoading: menusLoading } = menusQuery
   const { data: users = [] } = usersQuery
@@ -175,7 +166,7 @@ export function RolesPage() {
     filter: filterRoles
   })
   const filteredRoles = rolesTable.filteredData
-  const roleKeyword = String(rolesTable.filters.keyword ?? '')
+  const roleKeyword = normalizeKeyword(rolesTable.filters.keyword)
   const selectedRole = useMemo(
     () => filteredRoles.find(role => role.code === selectedRoleCode) ?? filteredRoles[0],
     [filteredRoles, selectedRoleCode]

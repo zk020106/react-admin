@@ -77,7 +77,7 @@ export function GlobalSearchDialog({
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebounce(query, { wait: 120 })
   const defaultSearchTerm = getMenuTitle(ADMIN_DEFAULT_PATH, menu)
-  const { data: users = emptyUsers } = useQuery({ ...systemQueries.users(), enabled: open })
+  const { data: users = emptyUsers } = useQuery({ ...systemQueries.usersAll(), enabled: open })
   const { data: managementMenus = emptyMenuManagementRecords } = useQuery({
     ...systemQueries.menus(),
     enabled: open

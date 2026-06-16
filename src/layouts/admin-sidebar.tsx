@@ -7,10 +7,12 @@ import {
   SquareMenu,
   type LucideIcon
 } from 'lucide-react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { AppLogo } from '@/components/app-logo'
 import { Button } from '@/components/ui/button'
+import { prefetchRouteData } from '@/lib/route-prefetch'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Sidebar,
@@ -715,6 +717,7 @@ function MenuNode({
   const isActive = activePath === item.path
   const hasActiveChild = children.some(child => isMenuRecordActive(child, activePath))
   const defaultOpen = hasActiveChild
+  const queryClient = useQueryClient()
 
   if (children.length > 0) {
     return (
@@ -748,6 +751,7 @@ function MenuNode({
             event.preventDefault()
             navigate(item.path)
           }}
+          onMouseEnter={() => prefetchRouteData(queryClient, item.path)}
         >
           {Icon && <Icon />}
           <span className="min-w-0 truncate">{item.title}</span>
@@ -848,6 +852,7 @@ function SidebarMenuSubNode({
 }) {
   const isActive = isMenuRecordActive(item, activePath)
   const isCurrent = item.path === activePath
+  const queryClient = useQueryClient()
 
   return (
     <SidebarMenuSubItem>
@@ -863,6 +868,7 @@ function SidebarMenuSubNode({
             event.preventDefault()
             navigate(item.path)
           }}
+          onMouseEnter={() => prefetchRouteData(queryClient, item.path)}
         >
           <span>{item.title}</span>
           {item.badge && (

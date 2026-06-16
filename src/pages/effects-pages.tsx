@@ -2,11 +2,14 @@ import { Expand, PanelsTopLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useStore } from 'zustand'
 
-import { SchemaForm } from '@/components/admin/form/schema-form'
-import { useAdminForm } from '@/components/admin/form/use-admin-form'
-import { AdminDrawer } from '@/components/admin/popup/admin-drawer'
-import { AdminModal } from '@/components/admin/popup/admin-modal'
-import { useDrawerApi, useModalApi } from '@/components/admin/popup/use-popup'
+import {
+  MCModal,
+  MCDrawer,
+  SchemaForm,
+  useDrawerApi,
+  useModalApi,
+  useMCForm
+} from '@/components/mc'
 import { Page, PageSection } from '@/components/page'
 import { getAdminMessages } from '@/i18n/admin-i18n'
 import { preferenceStore } from '@/store/preferences'
@@ -64,12 +67,12 @@ export function PopupLab({ messages }: { messages: AdminMessages }) {
           {popup.openDrawer}
         </Button>
       </CardContent>
-      <AdminModal api={modalApi}>
+      <MCModal api={modalApi}>
         {popup.payload}: {JSON.stringify(modalApi.getData())}
-      </AdminModal>
-      <AdminDrawer api={drawerApi} onConfirm={() => void drawerApi.close()}>
+      </MCModal>
+      <MCDrawer api={drawerApi} onConfirm={() => void drawerApi.close()}>
         {popup.payload}: {JSON.stringify(drawerApi.getData())}
-      </AdminDrawer>
+      </MCDrawer>
     </Card>
   )
 }
@@ -78,7 +81,7 @@ export function PopupLab({ messages }: { messages: AdminMessages }) {
 export function SchemaFormPanel({ messages }: { messages: AdminMessages }) {
   const schemaFormMessages = messages.pages.schemaForm
   const [submitted, setSubmitted] = useState<Record<string, unknown>>({})
-  const [formApi, form] = useAdminForm({
+  const [formApi, form] = useMCForm({
     handleSubmit: setSubmitted,
     schema: [
       {

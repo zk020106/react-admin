@@ -30,7 +30,7 @@ describe('admin api service', () => {
       delete: <T>() => Promise.resolve(undefined as T),
       get: <T>(url: string, config?: HttpRequestConfig) => {
         calls.push({ signal: config?.signal, url })
-        return Promise.resolve([] as T)
+        return Promise.resolve({ list: [], total: 0 } as T)
       },
       post: <T>() => Promise.resolve(undefined as T),
       put: <T>() => Promise.resolve(undefined as T)
@@ -38,7 +38,7 @@ describe('admin api service', () => {
     const controller = new AbortController()
     const api = createHttpAdminApi(client)
 
-    await api.users(controller.signal)
+    await api.users({ page: 1, size: 10 }, controller.signal)
 
     expect(calls).toEqual([
       {
@@ -83,7 +83,8 @@ describe('admin api service', () => {
 
     const created = await api.createUser(sampleInput)
     expect(created.id).toBeTruthy()
-    await expect(api.users()).resolves.toEqual(
+    const afterCreate = await api.users({ page: 1, size: 100 })
+    expect(afterCreate.list).toEqual(
       expect.arrayContaining([expect.objectContaining({ name: '测试账号' })])
     )
 
@@ -91,7 +92,7 @@ describe('admin api service', () => {
     expect(updated.name).toBe('改名账号')
 
     await api.deleteUser(created.id)
-    const remaining = await api.users()
-    expect(remaining.some(user => user.id === created.id)).toBe(false)
+    const remaining = await api.users({ page: 1, size: 100 })
+    expect(remaining.list.some((user: { id: string }) => user.id === created.id)).toBe(false)
   })
 })

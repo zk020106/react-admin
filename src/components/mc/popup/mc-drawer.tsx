@@ -4,19 +4,16 @@ import type { ReactNode } from 'react'
 import type { DrawerApi } from '@/utils/popup-api'
 import { usePopupState } from './use-popup'
 
-/** PopupApi 驱动的抽屉：placement、footer、submitting 全部来自弹层状态机。 */
-export function AdminDrawer({
-  api,
-  children,
-  onConfirm,
-  width
-}: {
+interface MCDrawerProps {
   api: DrawerApi
   children?: ReactNode
   /** 覆盖确认行为；缺省时触发 api.onConfirm() 走 options 回调。 */
   onConfirm?: () => void
   width?: number | string
-}) {
+}
+
+/** PopupApi 驱动的抽屉：placement、footer、submitting 全部来自弹层状态机。 */
+export function MCDrawer({ api, children, onConfirm, width }: MCDrawerProps) {
   const state = usePopupState(api)
 
   return (

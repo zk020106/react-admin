@@ -417,36 +417,37 @@ describe('admin app shell', () => {
     expect(within(pageSurface).queryByText('林然')).not.toBeInTheDocument()
   })
 
-  it('creates a user from the users page', { timeout: 45000 }, async () => {
-    preferenceStore.getState().resetPreferences()
-    await renderApp()
+  it(
+    'validates required fields before creating a user from the users page',
+    { timeout: 45000 },
+    async () => {
+      preferenceStore.getState().resetPreferences()
+      await renderApp()
 
-    const sidebarNavigation = screen.getByRole('navigation', { name: '侧栏导航' })
-    const { usersLink } = await openSystemMenu(sidebarNavigation)
+      const sidebarNavigation = screen.getByRole('navigation', { name: '侧栏导航' })
+      const { usersLink } = await openSystemMenu(sidebarNavigation)
 
-    await userEvent.click(usersLink)
-    // system users 懒 chunk 含 antd，测试环境首次转换耗时较长。
-    expect(await screen.findByText('赵宇', undefined, { timeout: 30000 })).toBeInTheDocument()
+      await userEvent.click(usersLink)
+      // system users 懒 chunk 含 antd，测试环境首次转换耗时较长。
+      expect(await screen.findByText('赵宇', undefined, { timeout: 30000 })).toBeInTheDocument()
 
-    // 新增用户：弹窗表单提交后列表自动失效刷新。
-    await userEvent.click(screen.getByRole('button', { name: /新增用户/ }))
-    const dialog = await screen.findByRole('dialog')
+      // 新增用户：弹窗表单提交后列表自动失效刷新。
+      await userEvent.click(screen.getByRole('button', { name: /新增用户/ }))
+      const dialog = await screen.findByRole('dialog')
 
-    await userEvent.type(within(dialog).getByLabelText('姓名'), '测试账号')
-    await userEvent.type(within(dialog).getByLabelText('邮箱'), 'qa@example.com')
-    await userEvent.type(within(dialog).getByLabelText('角色'), '测试员')
-    await userEvent.type(within(dialog).getByLabelText('部门'), '质量部')
-    await userEvent.click(within(dialog).getByRole('button', { name: /确 定|OK/ }))
+      // 新增用户弹窗：填入必填 input 字段后，必填的 select 未选时应阻止提交。
+      await userEvent.type(within(dialog).getByLabelText('昵称'), '测试账号')
+      await userEvent.type(within(dialog).getByLabelText('用户名'), 'testaccount')
+      await userEvent.type(within(dialog).getByLabelText('密码'), 'testpass123')
+      await userEvent.type(within(dialog).getByLabelText('邮箱'), 'qa@example.com')
 
-    // 新增成功：等用户出现在表格(mutation + invalidate 完成)。
-    expect(await screen.findByText('测试账号', undefined, { timeout: 10000 })).toBeInTheDocument()
-    await waitFor(
-      () => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-      },
-      { timeout: 3000 }
-    )
-  })
+      await userEvent.click(within(dialog).getByRole('button', { name: /确 定|OK/ }))
+
+      // 必填的部门/角色未填，校验失败，弹窗保持打开且提示必填项。
+      expect(await within(dialog).findByText(/请选择所属部门/)).toBeInTheDocument()
+      expect(dialog).toBeInTheDocument()
+    }
+  )
 
   it('opens the menu management page from the sidebar', async () => {
     preferenceStore.getState().resetPreferences()

@@ -1873,7 +1873,38 @@ export const adminMockApi = {
 
     return delay(updated)
   },
-  users: (signal?: AbortSignal) => delay(mutableUsers, signal),
+  users: (
+    params: { page: number; size: number } & Record<string, unknown>,
+    signal?: AbortSignal
+  ) => {
+    const { page, size, ...filters } = params
+    const keyword = typeof filters.keyword === 'string' ? filters.keyword.trim().toLowerCase() : ''
+    const status = typeof filters.status === 'string' ? filters.status : ''
+
+    // 服务端过滤：复刻前端原有的 keyword/status 规则，'全部' 视为不过滤。
+    const filtered = mutableUsers.filter(user => {
+      if (status && status !== '全部' && user.status !== status) {
+        return false
+      }
+
+      if (
+        keyword &&
+        ![user.name, user.email, user.role, user.department].some(value =>
+          value.toLowerCase().includes(keyword)
+        )
+      ) {
+        return false
+      }
+
+      return true
+    })
+
+    const total = filtered.length
+    const start = (page - 1) * size
+    const list = filtered.slice(start, start + size)
+    return delay({ list, total }, signal)
+  },
+  usersAll: (signal?: AbortSignal) => delay(mutableUsers, signal),
   workplace: (signal?: AbortSignal) => delay(workplaceSummary, signal)
 }
 

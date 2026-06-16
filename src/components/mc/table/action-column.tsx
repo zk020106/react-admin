@@ -1,17 +1,17 @@
+import { Button, Dropdown, Popconfirm, Space } from 'antd'
 import type { AnyObject } from 'antd/es/_util/type'
 import type { ColumnType } from 'antd/es/table'
-import { Button, Dropdown, Popconfirm, Space } from 'antd'
 import { MoreHorizontal } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 
 import { hasPermission } from '@/lib/permissions'
-import type { AdminActionColumnConfig, AdminTableAction, AdminTableActionConfirm } from './types'
+import type { MCActionColumnConfig, MCTableAction, MCTableActionConfirm } from './types'
 
 /** 把操作项配置编译成 antd 操作列；权限过滤依赖调用方传入的权限集合。 */
 export function buildActionColumn<RecordType extends AnyObject>(
-  actions: AdminTableAction<RecordType>[],
+  actions: MCTableAction<RecordType>[],
   permissions: readonly string[],
-  config?: AdminActionColumnConfig
+  config?: MCActionColumnConfig
 ): ColumnType<RecordType> {
   const max = config?.max ?? 3
   // 无权限的操作项整体剔除，行内不再判定。
@@ -19,7 +19,7 @@ export function buildActionColumn<RecordType extends AnyObject>(
 
   return {
     fixed: config?.fixed === false ? undefined : (config?.fixed ?? 'right'),
-    key: 'admin-table-actions',
+    key: 'mc-table-actions',
     title: config?.title ?? '操作',
     width: config?.width,
     render: (_, record) => <ActionCell actions={authorized} max={max} record={record} />
@@ -31,7 +31,7 @@ function ActionCell<RecordType extends AnyObject>({
   max,
   record
 }: {
-  actions: AdminTableAction<RecordType>[]
+  actions: MCTableAction<RecordType>[]
   max: number
   record: RecordType
 }) {
@@ -74,7 +74,7 @@ function ActionButton<RecordType extends AnyObject>({
   action,
   record
 }: {
-  action: AdminTableAction<RecordType>
+  action: MCTableAction<RecordType>
   record: RecordType
 }) {
   const [loading, setLoading] = useState(false)
@@ -103,7 +103,7 @@ function ActionButton<RecordType extends AnyObject>({
       // 有确认气泡时点击交给 Popconfirm 的 onConfirm，避免双触发。
       onClick={action.confirm ? undefined : () => void handleRun()}
       size="small"
-      type="link"
+      type={action.type ?? 'link'}
     >
       {action.label}
     </Button>
@@ -129,20 +129,20 @@ function ActionButton<RecordType extends AnyObject>({
 }
 
 function resolveDisabled<RecordType extends AnyObject>(
-  action: AdminTableAction<RecordType>,
+  action: MCTableAction<RecordType>,
   record: RecordType
 ) {
   return typeof action.disabled === 'function' ? action.disabled(record) : Boolean(action.disabled)
 }
 
 async function runAction<RecordType extends AnyObject>(
-  action: AdminTableAction<RecordType>,
+  action: MCTableAction<RecordType>,
   record: RecordType
 ) {
   await action.onClick?.(record)
 }
 
-function normalizeConfirm(confirm: ReactNode | AdminTableActionConfirm): AdminTableActionConfirm {
+function normalizeConfirm(confirm: ReactNode | MCTableActionConfirm): MCTableActionConfirm {
   if (confirm && typeof confirm === 'object' && 'title' in confirm) {
     return confirm
   }

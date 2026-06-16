@@ -2,9 +2,9 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { AdminFormModal } from '@/components/admin/form/admin-form-modal'
+import { MCFormModal } from '@/components/mc'
 
-describe('admin form modal', () => {
+describe('mc form modal', () => {
   afterEach(() => {
     cleanup()
   })
@@ -14,7 +14,7 @@ describe('admin form modal', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined)
 
     render(
-      <AdminFormModal<{ name: string }>
+      <MCFormModal<{ name: string }>
         onCancel={onCancel}
         onSubmit={onSubmit}
         open

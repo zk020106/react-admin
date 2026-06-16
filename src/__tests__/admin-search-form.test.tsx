@@ -2,7 +2,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { AdminSearchForm } from '@/components/admin/form/admin-search-form'
+import { MCSearchForm } from '@/components/mc'
 import type { FormSchema } from '@/types/admin'
 
 const schema: FormSchema[] = [
@@ -16,7 +16,7 @@ const schema: FormSchema[] = [
   { component: 'input', fieldName: 'department', label: '部门' }
 ]
 
-describe('admin search form', () => {
+describe('mc search form', () => {
   afterEach(() => {
     cleanup()
   })
@@ -25,7 +25,7 @@ describe('admin search form', () => {
     const onSearch = vi.fn()
 
     render(
-      <AdminSearchForm
+      <MCSearchForm
         collapsedCount={2}
         defaultValues={{ status: '启用' }}
         onSearch={onSearch}

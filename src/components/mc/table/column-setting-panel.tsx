@@ -1,5 +1,5 @@
-import type { AnyObject } from 'antd/es/_util/type'
 import { Button, Checkbox, Tooltip } from 'antd'
+import type { AnyObject } from 'antd/es/_util/type'
 import { Pin } from 'lucide-react'
 import { useState } from 'react'
 
@@ -24,7 +24,7 @@ export function ColumnSettingPanel<RecordType extends AnyObject>({
   return (
     <div
       className="w-56 rounded-md border bg-popover shadow-lg"
-      data-slot="admin-table-column-setting"
+      data-slot="mc-table-column-setting"
     >
       <div className="flex items-center justify-between border-b px-3 py-2">
         <Checkbox
@@ -90,7 +90,7 @@ function ColumnSettingRow<RecordType extends AnyObject>({
         over && 'bg-accent',
         dragging && 'opacity-50'
       )}
-      data-slot="admin-table-column-setting-row"
+      data-slot="mc-table-column-setting-row"
       draggable
       onDragEnd={() => {
         setOver(false)
@@ -113,7 +113,7 @@ function ColumnSettingRow<RecordType extends AnyObject>({
       onDragStartCapture={event => event.dataTransfer.setData('text/plain', meta.key)}
     >
       {/* 拖拽手柄 */}
-      <div className="flex cursor-grab items-center text-muted-foreground">
+      <div className="flex cursor-grab items-center text-muted-foreground" aria-hidden="true">
         <svg
           className="size-4"
           fill="none"

@@ -49,9 +49,9 @@ describe('antd theme bridge', () => {
 
     expect(config.components?.Table).toMatchObject({
       borderColor: 'hsl(var(--border))',
-      headerBg: 'hsl(var(--muted) / 0.5)',
-      headerColor: 'hsl(var(--foreground))',
-      rowHoverBg: 'hsl(var(--muted) / 0.5)'
+      headerBg: 'hsl(var(--card))',
+      headerColor: 'hsl(var(--muted-foreground))',
+      rowHoverBg: 'hsl(var(--accent))'
     })
   })
 
@@ -70,7 +70,7 @@ describe('antd theme bridge', () => {
       },
       Table: {
         borderColor: 'hsl(var(--border))',
-        headerBg: 'hsl(var(--muted) / 0.5)'
+        headerBg: 'hsl(var(--card))'
       }
     })
   })

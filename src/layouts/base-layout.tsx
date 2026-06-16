@@ -1,15 +1,24 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { QueryErrorResetBoundary, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Navigate, useLocation, useMatches, useNavigate } from '@tanstack/react-router'
 import { useBoolean, useKeyPress } from 'ahooks'
 import { Settings2 } from 'lucide-react'
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Component,
+  lazy,
+  type ReactNode,
+  Suspense,
+  useEffect,
+  useMemo,
+  useRef,
+  useState
+} from 'react'
 import { useStore } from 'zustand'
 
 import { authApi } from '@/api/auth'
 import { runtimeEnv } from '@/config/env'
 import { getAdminMessages } from '@/i18n/admin-i18n'
 import { filterAuthorizedMenu, hasPermission, resolveSessionPermissions } from '@/lib/permissions'
-import { getRouteRefreshQueryKeys, navigationKeys } from '@/lib/query-keys'
+import { getRouteRefreshQueryKeys } from '@/lib/query-keys'
 import {
   affixTabs,
   findMenuRecordByPath,
@@ -551,13 +560,14 @@ function AdminWorkspace() {
     )
   }
 
-  // 函数：logout。退出登录并刷新依赖登录态的查询缓存。
+  // 函数：logout。退出登录并清空所有业务查询缓存，避免跨账号数据串扰。
   function logout() {
     void authApi.logout().finally(() => {
       clearLockScreenSession()
       authStore.getState().clearSession()
       tabsStore.getState().closeAll()
-      void queryClient.invalidateQueries({ queryKey: navigationKeys.all })
+      // 清空全部缓存而非仅 invalidate：登出后用户态数据不应残留供下次登录读取。
+      queryClient.clear()
       void routerNavigate({ replace: true, to: '/login' })
     })
   }
@@ -778,9 +788,34 @@ function AdminWorkspace() {
               </div>
             </div>
           )}
-          <PageSurface activePath={activePath} key={activePath}>
-            {routeAllowed ? undefined : <ForbiddenPage permission={routePermission} />}
-          </PageSurface>
+          <QueryErrorResetBoundary>
+            {({ reset }) => (
+              <QueryErrorBoundary
+                fallback={({ error, reset: resetError }) => (
+                  <div className="flex h-full flex-col items-center justify-center gap-3 p-8 text-center">
+                    <p className="text-sm text-muted-foreground">
+                      {error instanceof Error ? error.message : '数据加载失败'}
+                    </p>
+                    <button
+                      className="rounded-md border px-3 py-1 text-sm hover:bg-muted"
+                      onClick={() => {
+                        reset()
+                        resetError()
+                      }}
+                      type="button"
+                    >
+                      重试
+                    </button>
+                  </div>
+                )}
+                resetKeys={[activePath]}
+              >
+                <PageSurface activePath={activePath} key={activePath}>
+                  {routeAllowed ? undefined : <ForbiddenPage permission={routePermission} />}
+                </PageSurface>
+              </QueryErrorBoundary>
+            )}
+          </QueryErrorResetBoundary>
         </main>
         {preferences.layout !== 'full-content' && preferences.footerEnable && (
           <footer
@@ -854,6 +889,49 @@ function AdminWorkspace() {
       <Toaster position="top-center" />
     </SidebarProvider>
   )
+}
+
+// 组件：QueryErrorBoundary。最小 ErrorBoundary，配合 QueryErrorResetBoundary 使用：
+// 查询抛错时展示重试入口，点重试调用 reset() 让相关查询重新发起。
+interface QueryErrorBoundaryProps {
+  children: ReactNode
+  fallback: (props: { error: Error; reset: () => void }) => ReactNode
+  resetKeys: unknown[]
+}
+
+interface QueryErrorBoundaryState {
+  error: Error | null
+}
+
+class QueryErrorBoundary extends Component<QueryErrorBoundaryProps, QueryErrorBoundaryState> {
+  state: QueryErrorBoundaryState = { error: null }
+
+  static getDerivedStateFromError(error: Error) {
+    return { error }
+  }
+
+  componentDidUpdate(prevProps: QueryErrorBoundaryProps) {
+    // resetKeys 值变化（如路由切换）时清除错误状态，重新渲染子树。
+    // error boundary 的 reset 机制需要在此 setState，属于该规则的合理例外。
+    if (
+      this.state.error &&
+      prevProps.resetKeys.some((key, index) => key !== this.props.resetKeys[index])
+    ) {
+      // eslint-disable-next-line react/no-did-update-set-state -- error boundary reset
+      this.setState({ error: null })
+    }
+  }
+
+  render() {
+    if (this.state.error) {
+      return this.props.fallback({
+        error: this.state.error,
+        reset: () => this.setState({ error: null })
+      })
+    }
+
+    return this.props.children
+  }
 }
 
 // 组件：BaseLayout。用于提供管理端基础布局入口、登录守卫和全局提示上下文。

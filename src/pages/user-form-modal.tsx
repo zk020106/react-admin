@@ -1,6 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 
-import { AdminFormModal } from '@/components/admin/form/admin-form-modal'
+import { MCFormModal } from '@/components/mc'
 import type { UserInput, UserRecord } from '@/mock/admin-mock'
 import type { FormSchema } from '@/types/admin'
 
@@ -58,7 +58,7 @@ export interface UseUserFormModalResult {
   openEdit: (record: UserRecord) => void
 }
 
-/** 用户新增/编辑弹窗：AdminModal + SchemaForm 的组合样板。
+/** 用户新增/编辑弹窗：MCFormModal + SchemaForm 的组合样板。
  *  校验失败保持弹窗打开；提交失败由 MutationCache 统一 toast 并解除锁定。 */
 export function useUserFormModal({
   onSubmit
@@ -99,7 +99,7 @@ export function useUserFormModal({
   }
 
   const modal = (
-    <AdminFormModal<UserInput>
+    <MCFormModal<UserInput>
       initialValues={initialValues}
       onCancel={closeModal}
       onSubmit={async input => {

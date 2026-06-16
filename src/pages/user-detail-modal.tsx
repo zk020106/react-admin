@@ -1,7 +1,7 @@
 import { Tag } from 'antd'
 
-import type { DetailField } from '@/components/admin/popup'
-import { useDetailModal } from '@/components/admin/popup'
+import type { DetailField } from '@/components/mc'
+import { useDetailModal } from '@/components/mc'
 import type { UserRecord } from '@/mock/admin-mock'
 
 /** 用户详情字段配置 */

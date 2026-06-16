@@ -39,7 +39,8 @@ export interface MCFormField {
 export interface MCFormProps extends Omit<FormProps, 'onFinish' | 'onValuesChange'> {
   // MC 扩展属性
   control?: MCFormControl
-  fields: MCFormField[]
+  /** 字段清单；与 schema 二选一，都不传时表单无字段。 */
+  fields?: MCFormField[]
   grid?: boolean
   gutter?: number
 
@@ -52,7 +53,8 @@ export interface MCSearchFormProps {
   collapsedCount?: number
   defaultCollapsed?: boolean
   defaultValues?: Record<string, unknown>
-  fields: MCFormField[]
+  /** 字段清单；与 schema 二选一。 */
+  fields?: MCFormField[]
   form?: FormInstance
   mode?: 'manual' | 'auto'
   onReset?: () => Promise<void> | void
@@ -61,7 +63,8 @@ export interface MCSearchFormProps {
 
 export interface MCFormModalProps<TValues extends object> {
   control?: MCFormControl
-  fields: MCFormField[]
+  /** 字段清单；与 schema 二选一。 */
+  fields?: MCFormField[]
   initialValues?: Partial<TValues>
   open: boolean
   title: string
@@ -72,7 +75,8 @@ export interface MCFormModalProps<TValues extends object> {
 
 export interface MCDrawerFormProps<TValues extends object> {
   control?: MCFormControl
-  fields: MCFormField[]
+  /** 字段清单；与 schema 二选一。 */
+  fields?: MCFormField[]
   initialValues?: Partial<TValues>
   open: boolean
   placement?: 'left' | 'right' | 'top' | 'bottom'

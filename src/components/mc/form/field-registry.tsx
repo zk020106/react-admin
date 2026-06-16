@@ -25,7 +25,7 @@ const fieldRegistry = new Map<string, FieldRenderer>([
 ])
 
 /** 注册业务自定义字段渲染器，重复注册会覆盖旧实现。 */
-export function registerAdminFormField(component: string, renderer: FieldRenderer) {
+export function registerMCFormField(component: string, renderer: FieldRenderer) {
   fieldRegistry.set(component, renderer)
 }
 

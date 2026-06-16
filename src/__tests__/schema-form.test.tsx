@@ -2,8 +2,8 @@ import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { SchemaForm } from '@/components/admin/form/schema-form'
-import { useAdminForm } from '@/components/admin/form/use-admin-form'
+import { SchemaForm } from '@/components/mc/form/schema-form'
+import { useMCForm } from '@/components/mc/form/use-mc-form'
 import type { FormApi, FormApiOptions } from '@/utils/form-api'
 
 function Harness({
@@ -13,7 +13,7 @@ function Harness({
   onReady: (api: FormApi) => void
   options: FormApiOptions
 }) {
-  const [api, form] = useAdminForm(options)
+  const [api, form] = useMCForm(options)
 
   onReady(api)
 

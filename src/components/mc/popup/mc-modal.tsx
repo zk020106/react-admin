@@ -7,15 +7,7 @@ import { usePopupState } from './use-popup'
 const modalMotionProps =
   import.meta.env.MODE === 'test' ? { maskTransitionName: '', transitionName: '' } : undefined
 
-/** PopupApi 驱动的模态弹窗：submitting 映射确认按钮 loading，关闭统一走 beforeClose 守卫。 */
-export function AdminModal({
-  api,
-  children,
-  forceRender = false,
-  onCancel,
-  onConfirm,
-  width
-}: {
+interface MCModalProps {
   api: ModalApi
   children?: ReactNode
   /** 弹窗未打开时也渲染内容，供表单实例提前挂载（编辑回填场景）。 */
@@ -25,7 +17,17 @@ export function AdminModal({
   /** 覆盖确认行为；缺省时触发 api.onConfirm() 走 options 回调。 */
   onConfirm?: () => void
   width?: number | string
-}) {
+}
+
+/** PopupApi 驱动的模态弹窗：submitting 映射确认按钮 loading，关闭统一走 beforeClose 守卫。 */
+export function MCModal({
+  api,
+  children,
+  forceRender = false,
+  onCancel,
+  onConfirm,
+  width
+}: MCModalProps) {
   const state = usePopupState(api)
 
   return (

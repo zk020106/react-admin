@@ -12,6 +12,7 @@ import {
   type WorkplaceSummary
 } from '@/mock/admin-mock'
 import type { MenuRecord } from '@/types/admin'
+import type { PageQuery, PageRes } from '@/types/page'
 import type { ProjectInfo } from '@/types/project-info'
 
 export interface AdminApi {
@@ -25,7 +26,13 @@ export interface AdminApi {
   overview: (signal?: AbortSignal) => Promise<OverviewSummary>
   roles: (signal?: AbortSignal) => Promise<RoleRecord[]>
   updateUser: (id: string, input: UserInput) => Promise<UserRecord>
-  users: (signal?: AbortSignal) => Promise<UserRecord[]>
+  /** 用户列表（服务端分页）：接收分页与筛选参数，返回当前页数据与总条数。 */
+  users: (
+    params: PageQuery & Record<string, unknown>,
+    signal?: AbortSignal
+  ) => Promise<PageRes<UserRecord>>
+  /** 全量用户列表：供全局搜索、角色成员统计等非分页场景使用。 */
+  usersAll: (signal?: AbortSignal) => Promise<UserRecord[]>
   workplace: (signal?: AbortSignal) => Promise<WorkplaceSummary>
 }
 
@@ -48,7 +55,9 @@ export function createHttpAdminApi(client: AdminApiHttpClient = http): AdminApi 
     overview: signal => client.get<OverviewSummary>('/admin/overview', { signal }),
     roles: signal => client.get<RoleRecord[]>('/admin/system/roles', { signal }),
     updateUser: (id, input) => client.put<UserRecord>(`/admin/system/users/${id}`, input),
-    users: signal => client.get<UserRecord[]>('/admin/system/users', { signal }),
+    users: (params, signal) =>
+      client.get<PageRes<UserRecord>>('/admin/system/users', { params, signal }),
+    usersAll: signal => client.get<UserRecord[]>('/admin/system/users/all', { signal }),
     workplace: signal => client.get<WorkplaceSummary>('/admin/workplace', { signal })
   }
 }

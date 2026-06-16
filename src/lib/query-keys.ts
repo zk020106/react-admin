@@ -26,7 +26,11 @@ export const systemKeys = {
   departments: () => [...systemKeys.all, 'departments'] as const,
   menus: () => [...systemKeys.all, 'menus'] as const,
   roles: () => [...systemKeys.all, 'roles'] as const,
-  users: () => [...systemKeys.all, 'users'] as const
+  // users 为服务端分页查询：传参时 key 携带 {page,size,...filters}，
+  // 不传参（systemKeys.users()）作为前缀用于 invalidate 全量失效。
+  users: (params?: Record<string, unknown>) => [...systemKeys.all, 'users', params ?? {}] as const,
+  // 全量用户（非分页）：供全局搜索、角色成员统计等场景。
+  usersAll: () => [...systemKeys.all, 'users-all'] as const
 }
 
 export const aboutKeys = {

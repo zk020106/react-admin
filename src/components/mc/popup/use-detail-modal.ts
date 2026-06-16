@@ -20,7 +20,7 @@ export interface UseDetailModalResult<T> {
   open: (data: T) => void
 }
 
-/** 详情弹窗 Hook：管理详情弹窗的打开/关闭和数据传递 */
+/** 详情弹窗 Hook：管理详情弹窗的打开/关闭和数据传递。 */
 export function useDetailModal<T = Record<string, unknown>>({
   fields,
   title,
