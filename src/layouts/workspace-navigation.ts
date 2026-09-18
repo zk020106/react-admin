@@ -1,5 +1,5 @@
 import { ADMIN_DEFAULT_PATH, getMenuTitle } from '@/router/app-data'
-import type { MenuRecord, TabRecord } from '@/types/admin'
+import type { MenuRecord, TabRecord } from '@/types'
 import { findMenuTrail } from '@/utils/menu'
 
 import { hasPageIcon } from '@/layouts/navigation'

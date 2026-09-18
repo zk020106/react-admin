@@ -13,7 +13,7 @@ For server-side rendering, prefetch queries on the server, dehydrate the cache t
 // server-side
 export async function getServerSideProps() {
   const data = await fetchPosts()
-  return { props: { posts: data } }  // Bypasses React Query cache
+  return { props: { posts: data } } // Bypasses React Query cache
 }
 
 // client-side
@@ -21,11 +21,11 @@ function PostsPage({ posts }: { posts: Post[] }) {
   // This doesn't benefit from the server fetch
   const { data } = useQuery({
     queryKey: ['posts'],
-    queryFn: fetchPosts,
+    queryFn: fetchPosts
     // Will refetch on client, causing flash
   })
 
-  return <PostList posts={data ?? posts} />  // Awkward fallback pattern
+  return <PostList posts={data ?? posts} /> // Awkward fallback pattern
 }
 ```
 
@@ -33,11 +33,7 @@ function PostsPage({ posts }: { posts: Post[] }) {
 
 ```tsx
 // app/posts/page.tsx
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from '@tanstack/react-query'
+import { dehydrate, HydrationBoundary, QueryClient } from '@tanstack/react-query'
 import { postQueries } from '@/lib/queries'
 
 export default async function PostsPage() {
@@ -53,7 +49,7 @@ export default async function PostsPage() {
 }
 
 // components/PostList.tsx
-'use client'
+;('use client')
 
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { postQueries } from '@/lib/queries'
@@ -83,7 +79,7 @@ export const Route = createFileRoute('/posts')({
     // Prefetch in route loader
     await queryClient.ensureQueryData(postQueries.list())
   },
-  component: PostsPage,
+  component: PostsPage
 })
 
 function PostsPage() {
@@ -103,15 +99,15 @@ export async function render(url: string) {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000,  // Prevent immediate client refetch
-      },
-    },
+        staleTime: 60 * 1000 // Prevent immediate client refetch
+      }
+    }
   })
 
   // Prefetch required data
   await queryClient.prefetchQuery({
     queryKey: ['posts'],
-    queryFn: fetchPosts,
+    queryFn: fetchPosts
   })
 
   const dehydratedState = dehydrate(queryClient)

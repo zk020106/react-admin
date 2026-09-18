@@ -8,7 +8,7 @@ import type {
   FieldMappingFormatter,
   FieldMappingTime,
   FormSchema
-} from '@/types/admin'
+} from '@/types'
 
 interface ValidationResult {
   errors?: Record<string, unknown>

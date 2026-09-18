@@ -1,5 +1,5 @@
 import { MutationCache, QueryClient } from '@tanstack/react-query'
-import { toast } from 'sonner'
+import { Toast } from '@douyinfe/semi-ui-19'
 
 import { HttpError } from '@/lib/http'
 
@@ -10,7 +10,7 @@ export const queryClient = new QueryClient({
   mutationCache: new MutationCache({
     // mutation 失败统一 toast，页面只需处理成功路径。
     onError: error => {
-      toast.error(error instanceof Error ? error.message : '操作失败，请稍后重试')
+      Toast.error(error instanceof Error ? error.message : '操作失败，请稍后重试')
     }
   }),
   defaultOptions: {

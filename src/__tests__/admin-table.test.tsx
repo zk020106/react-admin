@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import { AdminTable } from '@/components/admin/table/admin-table'
 
-interface DemoRecord {
+type DemoRecord = {
   id: string
   name: string
 }

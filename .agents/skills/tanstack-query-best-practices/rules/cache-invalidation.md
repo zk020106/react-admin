@@ -13,8 +13,8 @@ Query invalidation marks cached data as stale, triggering background refetches. 
 const mutation = useMutation({
   mutationFn: updateTodo,
   onSuccess: () => {
-    queryClient.invalidateQueries()  // Invalidates ENTIRE cache
-  },
+    queryClient.invalidateQueries() // Invalidates ENTIRE cache
+  }
 })
 
 // Invalidating too broadly
@@ -23,7 +23,7 @@ const mutation = useMutation({
   onSuccess: () => {
     // Invalidates all todos including unrelated lists
     queryClient.invalidateQueries({ queryKey: ['todos'] })
-  },
+  }
 })
 
 // Missing invalidation of related queries
@@ -32,7 +32,7 @@ const mutation = useMutation({
   onSuccess: () => {
     // Only invalidates comment list, misses comment count
     queryClient.invalidateQueries({ queryKey: ['comments', postId] })
-  },
+  }
 })
 ```
 
@@ -47,7 +47,7 @@ const mutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['todos', variables.id] })
     // Also invalidate lists that might contain this todo
     queryClient.invalidateQueries({ queryKey: ['todos', 'list'] })
-  },
+  }
 })
 
 // Use exact: true when you only want one specific query
@@ -56,9 +56,9 @@ const mutation = useMutation({
   onSuccess: () => {
     queryClient.invalidateQueries({
       queryKey: ['user', 'profile'],
-      exact: true,  // Only this exact key, not ['user', 'profile', 'settings']
+      exact: true // Only this exact key, not ['user', 'profile', 'settings']
     })
-  },
+  }
 })
 
 // Invalidate multiple related queries
@@ -70,14 +70,12 @@ const mutation = useMutation({
     queryClient.invalidateQueries({ queryKey: ['posts', postId, 'comment-count'] })
     // Optionally invalidate the post itself if it shows comment count
     queryClient.invalidateQueries({ queryKey: ['posts', postId] })
-  },
+  }
 })
 
 // Predicate-based invalidation for complex scenarios
 queryClient.invalidateQueries({
-  predicate: (query) =>
-    query.queryKey[0] === 'todos' &&
-    query.state.data?.userId === currentUserId,
+  predicate: query => query.queryKey[0] === 'todos' && query.state.data?.userId === currentUserId
 })
 ```
 
@@ -94,13 +92,13 @@ queryClient.invalidateQueries({ queryKey: ['todos'], exact: true })
 
 // Predicate matching - custom logic
 queryClient.invalidateQueries({
-  predicate: (query) => query.queryKey.includes('user-generated'),
+  predicate: query => query.queryKey.includes('user-generated')
 })
 
 // Refetch type control
 queryClient.invalidateQueries({
   queryKey: ['todos'],
-  refetchType: 'active',  // Only refetch active queries (default)
+  refetchType: 'active' // Only refetch active queries (default)
   // refetchType: 'inactive' - Only inactive
   // refetchType: 'all' - Both
   // refetchType: 'none' - Mark stale but don't refetch

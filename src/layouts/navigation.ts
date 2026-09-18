@@ -1,7 +1,7 @@
 import { BriefcaseBusiness, Info, LayoutDashboard, Shield, type LucideIcon } from 'lucide-react'
 
 import { pageIconMap } from '@/router/routes'
-import type { MenuRecord, TabRecord } from '@/types/admin'
+import type { MenuRecord, TabRecord } from '@/types'
 
 const menuIconMap: Record<string, LucideIcon> = {
   BriefcaseBusiness,
@@ -19,7 +19,7 @@ export function getMenuRecordIcon(item: Pick<MenuRecord, 'icon' | 'path'>, fallb
   return (item.icon ? menuIconMap[item.icon] : undefined) ?? pageIconMap[item.path] ?? fallback
 }
 
-export function getTabIcon(tab: Pick<TabRecord, 'icon' | 'path'>, fallback: LucideIcon) {
+export function getTabIcon(tab: Pick<TabRecord, 'icon' | 'path'>, fallback?: LucideIcon) {
   return tab.icon ? (pageIconMap[tab.path] ?? fallback) : undefined
 }
 

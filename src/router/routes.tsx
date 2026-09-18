@@ -2,10 +2,7 @@ import {
   BriefcaseBusiness,
   Info,
   LayoutDashboard,
-  Shield,
   SlidersHorizontal,
-  SquareMenu,
-  Users,
   type LucideIcon
 } from 'lucide-react'
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
@@ -24,20 +21,8 @@ export interface AdminPageDefinition {
 
 const OverviewPage = lazy(() => import('@/pages/overview-page'))
 const WorkplacePage = lazy(() => import('@/pages/workplace-page'))
-const UsersPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.UsersPage }))
-)
-const RolesPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.RolesPage }))
-)
-const MenusPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.MenusPage }))
-)
-const DepartmentsPage = lazy(() =>
-  import('@/pages/system-pages').then(module => ({ default: module.DepartmentsPage }))
-)
-const AboutPage = lazy(() => import('@/pages/about-page'))
 const EffectsPage = lazy(() => import('@/pages/effects-pages'))
+const AboutPage = lazy(() => import('@/pages/about-page'))
 
 /** 后台页面定义清单：路由、懒加载组件、图标与权限编码的单一数据源。 */
 export const adminPages: AdminPageDefinition[] = [
@@ -54,33 +39,21 @@ export const adminPages: AdminPageDefinition[] = [
     permission: 'workplace:read'
   },
   {
-    component: UsersPage,
-    icon: Users,
-    path: '/system/users',
-    permission: 'system:user:read'
-  },
-  {
-    component: RolesPage,
-    icon: Shield,
-    path: '/system/roles',
-    permission: 'system:role:read'
-  },
-  {
-    component: MenusPage,
-    icon: SquareMenu,
-    path: '/system/menus',
-    permission: 'system:menu:read'
-  },
-  {
-    component: DepartmentsPage,
-    icon: Users,
-    path: '/system/departments',
-    permission: 'system:department:read'
+    component: EffectsPage,
+    icon: SlidersHorizontal,
+    path: '/effects',
+    permission: 'effects:read'
   },
   {
     component: EffectsPage,
     icon: SlidersHorizontal,
-    path: '/effects',
+    path: '/effects/popup',
+    permission: 'effects:read'
+  },
+  {
+    component: EffectsPage,
+    icon: SlidersHorizontal,
+    path: '/effects/form',
     permission: 'effects:read'
   },
   {

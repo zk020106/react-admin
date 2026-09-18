@@ -12,14 +12,17 @@ const menu = [
     title: 'Overview'
   },
   {
-    children: [
-      { key: '/system/users', path: '/system/users', title: 'Users' },
-      { key: '/system/roles', path: '/system/roles', title: 'Roles' }
-    ],
+    icon: 'Info',
+    key: '/about',
+    path: '/about',
+    title: 'About'
+  },
+  {
+    children: [{ key: '/custom/page', path: '/custom/page', title: 'Page' }],
     icon: 'Shield',
-    key: '/system',
-    path: '/system',
-    title: 'System'
+    key: '/custom',
+    path: '/custom',
+    title: 'Custom'
   }
 ]
 
@@ -241,17 +244,25 @@ describe('workspace navigation helpers', () => {
       title: 'Overview'
     })
 
-    expect(resolveWorkspaceTab('/system/users', menu)).toEqual({
+    expect(resolveWorkspaceTab('/about', menu)).toEqual({
       affix: false,
-      icon: '/system/users',
-      key: '/system/users',
-      path: '/system/users',
-      title: 'Users'
+      icon: '/about',
+      key: '/about',
+      path: '/about',
+      title: 'About'
+    })
+
+    expect(resolveWorkspaceTab('/custom/page', menu)).toEqual({
+      affix: false,
+      icon: undefined,
+      key: '/custom/page',
+      path: '/custom/page',
+      title: 'Page'
     })
   })
 
   it('resolves the root menu for nested paths and falls back safely', () => {
-    expect(getWorkspaceRootMenu('/system/users', menu)?.path).toBe('/system')
+    expect(getWorkspaceRootMenu('/custom/page', menu)?.path).toBe('/custom')
     expect(getWorkspaceRootMenu('/overview', menu)?.path).toBe('/overview')
     expect(getWorkspaceRootMenu('/missing', menu)?.path).toBe('/overview')
   })

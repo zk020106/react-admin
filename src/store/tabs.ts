@@ -1,7 +1,7 @@
 import { createStore } from 'zustand/vanilla'
 
 import { preferenceStore } from '@/store/preferences'
-import type { TabRecord } from '@/types/admin'
+import type { TabRecord } from '@/types'
 
 export interface TabsStoreState {
   activeKey?: string
@@ -42,7 +42,7 @@ interface StoredTabsPayload {
   version?: number
 }
 
-export const TABS_STORAGE_KEY = 'antd-react-admin:tabs:v1'
+export const TABS_STORAGE_KEY = 'react-admin:tabs:v1'
 const TABS_STORAGE_VERSION = 1
 const TABS_PERSIST_DEBOUNCE_MS = 150
 

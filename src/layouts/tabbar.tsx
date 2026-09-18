@@ -5,7 +5,6 @@ import {
   Copy,
   ExternalLink,
   FoldHorizontal,
-  LayoutDashboard,
   LayoutGrid,
   Maximize2,
   Minimize2,
@@ -15,28 +14,14 @@ import {
   X
 } from 'lucide-react'
 import { useRef, type WheelEvent } from 'react'
+import { Button, Dropdown } from '@douyinfe/semi-ui-19'
 
-import { Button } from '@/components/ui/button'
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSeparator,
-  ContextMenuTrigger
-} from '@/components/ui/context-menu'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { getAdminMessages } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 import { getTabIcon } from '@/layouts/navigation'
 import { tabsStore } from '@/store/tabs'
 import { usePreferencesSlice } from '@/store/use-preferences'
-import type { TabRecord } from '@/types/admin'
+import type { TabRecord } from '@/types'
 
 type TabbarProps = {
   activePath: string
@@ -55,21 +40,6 @@ type TabbarProps = {
 
 /**
  * 渲染页面标签栏及其右键菜单操作。
- *
- * @param props - 组件属性。
- * @param props.activePath - 当前激活路由路径。
- * @param props.closeAllTabs - 关闭全部可关闭标签的回调。
- * @param props.closeLeftTabs - 关闭指定标签左侧标签的回调。
- * @param props.closeOtherTabs - 关闭指定标签以外标签的回调。
- * @param props.closeRightTabs - 关闭指定标签右侧标签的回调。
- * @param props.closeTab - 关闭单个标签的回调。
- * @param props.contentMaximized - 内容区是否最大化。
- * @param props.navigate - 标签切换导航回调。
- * @param props.onRefresh - 刷新当前页面回调。
- * @param props.onToggleMaximize - 切换内容区最大化回调。
- * @param props.tabs - 当前标签页列表。
- * @param props.toggleTabPin - 切换标签固定状态的回调。
- * @returns 后台页面标签栏。
  */
 export function Tabbar({
   activePath,
@@ -100,266 +70,278 @@ export function Tabbar({
     tabbarWheelable: preferences.tabbarWheelable
   }))
   const messages = getAdminMessages(preferences.appLocale)
-  const tabbarClass =
-    preferences.tabbarStyleType === 'card'
-      ? 'gap-1'
-      : preferences.tabbarStyleType === 'plain'
-        ? 'gap-0'
-        : 'gap-2'
-
   const visibleTabs = getVisibleTabs(tabs, activePath, preferences.tabbarMaxCount)
   const activeTab = tabs.find(tab => tab.key === activePath)
-  // 单次正反遍历预计算每个位置左右是否存在可关闭标签，避免逐标签做切片扫描。
-  const tabIndexByKey = new Map(tabs.map((tab, index) => [tab.key, index] as const))
-  const hasClosableBefore: boolean[] = []
-  const hasClosableAfter: boolean[] = []
-  let closableSeen = false
 
-  for (let index = 0; index < tabs.length; index++) {
-    hasClosableBefore.push(closableSeen)
-    closableSeen = closableSeen || !tabs[index]?.affix
-  }
-
-  closableSeen = false
-
-  for (let index = tabs.length - 1; index >= 0; index--) {
-    hasClosableAfter[index] = closableSeen
-    closableSeen = closableSeen || !tabs[index]?.affix
-  }
-
-  /**
-   * 把纵向滚轮转换为标签栏横向滚动。
-   *
-   * @param event - 标签列表的滚轮事件。
-   */
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
-    if (!preferences.tabbarWheelable || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) {
+    if (!preferences.tabbarWheelable || !listRef.current) {
       return
     }
 
     event.preventDefault()
-    event.currentTarget.scrollLeft += event.deltaY
+    listRef.current.scrollLeft += event.deltaY
   }
 
-  /**
-   * 复制标签页路径到剪贴板。
-   *
-   * @param tab - 待复制路径的标签页。
-   */
   function copyTabPath(tab: TabRecord) {
-    void navigator.clipboard?.writeText(tab.path)
+    if (typeof navigator === 'undefined' || !navigator.clipboard) {
+      return
+    }
+
+    void navigator.clipboard.writeText(tab.path)
   }
 
-  /**
-   * 在新窗口打开标签页路径。
-   *
-   * @param tab - 待打开的标签页。
-   */
   function openTabInNewWindow(tab: TabRecord) {
+    if (typeof window === 'undefined') {
+      return
+    }
+
     window.open(tab.path, '_blank', 'noopener,noreferrer')
   }
 
   return (
     <div
-      className="flex items-center gap-2 border-b bg-header px-3"
+      className={cn(
+        'flex shrink-0 items-center gap-1 border-b bg-muted/30 px-3 transition-[height] duration-200',
+        preferences.tabbarStyleType === 'chrome' && 'admin-tabbar-chrome',
+        preferences.tabbarStyleType === 'plain' && 'admin-tabbar-plain'
+      )}
+      data-slot="admin-tabbar"
+      data-tabbar-style={preferences.tabbarStyleType}
       style={{ height: preferences.tabbarHeight }}
     >
-      <Tabs className="min-w-0 flex-1" onValueChange={navigate} value={activePath}>
-        <TabsList
-          className={cn(
-            'admin-tabs-scroll max-w-full overflow-x-auto overflow-y-hidden',
-            tabbarClass
-          )}
-          onWheel={handleWheel}
-          ref={listRef}
-          variant="line"
-        >
-          {visibleTabs.map(tab => {
-            const tabIndex = tabIndexByKey.get(tab.key) ?? -1
-            const canClose = !tab.affix && tabs.length > 1
-            const hasClosableLeft = hasClosableBefore[tabIndex] ?? false
-            const hasClosableRight = hasClosableAfter[tabIndex] ?? false
-            const hasClosableOther = hasClosableLeft || hasClosableRight
-            const Icon = getTabIcon(tab, LayoutDashboard)
+      <div
+        className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto overflow-y-hidden"
+        onWheel={handleWheel}
+        ref={listRef}
+      >
+        <div role="tablist" className="admin-tabs-scroll flex items-center gap-1 min-w-0">
+          {visibleTabs.map((tab, index) => {
+            const Icon = getTabIcon(tab)
+            const canClose = !tab.affix
+            const hasClosableLeft = visibleTabs
+              .slice(0, index)
+              .some(item => !item.affix && item.key !== tab.key)
+            const hasClosableRight = visibleTabs
+              .slice(index + 1)
+              .some(item => !item.affix && item.key !== tab.key)
+            const hasClosableOther = visibleTabs.some(item => !item.affix && item.key !== tab.key)
+            const isActive = activePath === tab.key
 
             return (
-              <ContextMenu key={tab.key} modal={false}>
-                <ContextMenuTrigger asChild>
-                  <div
-                    className="group/tab flex items-center"
-                    draggable={preferences.tabbarDraggable && !tab.affix}
-                    onDragStart={event => {
-                      if (!preferences.tabbarDraggable) {
-                        return
-                      }
-
-                      event.dataTransfer.setData('text/plain', tab.key)
-                    }}
-                    onDragOver={event => {
-                      if (preferences.tabbarDraggable) {
-                        event.preventDefault()
-                      }
-                    }}
-                    onDrop={event => {
-                      if (!preferences.tabbarDraggable) {
-                        return
-                      }
-
-                      event.preventDefault()
-                      const fromKey = event.dataTransfer.getData('text/plain')
-                      const currentTabs = tabsStore.getState().tabs
-                      const fromIndex = currentTabs.findIndex(item => item.key === fromKey)
-                      const toIndex = currentTabs.findIndex(item => item.key === tab.key)
-
-                      tabsStore.getState().reorderTabs(fromIndex, toIndex)
-                    }}
-                  >
-                    <TabsTrigger
-                      className={cn(
-                        'h-8 px-2',
-                        preferences.tabbarStyleType === 'card' && 'rounded-md border bg-background',
-                        preferences.tabbarStyleType === 'brisk' && 'h-7'
-                      )}
-                      onMouseDown={event => {
-                        if (
-                          event.button === 1 &&
-                          preferences.tabbarMiddleClickToClose &&
-                          !tab.affix
-                        ) {
-                          event.preventDefault()
-                          closeTab(tab.key)
-                        }
-                      }}
-                      value={tab.key}
+              <Dropdown
+                key={tab.key}
+                trigger="contextMenu"
+                position="bottomLeft"
+                render={
+                  <Dropdown.Menu className="w-52">
+                    <Dropdown.Item
+                      disabled={!canClose}
+                      icon={<X className="size-4" />}
+                      onClick={() => closeTab(tab.key)}
                     >
-                      {preferences.tabbarShowIcon && Icon ? <Icon className="size-3.5" /> : null}
-                      {tab.title}
-                    </TabsTrigger>
-                    {!tab.affix ? (
-                      <Button
-                        aria-label={messages.tabbar.closeCurrent.replace('{title}', tab.title)}
-                        className="-ml-1 opacity-60 group-hover/tab:opacity-100"
-                        onClick={() => closeTab(tab.key)}
-                        size="icon-xs"
-                        variant="ghost"
-                      >
-                        <X />
-                      </Button>
-                    ) : null}
-                  </div>
-                </ContextMenuTrigger>
-                <ContextMenuContent className="w-52">
-                  <ContextMenuItem disabled={!canClose} onSelect={() => closeTab(tab.key)}>
-                    <X />
-                    {messages.tabbar.close}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={() => toggleTabPin(tab.key)}>
-                    {tab.affix ? <PinOff /> : <Pin />}
-                    {tab.affix ? messages.tabbar.unpin : messages.tabbar.pin}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={onToggleMaximize}>
-                    {contentMaximized ? <Minimize2 /> : <Maximize2 />}
-                    {contentMaximized ? messages.tabbar.restoreMaximize : messages.tabbar.maximize}
-                  </ContextMenuItem>
-                  <ContextMenuItem onSelect={onRefresh}>
-                    <RefreshCcw />
-                    {messages.tabbar.refresh}
-                  </ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem onSelect={() => openTabInNewWindow(tab)}>
-                    <ExternalLink />
-                    {messages.tabbar.openNewWindow}
-                  </ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem
-                    disabled={!hasClosableLeft}
-                    onSelect={() => closeLeftTabs(tab.key)}
+                      {messages.tabbar.close}
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      icon={tab.affix ? <PinOff className="size-4" /> : <Pin className="size-4" />}
+                      onClick={() => toggleTabPin(tab.key)}
+                    >
+                      {tab.affix ? messages.tabbar.unpin : messages.tabbar.pin}
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      icon={
+                        contentMaximized ? (
+                          <Minimize2 className="size-4" />
+                        ) : (
+                          <Maximize2 className="size-4" />
+                        )
+                      }
+                      onClick={onToggleMaximize}
+                    >
+                      {contentMaximized
+                        ? messages.tabbar.restoreMaximize
+                        : messages.tabbar.maximize}
+                    </Dropdown.Item>
+                    <Dropdown.Item icon={<RefreshCcw className="size-4" />} onClick={onRefresh}>
+                      {messages.tabbar.refresh}
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item
+                      icon={<ExternalLink className="size-4" />}
+                      onClick={() => openTabInNewWindow(tab)}
+                    >
+                      {messages.tabbar.openNewWindow}
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item
+                      disabled={!hasClosableLeft}
+                      icon={<ArrowLeftToLine className="size-4" />}
+                      onClick={() => closeLeftTabs(tab.key)}
+                    >
+                      {messages.tabbar.closeLeft}
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      disabled={!hasClosableRight}
+                      icon={<ArrowRightToLine className="size-4" />}
+                      onClick={() => closeRightTabs(tab.key)}
+                    >
+                      {messages.tabbar.closeRight}
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item
+                      disabled={!hasClosableOther}
+                      icon={<FoldHorizontal className="size-4" />}
+                      onClick={() => closeOtherTabs(tab.key)}
+                    >
+                      {messages.tabbar.closeOther}
+                    </Dropdown.Item>
+                    <Dropdown.Item
+                      disabled={!tabs.some(item => !item.affix)}
+                      icon={<ArrowRightLeft className="size-4" />}
+                      onClick={closeAllTabs}
+                    >
+                      {messages.tabbar.closeAll}
+                    </Dropdown.Item>
+                    <Dropdown.Divider />
+                    <Dropdown.Item
+                      icon={<Copy className="size-4" />}
+                      onClick={() => copyTabPath(tab)}
+                    >
+                      {messages.tabbar.copyPath}
+                    </Dropdown.Item>
+                  </Dropdown.Menu>
+                }
+              >
+                <div
+                  className={cn(
+                    'group/tab relative flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs transition-[background-color,color]',
+                    isActive
+                      ? 'bg-background text-foreground shadow-xs font-medium'
+                      : 'text-muted-foreground hover:bg-background/50 hover:text-foreground',
+                    preferences.tabbarStyleType === 'card' && 'border bg-background/60',
+                    preferences.tabbarStyleType === 'brisk' &&
+                      'rounded-none border-b-2 border-transparent',
+                    preferences.tabbarStyleType === 'brisk' && isActive && 'border-primary'
+                  )}
+                  draggable={preferences.tabbarDraggable}
+                  onDragOver={event => {
+                    if (preferences.tabbarDraggable) {
+                      event.preventDefault()
+                    }
+                  }}
+                  onDragStart={event => {
+                    if (preferences.tabbarDraggable) {
+                      event.dataTransfer.setData('text/plain', tab.key)
+                    }
+                  }}
+                  onDrop={event => {
+                    if (!preferences.tabbarDraggable) {
+                      return
+                    }
+
+                    event.preventDefault()
+                    const fromKey = event.dataTransfer.getData('text/plain')
+                    const currentTabs = tabsStore.getState().tabs
+                    const fromIndex = currentTabs.findIndex(item => item.key === fromKey)
+                    const toIndex = currentTabs.findIndex(item => item.key === tab.key)
+
+                    tabsStore.getState().reorderTabs(fromIndex, toIndex)
+                  }}
+                >
+                  <button
+                    role="tab"
+                    aria-selected={isActive}
+                    data-state={isActive ? 'active' : 'inactive'}
+                    className="flex items-center gap-1.5 cursor-pointer py-1 px-1 bg-transparent border-0 outline-hidden text-inherit"
+                    onClick={() => navigate(tab.path)}
+                    onMouseDown={event => {
+                      if (
+                        event.button === 1 &&
+                        preferences.tabbarMiddleClickToClose &&
+                        !tab.affix
+                      ) {
+                        event.preventDefault()
+                        closeTab(tab.key)
+                      }
+                    }}
                   >
-                    <ArrowLeftToLine />
-                    {messages.tabbar.closeLeft}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    disabled={!hasClosableRight}
-                    onSelect={() => closeRightTabs(tab.key)}
-                  >
-                    <ArrowRightToLine />
-                    {messages.tabbar.closeRight}
-                  </ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem
-                    disabled={!hasClosableOther}
-                    onSelect={() => closeOtherTabs(tab.key)}
-                  >
-                    <FoldHorizontal />
-                    {messages.tabbar.closeOther}
-                  </ContextMenuItem>
-                  <ContextMenuItem
-                    disabled={!tabs.some(item => !item.affix)}
-                    onSelect={closeAllTabs}
-                  >
-                    <ArrowRightLeft />
-                    {messages.tabbar.closeAll}
-                  </ContextMenuItem>
-                  <ContextMenuSeparator />
-                  <ContextMenuItem onSelect={() => copyTabPath(tab)}>
-                    <Copy />
-                    {messages.tabbar.copyPath}
-                  </ContextMenuItem>
-                </ContextMenuContent>
-              </ContextMenu>
+                    {preferences.tabbarShowIcon && Icon ? <Icon className="size-3.5" /> : null}
+                    <span>{tab.title}</span>
+                  </button>
+                  {!tab.affix ? (
+                    <Button
+                      aria-label={messages.tabbar.closeCurrent.replace('{title}', tab.title)}
+                      className="!size-4 !p-0 opacity-60 hover:opacity-100 !rounded-full"
+                      onClick={e => {
+                        e.stopPropagation()
+                        closeTab(tab.key)
+                      }}
+                      theme="borderless"
+                      type="tertiary"
+                      icon={<X className="size-3" />}
+                    />
+                  ) : null}
+                </div>
+              </Dropdown>
             )
           })}
-        </TabsList>
-      </Tabs>
+        </div>
+      </div>
       {preferences.tabbarShowMore && activeTab ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label={messages.tabbar.more}
-              className="admin-tabbar-tool"
-              size="icon-sm"
-              variant="ghost"
-            >
-              <LayoutGrid />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => copyTabPath(activeTab)}>
-              <Copy />
-              {messages.tabbar.copyPath}
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => openTabInNewWindow(activeTab)}>
-              <ExternalLink />
-              {messages.tabbar.openNewWindow}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <Dropdown
+          position="bottomRight"
+          render={
+            <Dropdown.Menu>
+              <Dropdown.Item
+                icon={<Copy className="size-4" />}
+                onClick={() => copyTabPath(activeTab)}
+              >
+                {messages.tabbar.copyPath}
+              </Dropdown.Item>
+              <Dropdown.Item
+                icon={<ExternalLink className="size-4" />}
+                onClick={() => openTabInNewWindow(activeTab)}
+              >
+                {messages.tabbar.openNewWindow}
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          }
+        >
+          <Button
+            aria-label={messages.tabbar.more}
+            className="admin-tabbar-tool !p-0 size-7 !rounded-md"
+            theme="borderless"
+            type="tertiary"
+            icon={<LayoutGrid className="size-3.5" />}
+          />
+        </Dropdown>
       ) : null}
       {preferences.tabbarShowRefresh ? (
         <Button
           aria-label={messages.tabbar.refreshCurrent}
-          className="admin-tabbar-tool"
+          className="admin-tabbar-tool !p-0 size-7 !rounded-md"
           onClick={onRefresh}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <RefreshCcw />
-        </Button>
+          theme="borderless"
+          type="tertiary"
+          icon={<RefreshCcw className="size-3.5" />}
+        />
       ) : null}
       {preferences.tabbarShowMaximize ? (
         <Button
           aria-label={
             contentMaximized ? messages.tabbar.restoreContent : messages.tabbar.maximizeContent
           }
-          className="admin-tabbar-tool"
+          className="admin-tabbar-tool !p-0 size-7 !rounded-md"
           onClick={onToggleMaximize}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          {contentMaximized ? <Minimize2 /> : <Maximize2 />}
-        </Button>
+          theme="borderless"
+          type="tertiary"
+          icon={
+            contentMaximized ? (
+              <Minimize2 className="size-3.5" />
+            ) : (
+              <Maximize2 className="size-3.5" />
+            )
+          }
+        />
       ) : null}
     </div>
   )
@@ -367,11 +349,6 @@ export function Tabbar({
 
 /**
  * 按最大显示数量裁剪标签并保留当前激活标签。
- *
- * @param tabs - 当前标签页列表。
- * @param activePath - 当前激活路由路径。
- * @param maxCount - 最多展示的标签数量，0 表示不限制。
- * @returns 裁剪后的标签页列表。
  */
 export function getVisibleTabs(tabs: TabRecord[], activePath: string, maxCount: number) {
   if (maxCount <= 0 || tabs.length <= maxCount) {

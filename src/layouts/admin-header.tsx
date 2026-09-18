@@ -20,32 +20,19 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import {
+  Badge,
+  Button,
+  Divider,
+  Dropdown,
+  Modal,
+  Radio,
+  RadioGroup,
+  Tooltip
+} from '@douyinfe/semi-ui-19'
 
 import { AppLogo } from '@/components/app-logo'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { Separator } from '@/components/ui/separator'
-import { SidebarTrigger } from '@/components/ui/sidebar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { SidebarTrigger } from '@/layouts/sidebar-context'
 import { getAdminMessages, getLocaleOptions } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 import { getMenuRecordIcon, isMenuRecordActive } from '@/layouts/navigation'
@@ -54,10 +41,10 @@ import {
   type PreferencesButtonPlacement
 } from '@/layouts/preferences-options'
 import type { NotificationRecord } from '@/mock/admin-mock'
-import { notificationQueries } from '@/pages/admin-queries'
+import { notificationQueries } from '@/api/queries'
 import { ADMIN_DEFAULT_PATH, getDefaultMenuPath, getMenuTitle } from '@/router/app-data'
 import { usePreferencesSlice, useSetPreferences } from '@/store/use-preferences'
-import type { AdminPreferences, MenuRecord } from '@/types/admin'
+import type { AdminPreferences, MenuRecord } from '@/types'
 import { findMenuTrail } from '@/utils/menu'
 
 type AdminHeaderProps = {
@@ -121,33 +108,16 @@ type TimezoneDialogButtonProps = {
 type UserMenuProps = {
   locale: string
   lockScreenEnabled: boolean
+  onLogout: () => void
   openLock: () => void
   openPreferences: () => void
   showPreferencesItem?: boolean
-  onLogout: () => void
 }
 
 const emptyNotifications: NotificationRecord[] = []
 
 /**
  * 渲染后台顶栏、面包屑、导航和工具按钮。
- *
- * @param props - 组件属性。
- * @param props.activePath - 当前激活的路由路径。
- * @param props.activeRootPath - 当前激活的一级菜单路径。
- * @param props.hidden - 顶栏是否处于滚动隐藏状态。
- * @param props.isMobile - 当前是否为移动端视口。
- * @param props.layout - 当前后台布局模式。
- * @param props.menu - 顶栏可用的菜单树。
- * @param props.navigate - 路由跳转回调。
- * @param props.onRefresh - 刷新当前标签页回调。
- * @param props.onSelectRoot - 混合导航根菜单选择回调。
- * @param props.openLock - 打开锁屏设置入口。
- * @param props.openPreferences - 打开偏好设置入口。
- * @param props.openSearch - 打开全局搜索入口。
- * @param props.preferencesButtonPlacement - 偏好设置按钮展示位置。
- * @param props.sidebarEnabled - 当前布局是否启用侧边栏。
- * @returns 后台顶栏。
  */
 export function AdminHeader({
   activePath,
@@ -234,9 +204,6 @@ export function AdminHeader({
     layout !== 'full-content'
 
   useEffect(() => {
-    /**
-     * 同步浏览器全屏状态到顶栏按钮。
-     */
     function handleFullscreenChange() {
       setBrowserFullscreen(!!document.fullscreenElement)
     }
@@ -247,9 +214,6 @@ export function AdminHeader({
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange)
   }, [])
 
-  /**
-   * 切换浏览器全屏模式。
-   */
   function toggleBrowserFullscreen() {
     if (document.fullscreenElement) {
       void document.exitFullscreen?.()
@@ -291,12 +255,12 @@ export function AdminHeader({
             <AppLogo size="sm" />
             <span className="text-sm font-semibold">{messages.common.systemName}</span>
           </div>
-          <Separator className="hidden h-5 md:block" orientation="vertical" />
+          <Divider layout="vertical" className="!h-5 hidden md:block !mx-1" />
         </>
       )}
       {preferences.widgetRefresh && (
         <HeaderIconButton label={messages.header.refresh} onClick={onRefresh}>
-          <RefreshCcw />
+          <RefreshCcw className="size-4" />
         </HeaderIconButton>
       )}
       <div className="flex min-w-0 flex-1 items-center gap-2">
@@ -328,7 +292,7 @@ export function AdminHeader({
                 {preferences.breadcrumbShowIcon && index === 0 && (
                   <LayoutDashboard className="size-3.5" />
                 )}
-                <span className={index === trail.length - 1 ? 'text-foreground' : ''}>
+                <span className={index === trail.length - 1 ? 'text-foreground font-medium' : ''}>
                   {item.title}
                 </span>
               </span>
@@ -340,7 +304,7 @@ export function AdminHeader({
       </div>
       {preferences.widgetGlobalSearch && (
         <HeaderIconButton label={messages.header.search} onClick={openSearch}>
-          <Search />
+          <Search className="size-4" />
         </HeaderIconButton>
       )}
       {preferencesButtonPlacement.header && (
@@ -349,7 +313,7 @@ export function AdminHeader({
           label={messages.header.preferences}
           onClick={openPreferences}
         >
-          <Settings2 />
+          <Settings2 className="size-4" />
         </HeaderIconButton>
       )}
       {preferencesButtonPlacement.header && preferences.widgetThemeToggle && (
@@ -357,7 +321,7 @@ export function AdminHeader({
           label={isDark ? messages.header.lightMode : messages.header.darkMode}
           onClick={() => setPreferences({ colorMode: isDark ? 'light' : 'dark' })}
         >
-          {isDark ? <Sun /> : <Moon />}
+          {isDark ? <Sun className="size-4" /> : <Moon className="size-4" />}
         </HeaderIconButton>
       )}
       {preferencesButtonPlacement.header && preferences.widgetLanguageToggle && (
@@ -378,7 +342,7 @@ export function AdminHeader({
           label={browserFullscreen ? messages.header.exitFullscreen : messages.header.fullscreen}
           onClick={toggleBrowserFullscreen}
         >
-          {browserFullscreen ? <Minimize2 /> : <Maximize2 />}
+          {browserFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
         </HeaderIconButton>
       )}
       {preferences.widgetNotification && <NotificationsMenu locale={preferences.appLocale} />}
@@ -394,12 +358,6 @@ export function AdminHeader({
   )
 }
 
-/**
- * 渲染顶栏导航列表和品牌区域。
- *
- * @param props - 组件属性。
- * @returns 顶栏导航内容。
- */
 function HeaderNavigation({
   activePath,
   activeRootPath,
@@ -420,7 +378,7 @@ function HeaderNavigation({
             <AppLogo size="sm" />
             <span className="text-sm font-semibold">{systemName}</span>
           </div>
-          <Separator className="hidden h-5 md:block" orientation="vertical" />
+          <Divider layout="vertical" className="!h-5 hidden md:block !mx-1" />
         </>
       )}
       <nav
@@ -443,12 +401,6 @@ function HeaderNavigation({
   )
 }
 
-/**
- * 渲染单个顶栏导航项及其子菜单。
- *
- * @param props - 组件属性。
- * @returns 顶栏导航项。
- */
 function HeaderNavigationItem({
   activePath,
   activeRootPath,
@@ -467,79 +419,69 @@ function HeaderNavigationItem({
     return (
       <Button
         className={cn(
-          'h-8 gap-1.5 px-2 text-muted-foreground',
-          isActive && 'bg-muted text-foreground'
+          'h-8 gap-1.5 px-2 text-muted-foreground !rounded-md text-xs font-normal',
+          isActive && '!bg-muted !text-foreground font-medium'
         )}
         onClick={() => (rootOnly ? onSelectRoot(item) : navigate(targetPath))}
-        variant="ghost"
+        theme="borderless"
+        type="tertiary"
+        icon={Icon && <Icon className="size-4" />}
       >
-        {Icon && <Icon className="size-4" />}
         <span>{item.title}</span>
-        {item.badge && <Badge variant="secondary">{item.badge}</Badge>}
+        {item.badge && <Badge count={item.badge} type="secondary" />}
       </Button>
     )
   }
 
   if (children.length > 0) {
     return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            aria-current={isActive ? 'page' : undefined}
-            className={cn(
-              'h-8 gap-1.5 px-2 text-muted-foreground',
-              isActive && 'bg-muted text-foreground'
-            )}
-            variant="ghost"
-          >
-            {Icon && <Icon className="size-4" />}
-            <span>{item.title}</span>
-            <ChevronDown className="size-3" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" className="w-48">
-          <DropdownMenuLabel>{item.title}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {children.map(child => {
-            const ChildIcon = getMenuRecordIcon(child)
-            const childActive = isMenuRecordActive(child, activePath)
+      <Dropdown
+        position="bottomLeft"
+        render={
+          <Dropdown.Menu className="w-48">
+            <Dropdown.Title>{item.title}</Dropdown.Title>
+            <Dropdown.Divider />
+            {children.map(child => {
+              const ChildIcon = getMenuRecordIcon(child)
+              const childActive = isMenuRecordActive(child, activePath)
 
-            return (
-              <DropdownMenuItem asChild key={child.key}>
-                <a
-                  aria-current={childActive ? 'page' : undefined}
-                  className={cn(childActive && 'bg-accent text-accent-foreground')}
-                  href={child.path}
-                  onClick={event => {
-                    event.preventDefault()
-                    navigate(child.path)
-                  }}
+              return (
+                <Dropdown.Item
+                  key={child.key}
+                  className={cn(childActive && '!bg-primary/10 !text-primary font-medium')}
+                  icon={ChildIcon && <ChildIcon className="size-4" />}
+                  onClick={() => navigate(child.path)}
                 >
-                  {ChildIcon && <ChildIcon className="size-4" />}
-                  <span>{child.title}</span>
-                  {child.badge && (
-                    <Badge className="ml-auto" variant="secondary">
-                      {child.badge}
-                    </Badge>
-                  )}
-                </a>
-              </DropdownMenuItem>
-            )
-          })}
-        </DropdownMenuContent>
-      </DropdownMenu>
+                  <span className="flex items-center justify-between w-full gap-2">
+                    <span>{child.title}</span>
+                    {child.badge && <Badge count={child.badge} type="secondary" />}
+                  </span>
+                </Dropdown.Item>
+              )
+            })}
+          </Dropdown.Menu>
+        }
+      >
+        <Button
+          aria-current={isActive ? 'page' : undefined}
+          className={cn(
+            'h-8 gap-1.5 px-2 text-muted-foreground !rounded-md text-xs font-normal',
+            isActive && '!bg-muted !text-foreground font-medium'
+          )}
+          theme="borderless"
+          type="tertiary"
+          icon={Icon && <Icon className="size-4" />}
+        >
+          <span>{item.title}</span>
+          <ChevronDown className="size-3" />
+        </Button>
+      </Dropdown>
     )
   }
 
   return null
 }
 
-/**
- * 渲染顶栏图标按钮并附带悬浮提示。
- *
- * @param props - 组件属性。
- * @returns 顶栏图标按钮。
- */
 function HeaderIconButton({
   children,
   dataPreferencesPosition,
@@ -547,83 +489,68 @@ function HeaderIconButton({
   onClick
 }: HeaderIconButtonProps) {
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <Button
-          aria-label={label}
-          className="admin-header-icon-button"
-          data-preferences-position={dataPreferencesPosition}
-          onClick={onClick}
-          size="icon-sm"
-          variant="ghost"
-        >
-          {children}
-        </Button>
-      </TooltipTrigger>
-      <TooltipContent>{label}</TooltipContent>
+    <Tooltip content={label}>
+      <Button
+        aria-label={label}
+        className="admin-header-icon-button !p-0 size-8 !rounded-md"
+        data-preferences-position={dataPreferencesPosition}
+        onClick={onClick}
+        theme="borderless"
+        type="tertiary"
+      >
+        {children}
+      </Button>
     </Tooltip>
   )
 }
 
-/**
- * 渲染语言切换下拉菜单。
- *
- * @param props - 组件属性。
- * @returns 语言切换菜单。
- */
 function LanguageDropdown({ locale, setLocale }: LanguageDropdownProps) {
   const messages = getAdminMessages(locale)
   const localeOptions = getLocaleOptions(locale)
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={messages.header.language}
-          className="admin-header-icon-button"
-          size="icon-sm"
-          variant="ghost"
-        >
-          <Globe2 />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40">
-        <DropdownMenuLabel>{messages.header.language}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuRadioGroup onValueChange={setLocale} value={locale}>
+    <Dropdown
+      position="bottomRight"
+      trigger="click"
+      render={
+        <Dropdown.Menu className="w-40">
+          <Dropdown.Title>{messages.header.language}</Dropdown.Title>
+          <Dropdown.Divider />
           {localeOptions.map(item => (
-            <DropdownMenuRadioItem key={item.value} value={item.value}>
+            <Dropdown.Item
+              key={item.value}
+              {...({ 'aria-checked': locale === item.value, role: 'menuitemradio' } as any)}
+              selected={locale === item.value}
+              active={locale === item.value}
+              onClick={() => setLocale(item.value)}
+            >
               {item.label}
-            </DropdownMenuRadioItem>
+            </Dropdown.Item>
           ))}
-        </DropdownMenuRadioGroup>
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </Dropdown.Menu>
+      }
+    >
+      <Button
+        aria-label={messages.header.language}
+        className="admin-header-icon-button !p-0 size-8 !rounded-md"
+        theme="borderless"
+        type="tertiary"
+        icon={<Globe2 className="size-4" />}
+      />
+    </Dropdown>
   )
 }
 
-/**
- * 打开时区选择弹窗并保存时区。
- *
- * @param props - 组件属性。
- * @returns 时区选择入口。
- */
 function TimezoneDialogButton({ locale, setTimezone, timezone }: TimezoneDialogButtonProps) {
   const messages = getAdminMessages(locale)
   const [open, setOpen] = useState(false)
   const [draftTimezone, setDraftTimezone] = useState(timezone)
 
-  /**
-   * 确认并保存时区选择。
-   */
   function confirmTimezone() {
     setTimezone(draftTimezone)
     setOpen(false)
   }
 
-  /**
-   * 打开时区弹窗并同步当前值到草稿。
-   */
   function openTimezoneDialog() {
     setDraftTimezone(timezone)
     setOpen(true)
@@ -632,107 +559,81 @@ function TimezoneDialogButton({ locale, setTimezone, timezone }: TimezoneDialogB
   return (
     <>
       <HeaderIconButton label={messages.header.timezone} onClick={openTimezoneDialog}>
-        <Clock3 />
+        <Clock3 className="size-4" />
       </HeaderIconButton>
-      <Dialog onOpenChange={setOpen} open={open}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{messages.header.timezoneTitle}</DialogTitle>
-            <DialogDescription>{messages.header.timezoneDescription}</DialogDescription>
-          </DialogHeader>
-          <RadioGroup className="grid gap-2" onValueChange={setDraftTimezone} value={draftTimezone}>
-            {preferenceTimezoneOptions.map(item => {
-              const active = draftTimezone === item.value
-
-              return (
-                <div
-                  className={cn(
-                    'flex cursor-pointer items-center gap-2 rounded-md border border-transparent px-2 py-2 hover:bg-accent',
-                    active && 'border-primary bg-accent text-accent-foreground'
-                  )}
-                  key={item.value}
-                  onClick={() => setDraftTimezone(item.value)}
-                  onKeyDown={event => {
-                    if (event.key === 'Enter' || event.key === ' ') {
-                      event.preventDefault()
-                      setDraftTimezone(item.value)
-                    }
-                  }}
-                  role="presentation"
-                >
-                  <RadioGroupItem aria-label={item.label} value={item.value} />
-                  <span className="text-sm">{item.label}</span>
-                </div>
-              )
-            })}
-          </RadioGroup>
-          <DialogFooter>
-            <Button onClick={() => setOpen(false)} type="button" variant="outline">
-              {messages.common.cancel}
-            </Button>
-            <Button onClick={confirmTimezone} type="button">
-              {messages.common.confirm}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <Modal
+        motion={false}
+        title={messages.header.timezoneTitle}
+        visible={open}
+        onCancel={() => setOpen(false)}
+        onOk={confirmTimezone}
+        okText={messages.common.confirm}
+        cancelText={messages.common.cancel}
+        okButtonProps={{ 'aria-label': messages.common.confirm } as any}
+        cancelButtonProps={{ 'aria-label': messages.common.cancel } as any}
+      >
+        <p className="text-xs text-muted-foreground mb-3">{messages.header.timezoneDescription}</p>
+        <RadioGroup
+          value={draftTimezone}
+          onChange={e => setDraftTimezone(e.target.value)}
+          direction="vertical"
+          className="w-full gap-2"
+        >
+          {preferenceTimezoneOptions.map(item => (
+            <Radio key={item.value} value={item.value} className="py-1">
+              {item.label}
+            </Radio>
+          ))}
+        </RadioGroup>
+      </Modal>
     </>
   )
 }
 
-/**
- * 渲染顶栏通知入口和通知列表。
- *
- * @param props - 组件属性。
- * @returns 通知下拉菜单。
- */
 function NotificationsMenu({ locale }: { locale: string }) {
   const messages = getAdminMessages(locale)
   const { data = emptyNotifications } = useQuery(notificationQueries.list())
   const unreadCount = useMemo(() => data.filter(item => item.status === 'unread').length, [data])
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={messages.header.notifications}
-          className="admin-header-icon-button relative"
-          size="icon-sm"
-          variant="ghost"
-        >
-          <Bell />
-          {unreadCount > 0 ? (
-            <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
-          ) : null}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <DropdownMenuLabel>{messages.header.notifications}</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        {data.length > 0 ? (
-          data.map(item => (
-            <DropdownMenuItem className="items-start gap-2" key={item.id}>
-              <CheckCircle2 className="mt-0.5 size-4 text-primary" />
-              <span className="grid gap-0.5">
-                <span>{item.title}</span>
-                <span className="text-xs text-muted-foreground">{item.description}</span>
-              </span>
-            </DropdownMenuItem>
-          ))
-        ) : (
-          <DropdownMenuItem disabled>暂无通知</DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Dropdown
+      position="bottomRight"
+      trigger="click"
+      render={
+        <Dropdown.Menu className="w-80 max-w-[90vw]">
+          <Dropdown.Title>{messages.header.notifications}</Dropdown.Title>
+          <Dropdown.Divider />
+          {data.length > 0 ? (
+            data.map(item => (
+              <Dropdown.Item key={item.id} className="items-start gap-2 whitespace-normal py-2">
+                <CheckCircle2 className="mt-0.5 size-4 text-primary shrink-0" />
+                <div className="grid gap-0.5">
+                  <span className="text-sm font-medium">{item.title}</span>
+                  <span className="text-xs text-muted-foreground">{item.description}</span>
+                </div>
+              </Dropdown.Item>
+            ))
+          ) : (
+            <Dropdown.Item disabled>暂无通知</Dropdown.Item>
+          )}
+        </Dropdown.Menu>
+      }
+    >
+      <Button
+        aria-label={messages.header.notifications}
+        className="admin-header-icon-button relative !p-0 size-8 !rounded-md"
+        theme="borderless"
+        type="tertiary"
+        icon={<Bell className="size-4" />}
+      >
+        {unreadCount > 0 ? (
+          <span className="absolute top-1.5 right-1.5 size-1.5 rounded-full bg-primary" />
+        ) : null}
+      </Button>
+    </Dropdown>
   )
 }
 
-/**
- * 渲染用户下拉菜单及偏好和锁屏入口。
- *
- * @param props - 组件属性。
- * @returns 用户下拉菜单。
- */
 function UserMenu({
   locale,
   lockScreenEnabled,
@@ -744,41 +645,44 @@ function UserMenu({
   const messages = getAdminMessages(locale)
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          aria-label={messages.header.userMenu}
-          className="admin-header-icon-button"
-          size="icon-sm"
-          variant="ghost"
-        >
-          <CircleUserRound />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>Root Admin</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          <UserRoundCog />
-          {messages.header.userProfile}
-        </DropdownMenuItem>
-        {showPreferencesItem && (
-          <DropdownMenuItem data-preferences-position="user-dropdown" onClick={openPreferences}>
-            <Settings2 />
-            {messages.header.preferences}
-          </DropdownMenuItem>
-        )}
-        {lockScreenEnabled && (
-          <DropdownMenuItem onClick={openLock}>
-            <LockKeyhole />
-            {messages.header.lockScreen}
-          </DropdownMenuItem>
-        )}
-        <DropdownMenuItem onClick={onLogout}>
-          <LogOut />
-          {messages.header.logout}
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <Dropdown
+      position="bottomRight"
+      trigger="click"
+      render={
+        <Dropdown.Menu className="w-48">
+          <Dropdown.Title>Root Admin</Dropdown.Title>
+          <Dropdown.Divider />
+          <Dropdown.Item icon={<UserRoundCog className="size-4" />}>
+            {messages.header.userProfile}
+          </Dropdown.Item>
+          {showPreferencesItem && (
+            <Dropdown.Item
+              data-preferences-position="user-dropdown"
+              icon={<Settings2 className="size-4" />}
+              onClick={openPreferences}
+            >
+              {messages.header.preferences}
+            </Dropdown.Item>
+          )}
+          {lockScreenEnabled && (
+            <Dropdown.Item icon={<LockKeyhole className="size-4" />} onClick={openLock}>
+              {messages.header.lockScreen}
+            </Dropdown.Item>
+          )}
+          <Dropdown.Divider />
+          <Dropdown.Item type="danger" icon={<LogOut className="size-4" />} onClick={onLogout}>
+            {messages.header.logout}
+          </Dropdown.Item>
+        </Dropdown.Menu>
+      }
+    >
+      <Button
+        aria-label={messages.header.userMenu}
+        className="admin-header-icon-button !p-0 size-8 !rounded-md"
+        theme="borderless"
+        type="tertiary"
+        icon={<CircleUserRound className="size-5" />}
+      />
+    </Dropdown>
   )
 }

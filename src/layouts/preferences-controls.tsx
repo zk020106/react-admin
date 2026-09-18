@@ -1,17 +1,7 @@
 import { Plus } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Button, Select, Switch } from '@douyinfe/semi-ui-19'
 
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
 import { getPreferenceStepAria } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 
@@ -77,11 +67,6 @@ type PreferenceToggleProps = {
 
 /**
  * 渲染偏好设置面板中的分组区块。
- *
- * @param props - 组件属性。
- * @param props.children - 分组内的偏好控件。
- * @param props.title - 分组标题文本。
- * @returns 带标题和分割线的偏好设置分组。
  */
 export function PreferenceBlock({ children, title }: PreferenceBlockProps) {
   return (
@@ -94,17 +79,6 @@ export function PreferenceBlock({ children, title }: PreferenceBlockProps) {
 
 /**
  * 渲染偏好设置中的数值步进控件。
- *
- * @param props - 组件属性。
- * @param props.disabled - 是否禁用当前控件。
- * @param props.label - 控件标签文本。
- * @param props.locale - 当前语言环境，用于生成无障碍文案。
- * @param props.max - 允许设置的最大值。
- * @param props.min - 允许设置的最小值。
- * @param props.onValueChange - 数值变更回调。
- * @param props.step - 每次点击步进按钮调整的数值。
- * @param props.value - 当前数值。
- * @returns 带加减按钮和数字输入框的偏好控件。
  */
 export function PreferenceNumber({
   disabled = false,
@@ -116,11 +90,6 @@ export function PreferenceNumber({
   step = 1,
   value
 }: PreferenceNumberProps) {
-  /**
-   * 约束数值步进后的结果并回传。
-   *
-   * @param next - 用户输入或按钮步进后的候选值。
-   */
   const setNext = (next: number) => onValueChange(Math.min(Math.max(next, min), max))
 
   return (
@@ -130,22 +99,20 @@ export function PreferenceNumber({
         disabled && 'pointer-events-none opacity-50'
       )}
     >
-      <Label>{label}</Label>
+      <label className="text-sm font-medium">{label}</label>
       <div className="grid grid-cols-[1.9rem_4.25rem_1.9rem] items-center overflow-hidden rounded-md border bg-background">
-        <Button
+        <button
           aria-label={getPreferenceStepAria(locale, 'decrease', label)}
-          className="rounded-none"
+          className="flex h-7 items-center justify-center rounded-none border-0 bg-transparent text-foreground hover:bg-muted cursor-pointer disabled:opacity-50"
           disabled={disabled}
           onClick={() => setNext(value - step)}
-          size="icon-xs"
           type="button"
-          variant="ghost"
         >
           <span className="text-base leading-none">-</span>
-        </Button>
-        <Input
+        </button>
+        <input
           aria-label={label}
-          className="h-7 rounded-none border-y-0 border-x px-1 text-center text-xs tabular-nums"
+          className="h-7 w-full border-y-0 border-x border-input bg-transparent px-1 text-center text-xs tabular-nums outline-hidden"
           disabled={disabled}
           max={max}
           min={min}
@@ -154,17 +121,15 @@ export function PreferenceNumber({
           type="number"
           value={value}
         />
-        <Button
+        <button
           aria-label={getPreferenceStepAria(locale, 'increase', label)}
-          className="rounded-none"
+          className="flex h-7 items-center justify-center rounded-none border-0 bg-transparent text-foreground hover:bg-muted cursor-pointer disabled:opacity-50"
           disabled={disabled}
           onClick={() => setNext(value + step)}
-          size="icon-xs"
           type="button"
-          variant="ghost"
         >
           <Plus className="size-3.5" />
-        </Button>
+        </button>
       </div>
     </div>
   )
@@ -172,13 +137,6 @@ export function PreferenceNumber({
 
 /**
  * 渲染偏好设置中的文本输入项。
- *
- * @param props - 组件属性。
- * @param props.disabled - 是否禁用当前控件。
- * @param props.label - 输入项标签文本。
- * @param props.onValueChange - 文本变更回调。
- * @param props.value - 当前文本值。
- * @returns 带标签的文本输入控件。
  */
 export function PreferenceText({
   disabled = false,
@@ -193,9 +151,10 @@ export function PreferenceText({
         disabled && 'pointer-events-none opacity-50'
       )}
     >
-      <Label>{label}</Label>
-      <Input
+      <label className="text-sm font-medium">{label}</label>
+      <input
         aria-label={label}
+        className="h-8 w-full rounded-md border border-input bg-background px-3 text-sm outline-hidden focus:border-primary"
         disabled={disabled}
         onChange={event => onValueChange(event.target.value)}
         value={value}
@@ -206,15 +165,6 @@ export function PreferenceText({
 
 /**
  * 渲染偏好设置中的分段单选控件。
- *
- * @typeParam TValue - 单选项 value 的字符串字面量类型。
- * @param props - 组件属性。
- * @param props.disabled - 是否禁用当前控件。
- * @param props.items - 可选择的分段项列表。
- * @param props.label - 控件标签文本。
- * @param props.onValueChange - 单选值变更回调。
- * @param props.value - 当前选中的值。
- * @returns 右侧按钮式分段单选控件。
  */
 export function PreferenceSegmented<TValue extends string>({
   disabled = false,
@@ -230,7 +180,7 @@ export function PreferenceSegmented<TValue extends string>({
         disabled && 'pointer-events-none opacity-50'
       )}
     >
-      <Label className="shrink-0">{label}</Label>
+      <label className="shrink-0 text-sm font-medium">{label}</label>
       <div className="flex flex-wrap justify-end gap-2">
         {items.map(item => {
           const active = value === item.value
@@ -240,15 +190,14 @@ export function PreferenceSegmented<TValue extends string>({
               aria-pressed={active}
               data-active={active ? 'true' : undefined}
               className={cn(
-                'h-7 rounded-sm px-2 text-xs',
-                active &&
-                  'border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground'
+                'h-7 rounded-sm px-2 text-xs !font-normal',
+                active && '!border-primary !bg-primary !text-primary-foreground shadow-none'
               )}
               disabled={disabled}
               key={item.value}
               onClick={() => onValueChange(item.value)}
-              type="button"
-              variant="outline"
+              type="primary"
+              theme={active ? 'solid' : 'light'}
             >
               {item.label}
             </Button>
@@ -261,15 +210,6 @@ export function PreferenceSegmented<TValue extends string>({
 
 /**
  * 渲染偏好设置中的多选按钮组。
- *
- * @typeParam TValue - 多选项 value 的字符串字面量类型。
- * @param props - 组件属性。
- * @param props.disabled - 是否禁用当前控件。
- * @param props.items - 可选择的多选项列表。
- * @param props.label - 控件标签文本。
- * @param props.onValuesChange - 多选值集合变更回调。
- * @param props.values - 当前已选中的值集合。
- * @returns 右侧按钮式多选控件。
  */
 export function PreferenceCheckboxGroup<TValue extends string>({
   disabled = false,
@@ -278,11 +218,6 @@ export function PreferenceCheckboxGroup<TValue extends string>({
   onValuesChange,
   values
 }: PreferenceCheckboxGroupProps<TValue>) {
-  /**
-   * 根据当前选中状态添加或移除多选值。
-   *
-   * @param value - 本次点击的多选项值。
-   */
   function toggleValue(value: TValue) {
     if (values.includes(value)) {
       onValuesChange(values.filter(item => item !== value))
@@ -299,7 +234,7 @@ export function PreferenceCheckboxGroup<TValue extends string>({
         disabled && 'pointer-events-none opacity-50'
       )}
     >
-      <Label className="shrink-0">{label}</Label>
+      <label className="shrink-0 text-sm font-medium">{label}</label>
       <div className="flex flex-wrap justify-end gap-2">
         {items.map(item => {
           const active = values.includes(item.value)
@@ -309,15 +244,14 @@ export function PreferenceCheckboxGroup<TValue extends string>({
               aria-pressed={active}
               data-active={active ? 'true' : undefined}
               className={cn(
-                'h-7 rounded-sm px-2 text-xs',
-                active &&
-                  'border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground'
+                'h-7 rounded-sm px-2 text-xs !font-normal',
+                active && '!border-primary !bg-primary !text-primary-foreground shadow-none'
               )}
               disabled={disabled}
               key={item.value}
               onClick={() => toggleValue(item.value)}
-              type="button"
-              variant={active ? 'default' : 'outline'}
+              type="primary"
+              theme={active ? 'solid' : 'light'}
             >
               {item.label}
             </Button>
@@ -330,15 +264,6 @@ export function PreferenceCheckboxGroup<TValue extends string>({
 
 /**
  * 渲染偏好设置中的下拉选择控件。
- *
- * @typeParam TValue - 下拉选项 value 的字符串字面量类型。
- * @param props - 组件属性。
- * @param props.disabled - 是否禁用当前控件。
- * @param props.items - 下拉选项列表。
- * @param props.label - 控件标签文本。
- * @param props.onValueChange - 下拉值变更回调。
- * @param props.value - 当前选中的值。
- * @returns 带标签的下拉选择控件。
  */
 export function PreferenceSelect<TValue extends string>({
   disabled = false,
@@ -347,6 +272,8 @@ export function PreferenceSelect<TValue extends string>({
   onValueChange,
   value
 }: PreferenceSelectProps<TValue>) {
+  const labelId = `pref-select-label-${label.replace(/[^a-zA-Z0-9_-]/g, '_').toLowerCase()}`
+
   return (
     <div
       className={cn(
@@ -354,37 +281,23 @@ export function PreferenceSelect<TValue extends string>({
         disabled && 'pointer-events-none opacity-50'
       )}
     >
-      <Label className="shrink-0">{label}</Label>
+      <label id={labelId} className="shrink-0 text-sm font-medium">
+        {label}
+      </label>
       <Select
+        aria-labelledby={labelId}
         disabled={disabled}
-        onValueChange={onValueChange as (value: string) => void}
+        onChange={val => onValueChange(val as TValue)}
         value={value}
-      >
-        <SelectTrigger aria-label={label} className="h-8 w-[165px]">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {items.map(item => (
-            <SelectItem key={item.value} value={item.value}>
-              {item.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+        className="w-[165px]"
+        optionList={items.map(item => ({ label: item.label, value: item.value }))}
+      />
     </div>
   )
 }
 
 /**
  * 渲染偏好设置中的开关项。
- *
- * @param props - 组件属性。
- * @param props.checked - 当前开关是否开启。
- * @param props.disabled - 是否禁用当前控件。
- * @param props.label - 开关标签文本。
- * @param props.onCheckedChange - 开关状态变更回调。
- * @param props.shortcut - 可选快捷键提示文本。
- * @returns 可点击整行切换的偏好开关控件。
  */
 export function PreferenceToggle({
   checked,
@@ -393,23 +306,33 @@ export function PreferenceToggle({
   onCheckedChange,
   shortcut
 }: PreferenceToggleProps) {
+  const containerRef = (node: HTMLDivElement | null) => {
+    if (node) {
+      const input = node.querySelector('input[role="switch"]')
+      if (input) {
+        input.setAttribute('data-state', checked ? 'checked' : 'unchecked')
+      }
+    }
+  }
+
   return (
     <div
+      ref={containerRef}
       className={cn(
-        'my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5 hover:bg-accent',
+        'my-1 flex w-full items-center justify-between rounded-md px-2 py-2.5 hover:bg-accent cursor-pointer',
         disabled && 'pointer-events-none opacity-50'
       )}
       onClick={() => onCheckedChange(!checked)}
     >
-      <Label className="min-w-0 flex-1 text-sm">{label}</Label>
+      <span className="min-w-0 flex-1 text-sm font-medium">{label}</span>
       {shortcut ? (
         <span className="mr-2 ml-auto shrink-0 text-xs opacity-60">{shortcut}</span>
       ) : null}
       <Switch
         checked={checked}
+        data-state={checked ? 'checked' : 'unchecked'}
         disabled={disabled}
-        onClick={event => event.stopPropagation()}
-        onCheckedChange={onCheckedChange}
+        onChange={checkedState => onCheckedChange(checkedState)}
       />
     </div>
   )

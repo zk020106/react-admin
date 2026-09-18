@@ -10,8 +10,8 @@ Organize code by execution context to prevent server code from accidentally bund
 
 ```tsx
 // lib/posts.ts - Mixed server and client code
-import { db } from './db'  // Database - server only
-import { formatDate } from './utils'  // Utility - shared
+import { db } from './db' // Database - server only
+import { formatDate } from './utils' // Utility - shared
 
 export async function getPosts() {
   // This uses db, so it's server-only
@@ -51,7 +51,7 @@ export interface Post {
 
 export function formatPostDate(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
+    dateStyle: 'medium'
   }).format(date)
 }
 
@@ -61,7 +61,7 @@ import type { Post } from './posts'
 
 export async function getPostsFromDb(): Promise<Post[]> {
   return db.posts.findMany({
-    orderBy: { createdAt: 'desc' },
+    orderBy: { createdAt: 'desc' }
   })
 }
 
@@ -74,10 +74,9 @@ import { createServerFn } from '@tanstack/react-start'
 import { getPostsFromDb, createPostInDb } from './posts.server'
 import { createPostSchema } from './schemas/post'
 
-export const getPosts = createServerFn()
-  .handler(async () => {
-    return await getPostsFromDb()
-  })
+export const getPosts = createServerFn().handler(async () => {
+  return await getPostsFromDb()
+})
 
 export const createPost = createServerFn({ method: 'POST' })
   .validator(createPostSchema)
@@ -90,19 +89,19 @@ export const createPost = createServerFn({ method: 'POST' })
 
 ```tsx
 // components/PostList.tsx
-import { getPosts } from '@/lib/posts.functions'  // Safe - RPC stub on client
-import { formatPostDate } from '@/lib/posts'       // Safe - shared utility
-import type { Post } from '@/lib/posts'            // Safe - type only
+import { getPosts } from '@/lib/posts.functions' // Safe - RPC stub on client
+import { formatPostDate } from '@/lib/posts' // Safe - shared utility
+import type { Post } from '@/lib/posts' // Safe - type only
 
 function PostList() {
   const postsQuery = useQuery({
     queryKey: ['posts'],
-    queryFn: () => getPosts(),  // Calls server function
+    queryFn: () => getPosts() // Calls server function
   })
 
   return (
     <ul>
-      {postsQuery.data?.map((post) => (
+      {postsQuery.data?.map(post => (
         <li key={post.id}>
           {post.title}
           <span>{formatPostDate(post.createdAt)}</span>
@@ -115,12 +114,12 @@ function PostList() {
 
 ## File Convention Summary
 
-| Suffix | Purpose | Safe to Import on Client |
-|--------|---------|-------------------------|
-| `.ts` | Shared utilities, types | Yes |
-| `.server.ts` | Server-only logic (db, secrets) | No |
-| `.functions.ts` | Server function wrappers | Yes |
-| `.client.ts` | Client-only code | Yes (client only) |
+| Suffix          | Purpose                         | Safe to Import on Client |
+| --------------- | ------------------------------- | ------------------------ |
+| `.ts`           | Shared utilities, types         | Yes                      |
+| `.server.ts`    | Server-only logic (db, secrets) | No                       |
+| `.functions.ts` | Server function wrappers        | Yes                      |
+| `.client.ts`    | Client-only code                | Yes (client only)        |
 
 ## Good Example: Environment Variables
 
@@ -129,14 +128,14 @@ function PostList() {
 export const config = {
   databaseUrl: process.env.DATABASE_URL!,
   sessionSecret: process.env.SESSION_SECRET!,
-  stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY!
 }
 
 // lib/config.ts - Public config (safe for client)
 export const publicConfig = {
   appName: 'My App',
   apiUrl: process.env.NEXT_PUBLIC_API_URL,
-  stripePublicKey: process.env.NEXT_PUBLIC_STRIPE_KEY,
+  stripePublicKey: process.env.NEXT_PUBLIC_STRIPE_KEY
 }
 
 // Never import config.server.ts on client

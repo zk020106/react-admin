@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
@@ -22,8 +22,16 @@ async function openPreferencesTab(name: string) {
 }
 
 async function chooseSelect(label: string, option: string) {
-  await userEvent.click(screen.getByRole('combobox', { name: label }))
-  await userEvent.click(await screen.findByRole('option', { name: option }))
+  const dialog = screen.getByRole('dialog', { name: /偏好设置|Preferences/ })
+  const labelEl = within(dialog).getByText(label)
+  const container = labelEl.closest('div')
+  const trigger = (container?.querySelector('.semi-select-selection') ??
+    container?.querySelector('[role="combobox"]') ??
+    container?.querySelector('.semi-select')) as HTMLElement
+  fireEvent.click(trigger)
+  const optionText = await screen.findByText(option)
+  const optionEl = (optionText.closest('[role="option"]') ?? optionText) as HTMLElement
+  fireEvent.click(optionEl)
 }
 
 function preferences() {

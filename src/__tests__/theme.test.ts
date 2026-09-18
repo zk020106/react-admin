@@ -27,6 +27,11 @@ describe('admin theme', () => {
       'calc(16px * 0.875)'
     )
     expect(document.documentElement.style.getPropertyValue('--primary')).toBe('212 100% 45%')
+    expect(document.documentElement.style.getPropertyValue('--semi-border-radius-small')).toBe(
+      '0.5rem'
+    )
+    expect(document.documentElement.style.getPropertyValue('--semi-color-primary')).toBe('#006be6')
+    expect(document.body.style.getPropertyValue('--semi-border-radius-small')).toBe('0.5rem')
     expect(document.documentElement.style.getPropertyValue('--sidebar-active')).toBe(
       'var(--primary) / 15%'
     )
@@ -39,6 +44,26 @@ describe('admin theme', () => {
     expect(document.documentElement.style.getPropertyValue('--sidebar-hover-foreground')).toBe(
       '210 6% 21%'
     )
+  })
+
+  it('synchronizes 0px sharp corners to Semi Design tokens', () => {
+    applyAdminTheme({
+      builtinType: 'default',
+      fontSize: 16,
+      mode: 'light',
+      radius: '0'
+    })
+
+    expect(document.documentElement.style.getPropertyValue('--semi-border-radius-small')).toBe(
+      '0px'
+    )
+    expect(document.documentElement.style.getPropertyValue('--semi-border-radius-medium')).toBe(
+      '0px'
+    )
+    expect(document.documentElement.style.getPropertyValue('--semi-border-radius-large')).toBe(
+      '0px'
+    )
+    expect(document.body.style.getPropertyValue('--semi-border-radius-small')).toBe('0px')
   })
 
   it('uses builtin dark primary color overrides where admin presets define them', () => {
@@ -83,5 +108,31 @@ describe('admin theme', () => {
     expect(document.documentElement.style.getPropertyValue('--sidebar-active-indicator')).toBe(
       '0 0% 95%'
     )
+  })
+
+  it('applies cyber-blue theme preset correctly in light and dark modes', () => {
+    const cyberPreset = BUILT_IN_THEME_PRESETS.find(preset => preset.type === 'cyber-blue')
+    expect(cyberPreset).toBeDefined()
+    expect(cyberPreset?.color).toBe('#07bdfd')
+
+    // Light mode
+    applyAdminTheme({
+      builtinType: 'cyber-blue',
+      fontSize: 16,
+      mode: 'light',
+      radius: '0.5'
+    })
+    expect(document.documentElement.dataset.theme).toBe('cyber-blue')
+    expect(document.documentElement.style.getPropertyValue('--semi-color-primary')).toBe('#006be6')
+
+    // Dark mode
+    applyAdminTheme({
+      builtinType: 'cyber-blue',
+      fontSize: 16,
+      mode: 'dark',
+      radius: '0.5'
+    })
+    expect(document.documentElement.classList.contains('dark')).toBe(true)
+    expect(document.documentElement.style.getPropertyValue('--semi-color-primary')).toBe('#07bdfd')
   })
 })

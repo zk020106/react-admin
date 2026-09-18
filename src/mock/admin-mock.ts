@@ -1,7 +1,7 @@
 import { projectInfo } from 'virtual:admin-project-info'
 
 import { HttpError } from '@/lib/http'
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 import type { ProjectInfo } from '@/types/project-info'
 
 export interface OverviewStat {
@@ -134,38 +134,19 @@ export const mockAdminMenu: MenuRecord[] = [
   {
     children: [
       {
-        badge: '12',
-        key: '/system/users',
-        path: '/system/users',
-        permission: 'system:user:read',
-        title: '用户管理'
+        badge: 'New',
+        key: '/effects/popup',
+        path: '/effects/popup',
+        permission: 'effects:read',
+        title: '弹窗抽屉'
       },
       {
-        key: '/system/roles',
-        path: '/system/roles',
-        permission: 'system:role:read',
-        title: '角色管理'
-      },
-      {
-        key: '/system/menus',
-        path: '/system/menus',
-        permission: 'system:menu:read',
-        title: '菜单管理'
-      },
-      {
-        key: '/system/departments',
-        path: '/system/departments',
-        permission: 'system:department:read',
-        title: '部门管理'
+        key: '/effects/form',
+        path: '/effects/form',
+        permission: 'effects:read',
+        title: '表单控件'
       }
     ],
-    icon: 'Shield',
-    key: '/system',
-    path: '/system',
-    permission: 'system:read',
-    title: '系统管理'
-  },
-  {
     icon: 'SlidersHorizontal',
     key: '/effects',
     path: '/effects',

@@ -1,17 +1,7 @@
-import { Copy, Pin, PinOff, RefreshCcw } from 'lucide-react'
-import { useMemo } from 'react'
+import { Copy, Pin, PinOff, RefreshCcw, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { Button, SideSheet, Tooltip } from '@douyinfe/semi-ui-19'
 
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { getAdminMessages, getPreferenceTabs } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 import { getPreferenceDiff } from '@/layouts/preferences-options'
@@ -22,7 +12,7 @@ import {
   ShortcutPreferences
 } from '@/layouts/preferences-sections'
 import type { PreferenceStoreState } from '@/store/preferences'
-import type { AdminPreferences } from '@/types/admin'
+import type { AdminPreferences } from '@/types'
 
 type PreferencesSheetProps = {
   onClearCacheLogout: () => void
@@ -35,14 +25,6 @@ type PreferencesSheetProps = {
 
 /**
  * 渲染偏好设置抽屉和全部配置页签。
- *
- * @param props - 组件属性。
- * @param props.onOpenChange - 抽屉开关状态变更回调。
- * @param props.open - 抽屉是否打开。
- * @param props.preferences - 当前完整偏好设置。
- * @param props.resetPreferences - 恢复默认偏好设置的方法。
- * @param props.setPreferences - 偏好设置更新方法。
- * @returns 偏好设置抽屉。
  */
 export function PreferencesSheet({
   onClearCacheLogout,
@@ -56,12 +38,8 @@ export function PreferencesSheet({
   const preferenceTabs = getPreferenceTabs(preferences.appLocale)
   const preferenceDiff = useMemo(() => getPreferenceDiff(preferences), [preferences])
   const hasPreferenceDiff = Object.keys(preferenceDiff).length > 0
+  const [activeTab, setActiveTab] = useState<string>('appearance')
 
-  /**
-   * 复制当前与默认值不同的偏好配置。
-   *
-   * @returns 剪贴板写入完成后的 Promise。
-   */
   async function copyPreferences() {
     if (!hasPreferenceDiff) {
       return
@@ -77,95 +55,139 @@ export function PreferencesSheet({
   }
 
   return (
-    <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="w-[390px] gap-0 sm:max-w-[390px]">
-        <SheetHeader className="pr-20">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <SheetTitle>{messages.preferences.title}</SheetTitle>
-              <SheetDescription>{messages.preferences.description}</SheetDescription>
-            </div>
-            <div className="absolute top-3 right-11 flex items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={messages.preferences.actions.reset}
-                    className="relative"
-                    disabled={!hasPreferenceDiff}
-                    onClick={resetPreferences}
-                    size="icon-sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    {hasPreferenceDiff ? (
-                      <span className="absolute top-1 right-1 size-1.5 rounded-sm bg-primary" />
-                    ) : null}
-                    <RefreshCcw />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{messages.preferences.actions.resetTooltip}</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    aria-label={
-                      preferences.appEnableStickyPreferencesNavigationBar
-                        ? messages.preferences.actions.unpinNavigation
-                        : messages.preferences.actions.pinNavigation
-                    }
-                    onClick={() =>
-                      setPreferences({
-                        appEnableStickyPreferencesNavigationBar:
-                          !preferences.appEnableStickyPreferencesNavigationBar
-                      })
-                    }
-                    size="icon-sm"
-                    type="button"
-                    variant="ghost"
-                  >
-                    {preferences.appEnableStickyPreferencesNavigationBar ? <PinOff /> : <Pin />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {preferences.appEnableStickyPreferencesNavigationBar
-                    ? messages.preferences.actions.unpinNavigation
-                    : messages.preferences.actions.pinNavigation}
-                </TooltipContent>
-              </Tooltip>
-            </div>
+    <SideSheet
+      visible={open}
+      onCancel={() => onOpenChange(false)}
+      placement="right"
+      width={390}
+      closable={false}
+      headerStyle={{ display: 'none' }}
+      bodyStyle={{ padding: 0, height: '100%', display: 'flex', flexDirection: 'column' }}
+      className="admin-preferences-sheet text-foreground"
+      aria-label={messages.preferences.title}
+    >
+      <div
+        role="dialog"
+        aria-label={messages.preferences.title}
+        className="flex flex-col h-full w-full bg-background"
+      >
+        {/* 头部区域 */}
+        <div className="relative flex items-start justify-between border-b p-4 pr-12">
+          <div>
+            <h2 className="text-base font-semibold">{messages.preferences.title}</h2>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {messages.preferences.description}
+            </p>
           </div>
-        </SheetHeader>
-        <Tabs className="min-h-0 flex-1 gap-0" defaultValue="appearance">
-          <div className="px-4 pb-3">
-            <TabsList
+          <div className="absolute top-3 right-3 flex items-center gap-1">
+            <Tooltip content={messages.preferences.actions.resetTooltip}>
+              <Button
+                aria-label={messages.preferences.actions.reset}
+                className="relative !size-7 !p-0"
+                disabled={!hasPreferenceDiff}
+                onClick={resetPreferences}
+                theme="borderless"
+                type="tertiary"
+                icon={<RefreshCcw className="size-3.5" />}
+              >
+                {hasPreferenceDiff ? (
+                  <span className="absolute top-1 right-1 size-1.5 rounded-sm bg-primary" />
+                ) : null}
+              </Button>
+            </Tooltip>
+            <Tooltip
+              content={
+                preferences.appEnableStickyPreferencesNavigationBar
+                  ? messages.preferences.actions.unpinNavigation
+                  : messages.preferences.actions.pinNavigation
+              }
+            >
+              <Button
+                aria-label={
+                  preferences.appEnableStickyPreferencesNavigationBar
+                    ? messages.preferences.actions.unpinNavigation
+                    : messages.preferences.actions.pinNavigation
+                }
+                className="!size-7 !p-0"
+                onClick={() =>
+                  setPreferences({
+                    appEnableStickyPreferencesNavigationBar:
+                      !preferences.appEnableStickyPreferencesNavigationBar
+                  })
+                }
+                theme="borderless"
+                type="tertiary"
+                icon={
+                  preferences.appEnableStickyPreferencesNavigationBar ? (
+                    <PinOff className="size-3.5" />
+                  ) : (
+                    <Pin className="size-3.5" />
+                  )
+                }
+              />
+            </Tooltip>
+            <Button
+              aria-label={messages.common.cancel}
+              className="!size-7 !p-0"
+              onClick={() => onOpenChange(false)}
+              theme="borderless"
+              type="tertiary"
+              icon={<X className="size-4" />}
+            />
+          </div>
+        </div>
+
+        {/* 选项卡导航与内容 */}
+        <div
+          data-slot="tabs"
+          data-orientation="horizontal"
+          className="min-h-0 flex-1 flex flex-col data-[orientation=horizontal]:flex-col gap-0"
+        >
+          <div className="px-4 py-3 border-b bg-muted/20">
+            <div
+              role="tablist"
               className={cn(
-                'grid h-9 w-full',
+                'grid h-9 w-full rounded-lg bg-muted p-1 text-muted-foreground',
                 preferences.appEnableStickyPreferencesNavigationBar && 'sticky top-0 z-20'
               )}
               style={{ gridTemplateColumns: `repeat(${preferenceTabs.length}, minmax(0, 1fr))` }}
             >
               {preferenceTabs.map(tab => (
-                <TabsTrigger key={tab.value} value={tab.value}>
+                <button
+                  key={tab.value}
+                  role="tab"
+                  aria-selected={activeTab === tab.value}
+                  data-state={activeTab === tab.value ? 'active' : 'inactive'}
+                  className={cn(
+                    'inline-flex items-center justify-center rounded-md px-2 py-1 text-xs font-medium cursor-pointer transition-all border-0 bg-transparent text-inherit outline-hidden data-[state=active]:bg-background',
+                    activeTab === tab.value
+                      ? 'bg-background text-foreground shadow-xs font-semibold'
+                      : 'hover:text-foreground'
+                  )}
+                  onClick={() => setActiveTab(tab.value)}
+                >
                   {tab.label}
-                </TabsTrigger>
+                </button>
               ))}
-            </TabsList>
+            </div>
           </div>
-          <ScrollArea className="min-h-0 flex-1 px-4">
-            <TabsContent className="m-0 pb-6" value="appearance">
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto px-4 py-2">
+            {activeTab === 'appearance' && (
               <AppearancePreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-            <TabsContent className="m-0 pb-6" value="layout">
+            )}
+            {activeTab === 'layout' && (
               <LayoutPreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-            <TabsContent className="m-0 pb-6" value="shortcut">
+            )}
+            {activeTab === 'shortcut' && (
               <ShortcutPreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-            <TabsContent className="m-0 pb-6" value="general">
+            )}
+            {activeTab === 'general' && (
               <GeneralPreferences preferences={preferences} setPreferences={setPreferences} />
-            </TabsContent>
-          </ScrollArea>
-        </Tabs>
+            )}
+          </div>
+        </div>
+
+        {/* 底部操作按钮 */}
         <div
           className={cn(
             'grid gap-3 border-t p-4',
@@ -176,17 +198,18 @@ export function PreferencesSheet({
             <Button
               disabled={!hasPreferenceDiff}
               onClick={() => void copyPreferences()}
-              variant="default"
+              theme="solid"
+              type="primary"
+              icon={<Copy className="size-4" />}
             >
-              <Copy />
               {messages.preferences.actions.copy}
             </Button>
           ) : null}
-          <Button onClick={handleClearCacheLogout} variant="ghost">
+          <Button onClick={handleClearCacheLogout} theme="borderless" type="tertiary">
             {messages.preferences.actions.clearCacheLogout}
           </Button>
         </div>
-      </SheetContent>
-    </Sheet>
+      </div>
+    </SideSheet>
   )
 }

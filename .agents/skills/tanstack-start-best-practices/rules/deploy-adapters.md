@@ -19,8 +19,8 @@ export default defineConfig({
 // Or using wrong adapter for platform
 export default defineConfig({
   server: {
-    preset: 'node-server',  // But deploying to Vercel Edge
-  },
+    preset: 'node-server' // But deploying to Vercel Edge
+  }
 })
 ```
 
@@ -53,20 +53,20 @@ import { defineConfig } from '@tanstack/react-start/config'
 
 export default defineConfig({
   server: {
-    preset: 'cloudflare-pages',
-  },
+    preset: 'cloudflare-pages'
+  }
 })
 
 // wrangler.toml
-name = "my-tanstack-app"
-compatibility_date = "2024-01-01"
-pages_build_output_dir = ".output/public"
+name = 'my-tanstack-app'
+compatibility_date = '2024-01-01'
+pages_build_output_dir = '.output/public'
 
 // For Cloudflare Workers (full control)
 export default defineConfig({
   server: {
-    preset: 'cloudflare',
-  },
+    preset: 'cloudflare'
+  }
 })
 ```
 
@@ -76,19 +76,15 @@ export default defineConfig({
 // app.config.ts
 import { defineConfig } from '@tanstack/react-start/config'
 
-export default defineConfig({
+export default // netlify.toml
+defineConfig({
   server: {
-    preset: 'netlify',
-  },
-})
-
-// netlify.toml
-[build]
-  command = "npm run build"
-  publish = ".output/public"
-
-[functions]
-  directory = ".output/server"
+    preset: 'netlify'
+  }
+})[build]
+command = 'npm run build'
+publish = '.output/public'[functions]
+directory = '.output/server'
 ```
 
 ## Good Example: Node.js Server
@@ -128,9 +124,9 @@ export default defineConfig({
     preset: 'static',
     prerender: {
       routes: ['/'],
-      crawlLinks: true,
-    },
-  },
+      crawlLinks: true
+    }
+  }
 })
 
 // Output: .output/public (static files only)
@@ -171,8 +167,8 @@ import { defineConfig } from '@tanstack/react-start/config'
 
 export default defineConfig({
   server: {
-    preset: 'bun',
-  },
+    preset: 'bun'
+  }
 })
 
 // Run with: bun .output/server/index.mjs
@@ -180,16 +176,16 @@ export default defineConfig({
 
 ## Adapter Comparison
 
-| Adapter | Runtime | Edge | Static | Best For |
-|---------|---------|------|--------|----------|
-| `vercel` | Node/Edge | Yes | Yes | Vercel hosting |
-| `cloudflare-pages` | Workers | Yes | Yes | Cloudflare Pages |
-| `cloudflare` | Workers | Yes | No | Cloudflare Workers |
-| `netlify` | Node | Yes | Yes | Netlify hosting |
-| `node-server` | Node | No | No | Docker, VPS, self-host |
-| `static` | None | No | Yes | Any static host |
-| `aws-lambda` | Node | No | No | AWS serverless |
-| `bun` | Bun | No | No | Bun runtime |
+| Adapter            | Runtime   | Edge | Static | Best For               |
+| ------------------ | --------- | ---- | ------ | ---------------------- |
+| `vercel`           | Node/Edge | Yes  | Yes    | Vercel hosting         |
+| `cloudflare-pages` | Workers   | Yes  | Yes    | Cloudflare Pages       |
+| `cloudflare`       | Workers   | Yes  | No     | Cloudflare Workers     |
+| `netlify`          | Node      | Yes  | Yes    | Netlify hosting        |
+| `node-server`      | Node      | No   | No     | Docker, VPS, self-host |
+| `static`           | None      | No   | Yes    | Any static host        |
+| `aws-lambda`       | Node      | No   | No     | AWS serverless         |
+| `bun`              | Bun       | No   | No     | Bun runtime            |
 
 ## Context
 

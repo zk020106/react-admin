@@ -10,8 +10,7 @@ import {
 import { useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 
 import { AppLogo } from '@/components/app-logo'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
+import { Button, Tooltip } from '@douyinfe/semi-ui-19'
 import {
   Sidebar,
   SidebarContent,
@@ -29,15 +28,14 @@ import {
   SidebarMenuSubItem,
   SidebarTrigger,
   useSidebar
-} from '@/components/ui/sidebar'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+} from '@/layouts/sidebar-context'
 import { getAdminMessages } from '@/i18n/admin-i18n'
 import { cn } from '@/lib/utils'
 import { getMenuRecordIcon, isMenuRecordActive } from '@/layouts/navigation'
 import { getDefaultMenuPath } from '@/router/app-data'
 import { preferenceStore } from '@/store/preferences'
 import { usePreferencesSlice, useSetPreferences } from '@/store/use-preferences'
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 
 // 函数：clampNumber。把数值约束在最小值和最大值之间。
 function clampNumber(value: number, min: number, max: number) {
@@ -461,7 +459,7 @@ export function MixedSidebarFrame({
           <div className="flex h-12 items-center justify-center">
             <AppLogo size="md" />
           </div>
-          <ScrollArea className="min-h-0 flex-1 py-2">
+          <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto py-2">
             <nav aria-label={resolvedRootAriaLabel}>
               <SidebarMenu className="gap-1">
                 {rootMenus.map(item => (
@@ -490,7 +488,7 @@ export function MixedSidebarFrame({
                 ))}
               </SidebarMenu>
             </nav>
-          </ScrollArea>
+          </div>
         </div>
         <div
           className={cn(
@@ -519,7 +517,7 @@ export function MixedSidebarFrame({
             </div>
           </div>
           {extraVisible && (
-            <ScrollArea className="min-h-0 flex-1 py-2 pb-12">
+            <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto py-2 pb-12">
               <nav
                 aria-label={messages.navigation.mixedSecondary}
                 className={cn(extraCollapsed ? 'px-0' : 'px-2')}
@@ -550,7 +548,7 @@ export function MixedSidebarFrame({
                   )}
                 </SidebarMenu>
               </nav>
-            </ScrollArea>
+            </div>
           )}
           <div aria-hidden="true" className="h-[42px] shrink-0" />
           {fixedExtra && extraVisible && (
@@ -562,9 +560,8 @@ export function MixedSidebarFrame({
               }
               className="absolute bottom-2 left-3 z-10 size-6 rounded-sm bg-accent p-0 text-foreground/60 hover:bg-[hsl(var(--accent-hover))] hover:text-foreground"
               onClick={() => setPreferences({ sidebarExtraCollapsed: !extraCollapsed })}
-              size="icon-xs"
-              type="button"
-              variant="ghost"
+              theme="borderless"
+              type="tertiary"
             >
               {extraCollapsed ? (
                 <ChevronsRight className="size-4" />
@@ -583,9 +580,8 @@ export function MixedSidebarFrame({
                 setTransientExtraVisible(fixedExtra)
                 setPreferences({ sidebarExpandOnHover: !fixedExtra })
               }}
-              size="icon-xs"
-              type="button"
-              variant="ghost"
+              theme="borderless"
+              type="tertiary"
             >
               {fixedExtra ? <Pin className="size-3.5" /> : <PinOff className="size-3.5" />}
             </Button>
@@ -622,27 +618,24 @@ function MixedRootMenuItem({
 
   return (
     <SidebarMenuItem className="px-2">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            aria-label={item.title}
-            aria-pressed={isActive}
-            className={cn(
-              'group relative flex min-h-14 w-full flex-col items-center justify-center gap-1 px-0 py-2 text-sidebar-foreground/70 transition-[background-color,color,box-shadow] hover:bg-sidebar-hover/80 hover:text-sidebar-hover-foreground',
-              rounded ? 'rounded-md' : 'rounded-none',
-              isActive &&
-                'rounded-none bg-sidebar-active/90 text-sidebar-active-foreground hover:bg-sidebar-active hover:text-sidebar-active-foreground'
-            )}
-            data-active={isActive ? 'true' : undefined}
-            onMouseEnter={onMouseEnter}
-            onClick={() => onSelectRoot(item)}
-            type="button"
-          >
-            {Icon && <Icon className="size-5 transition-transform group-hover:scale-110" />}
-            <span className="w-full truncate text-center text-[11px] leading-4">{item.title}</span>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="right">{item.title}</TooltipContent>
+      <Tooltip content={item.title} position="right">
+        <button
+          aria-label={item.title}
+          aria-pressed={isActive}
+          className={cn(
+            'group relative flex min-h-14 w-full flex-col items-center justify-center gap-1 px-0 py-2 text-sidebar-foreground/70 transition-[background-color,color,box-shadow] hover:bg-sidebar-hover/80 hover:text-sidebar-hover-foreground',
+            rounded ? 'rounded-md' : 'rounded-none',
+            isActive &&
+              'rounded-none bg-sidebar-active/90 text-sidebar-active-foreground hover:bg-sidebar-active hover:text-sidebar-active-foreground'
+          )}
+          data-active={isActive ? 'true' : undefined}
+          onMouseEnter={onMouseEnter}
+          onClick={() => onSelectRoot(item)}
+          type="button"
+        >
+          {Icon && <Icon className="size-5 transition-transform group-hover:scale-110" />}
+          <span className="w-full truncate text-center text-[11px] leading-4">{item.title}</span>
+        </button>
       </Tooltip>
     </SidebarMenuItem>
   )
@@ -666,25 +659,22 @@ function CollapsedExtraMenuItem({
 
   return (
     <SidebarMenuItem className="flex w-full justify-center">
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            aria-label={item.title}
-            aria-pressed={isActive}
-            className={cn(
-              'flex h-10 w-12 items-center justify-center text-sidebar-foreground/70 transition-[background-color,color,box-shadow] hover:bg-sidebar-hover hover:text-sidebar-hover-foreground',
-              rounded ? 'rounded-md' : 'rounded-none',
-              isActive &&
-                'bg-sidebar-active text-sidebar-active-foreground hover:bg-sidebar-active hover:text-sidebar-active-foreground'
-            )}
-            data-active={isActive ? 'true' : undefined}
-            onClick={() => navigate(targetPath)}
-            type="button"
-          >
-            <Icon className="size-5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="right">{item.title}</TooltipContent>
+      <Tooltip content={item.title} position="right">
+        <button
+          aria-label={item.title}
+          aria-pressed={isActive}
+          className={cn(
+            'flex h-10 w-12 items-center justify-center text-sidebar-foreground/70 transition-[background-color,color,box-shadow] hover:bg-sidebar-hover hover:text-sidebar-hover-foreground',
+            rounded ? 'rounded-md' : 'rounded-none',
+            isActive &&
+              'bg-sidebar-active text-sidebar-active-foreground hover:bg-sidebar-active hover:text-sidebar-active-foreground'
+          )}
+          data-active={isActive ? 'true' : undefined}
+          onClick={() => navigate(targetPath)}
+          type="button"
+        >
+          <Icon className="size-5" />
+        </button>
       </Tooltip>
     </SidebarMenuItem>
   )

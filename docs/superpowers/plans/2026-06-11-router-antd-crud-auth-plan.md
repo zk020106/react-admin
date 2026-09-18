@@ -25,6 +25,7 @@
 ### Task A1: 路由表与 404 页
 
 **Files:**
+
 - Create: `src/router/routes.tsx`
 - Create: `src/pages/not-found-page.tsx`
 - Modify: `src/router/index.tsx`
@@ -56,15 +57,9 @@ export interface AdminPageDefinition {
 
 const OverviewPage = lazy(() => import('@/pages/overview-page'))
 const WorkplacePage = lazy(() => import('@/pages/workplace-page'))
-const UsersPage = lazy(() =>
-  import('@/pages/system-pages').then(m => ({ default: m.UsersPage }))
-)
-const RolesPage = lazy(() =>
-  import('@/pages/system-pages').then(m => ({ default: m.RolesPage }))
-)
-const MenusPage = lazy(() =>
-  import('@/pages/system-pages').then(m => ({ default: m.MenusPage }))
-)
+const UsersPage = lazy(() => import('@/pages/system-pages').then(m => ({ default: m.UsersPage })))
+const RolesPage = lazy(() => import('@/pages/system-pages').then(m => ({ default: m.RolesPage })))
+const MenusPage = lazy(() => import('@/pages/system-pages').then(m => ({ default: m.MenusPage })))
 const DepartmentsPage = lazy(() =>
   import('@/pages/system-pages').then(m => ({ default: m.DepartmentsPage }))
 )
@@ -72,12 +67,27 @@ const AboutPage = lazy(() => import('@/pages/about-page'))
 
 /** 后台页面定义清单：路由、懒加载组件、图标与权限编码的单一数据源。 */
 export const adminPages: AdminPageDefinition[] = [
-  { component: OverviewPage, icon: LayoutDashboard, path: '/overview', permission: 'overview:read' },
-  { component: WorkplacePage, icon: BriefcaseBusiness, path: '/workplace', permission: 'workplace:read' },
+  {
+    component: OverviewPage,
+    icon: LayoutDashboard,
+    path: '/overview',
+    permission: 'overview:read'
+  },
+  {
+    component: WorkplacePage,
+    icon: BriefcaseBusiness,
+    path: '/workplace',
+    permission: 'workplace:read'
+  },
   { component: UsersPage, icon: Users, path: '/system/users', permission: 'system:user:read' },
   { component: RolesPage, icon: Shield, path: '/system/roles', permission: 'system:role:read' },
   { component: MenusPage, icon: SquareMenu, path: '/system/menus', permission: 'system:menu:read' },
-  { component: DepartmentsPage, icon: Users, path: '/system/departments', permission: 'system:department:read' },
+  {
+    component: DepartmentsPage,
+    icon: Users,
+    path: '/system/departments',
+    permission: 'system:department:read'
+  },
   { component: AboutPage, icon: Info, path: '/about', permission: 'about:read' }
 ]
 
@@ -210,6 +220,7 @@ Expected: router.test PASS（basepath 纯函数未动）；app-shell 尚未适�
 ### Task A2: BaseLayout 改造（Outlet 化 + 守卫 + 移除 AuthGate）
 
 **Files:**
+
 - Modify: `src/layouts/base-layout.tsx`
 - Modify: `src/layouts/page-surface.tsx`
 - Modify: `src/pages/login-page.tsx`
@@ -269,7 +280,7 @@ useEffect(() => {
 }, [activeMenu, activePath, activePathInMenu])
 ```
 
-  - `BaseLayout` 导出改为带守卫版本：
+- `BaseLayout` 导出改为带守卫版本：
 
 ```tsx
 // 组件：BaseLayout。用于提供管理端基础布局入口、登录守卫和全局提示上下文。
@@ -324,6 +335,7 @@ Expected: 大部分 PASS；若 `renders the admin shell` 等用例因 Outlet 时
 ### Task A3: 路由守卫与 404 测试
 
 **Files:**
+
 - Test: `src/__tests__/router.test.ts`
 
 - [ ] **Step 1: 新增三条路由行为测试**（使用 `createMemoryHistory` 隔离；`createAppRouter(history)` 已支持注入）
@@ -382,6 +394,7 @@ Expected: exit 0。
 ### Task B0: 主题桥 AdminConfigProvider
 
 **Files:**
+
 - Create: `src/hooks/use-system-dark.ts`
 - Create: `src/theme/antd-theme.tsx`
 - Modify: `src/theme/index.ts`（导出 `resolveAdminPrimaryColor`）
@@ -500,6 +513,7 @@ Run: `pnpm vitest run src/__tests__/antd-theme.test.ts && pnpm lint`
 ### Task B1: SchemaForm + useAdminForm（FormApi → antd Form 适配）
 
 **Files:**
+
 - Create: `src/components/admin/form/form-field-registry.tsx`
 - Create: `src/components/admin/form/schema-form.tsx`
 - Create: `src/components/admin/form/use-admin-form.ts`
@@ -514,10 +528,14 @@ it('reads live values when the mounted form exposes a values getter', async () =
   const api = new FormApi()
   api.mount({
     reset: () => {},
-    setValue: (field, value) => { store[field] = value },
+    setValue: (field, value) => {
+      store[field] = value
+    },
     submit: () => {},
     validate: () => ({ valid: true }),
-    get values() { return { ...store } }
+    get values() {
+      return { ...store }
+    }
   })
   store.name = 'after'
   expect(await api.getValues()).toEqual({ name: 'after' })
@@ -601,7 +619,9 @@ export function SchemaForm({
   }, [api, form])
 
   const initialValues = Object.fromEntries(
-    schema.filter(item => item.defaultValue !== undefined).map(item => [item.fieldName, item.defaultValue])
+    schema
+      .filter(item => item.defaultValue !== undefined)
+      .map(item => [item.fieldName, item.defaultValue])
   )
 
   return (
@@ -646,6 +666,7 @@ Run: `pnpm vitest run src/__tests__/schema-form.test.tsx src/__tests__/form-api.
 ### Task B2: AdminModal / AdminDrawer（PopupApi → antd）
 
 **Files:**
+
 - Create: `src/components/admin/popup/use-popup.ts`
 - Create: `src/components/admin/popup/admin-modal.tsx`
 - Create: `src/components/admin/popup/admin-drawer.tsx`
@@ -726,6 +747,7 @@ Run: `pnpm vitest run src/__tests__/admin-popup.test.tsx && pnpm lint`
 ### Task B3: AdminTable 薄封装
 
 **Files:**
+
 - Create: `src/components/admin/table/admin-table.tsx`
 - Test: `src/__tests__/admin-table.test.tsx`
 
@@ -764,6 +786,7 @@ export function AdminTable<RecordType extends object>({
 ### Task B4: 数据写通道 + mutation 约定
 
 **Files:**
+
 - Modify: `src/mock/admin-mock.ts`（UserRecord+id、users CRUD mock）
 - Modify: `src/api/admin.ts`（AdminApi 写方法 + http post/put/delete）
 - Create: `src/pages/admin-mutations.ts`
@@ -864,7 +887,9 @@ export const queryClient = new QueryClient({
       toast.error(error instanceof Error ? error.message : '操作失败，请稍后重试')
     }
   }),
-  defaultOptions: { /* 原配置不变 */ }
+  defaultOptions: {
+    /* 原配置不变 */
+  }
 })
 ```
 
@@ -877,6 +902,7 @@ Run: `pnpm vitest run src/__tests__/admin-api.test.ts && pnpm lint`
 ### Task B5: users 页全链路 CRUD + effects 演示页转正
 
 **Files:**
+
 - Modify: `src/pages/system-pages.tsx`（UsersPage 重建）
 - Create: `src/pages/user-form-modal.tsx`
 - Modify: `src/router/routes.tsx`、`src/mock/admin-mock.ts`（/effects 菜单+路由，权限 `effects:read`，mockAuthUser 补该编码）
@@ -895,12 +921,42 @@ import { useModalApi, usePopupState } from '@/components/admin/popup/use-popup'
 import type { UserInput, UserRecord } from '@/mock/admin-mock'
 
 const userFields = [
-  { component: 'input', fieldName: 'name', label: '姓名', rules: [{ message: '请输入姓名', required: true }] },
-  { component: 'input', fieldName: 'email', label: '邮箱', rules: [{ message: '请输入邮箱', required: true, type: 'email' }] },
-  { component: 'input', fieldName: 'role', label: '角色', rules: [{ message: '请输入角色', required: true }] },
-  { component: 'input', fieldName: 'department', label: '部门', rules: [{ message: '请输入部门', required: true }] },
-  { component: 'select', fieldName: 'status', label: '状态', componentProps: { options: [{ value: '启用' }, { value: '复核中' }] } },
-  { component: 'select', fieldName: 'riskLevel', label: '风险等级', componentProps: { options: [{ value: '低' }, { value: '中' }, { value: '高' }] } }
+  {
+    component: 'input',
+    fieldName: 'name',
+    label: '姓名',
+    rules: [{ message: '请输入姓名', required: true }]
+  },
+  {
+    component: 'input',
+    fieldName: 'email',
+    label: '邮箱',
+    rules: [{ message: '请输入邮箱', required: true, type: 'email' }]
+  },
+  {
+    component: 'input',
+    fieldName: 'role',
+    label: '角色',
+    rules: [{ message: '请输入角色', required: true }]
+  },
+  {
+    component: 'input',
+    fieldName: 'department',
+    label: '部门',
+    rules: [{ message: '请输入部门', required: true }]
+  },
+  {
+    component: 'select',
+    fieldName: 'status',
+    label: '状态',
+    componentProps: { options: [{ value: '启用' }, { value: '复核中' }] }
+  },
+  {
+    component: 'select',
+    fieldName: 'riskLevel',
+    label: '风险等级',
+    componentProps: { options: [{ value: '低' }, { value: '中' }, { value: '高' }] }
+  }
 ] satisfies FormSchema[]
 ```
 
@@ -944,6 +1000,7 @@ Expected: 全部 PASS。
 ### Task C1: token 刷新单飞队列
 
 **Files:**
+
 - Create: `src/auth/token-refresh.ts`
 - Modify: `src/types/auth.ts`（如缺 refresh 响应类型则补）
 - Modify: `src/api/auth.ts`（AuthApi += refresh）
@@ -969,8 +1026,12 @@ it('coalesces concurrent refresh calls into one request', async () => {
   expect(calls).toBe(1)
 })
 
-it('allows a new refresh after the previous one settles', async () => { /* 第二轮 calls 变 2 */ })
-it('propagates refresh failure to all waiters and clears the in-flight slot', async () => { /* reject 两个等待者，随后可重试 */ })
+it('allows a new refresh after the previous one settles', async () => {
+  /* 第二轮 calls 变 2 */
+})
+it('propagates refresh failure to all waiters and clears the in-flight slot', async () => {
+  /* reject 两个等待者，随后可重试 */
+})
 ```
 
 - [ ] **Step 2: 实现 `createTokenRefreshQueue`**
@@ -1002,7 +1063,7 @@ export function createTokenRefreshQueue({ refresh }: TokenRefreshQueueOptions) {
 
 ```ts
 // 401 时先尝试刷新一次并重放原请求，刷新失败再走 onUnauthorized。
-async (error: AxiosError<unknown>) => {
+;async (error: AxiosError<unknown>) => {
   const normalizedError = normalizeAxiosError(error)
   const config = error.config as (AxiosRequestConfig & { __retried?: boolean }) | undefined
 
@@ -1033,6 +1094,7 @@ Run: `pnpm vitest run src/__tests__/token-refresh.test.ts && pnpm lint`
 ### Task C2: HasPermission 组件
 
 **Files:**
+
 - Create: `src/components/has-permission.tsx`
 - Test: `src/__tests__/has-permission.test.tsx`
 - Modify: `src/pages/system-pages.tsx`（新增/编辑/删除按钮包权限）
@@ -1075,6 +1137,7 @@ export function HasPermission({
 ### Task C3: 路由级权限 + 403 面板
 
 **Files:**
+
 - Create: `src/pages/forbidden-page.tsx`（403 提示面板，结构同 404）
 - Modify: `src/layouts/page-surface.tsx`（按当前匹配路由 staticData.permission 拦截）
 - Test: `src/__tests__/router.test.tsx`
@@ -1096,6 +1159,7 @@ const allowed = hasPermission(permissions, requiredPermission)
 ### Task C4: 路由错误边界
 
 **Files:**
+
 - Create: `src/pages/route-error-page.tsx`
 - Modify: `src/router/index.tsx`（`createRouter({ defaultErrorComponent: RouteErrorPage })`）
 - Test: `src/__tests__/router.test.tsx`（抛错组件被边界捕获）

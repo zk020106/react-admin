@@ -2,7 +2,7 @@ import { TinyColor } from '@ctrl/tinycolor'
 import { Check, MoonStar, PencilLine, Plus, Sun, SunMoon, type LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 
-import { Button } from '@/components/ui/button'
+import { Button } from '@douyinfe/semi-ui-19'
 import {
   getAdminMessages,
   getColorModeOptions,
@@ -14,7 +14,7 @@ import {
 import { cn } from '@/lib/utils'
 import { preferenceRadiusOptions, preferenceTransitionOptions } from '@/layouts/preferences-options'
 import { BUILT_IN_THEME_PRESETS } from '@/theme'
-import type { AdminPreferences } from '@/types/admin'
+import type { AdminPreferences } from '@/types'
 
 const colorModeIcons: Record<AdminPreferences['colorMode'], LucideIcon> = {
   dark: MoonStar,
@@ -240,6 +240,14 @@ export function BuiltinThemeGrid({
  * @param props.setRadius - 圆角半径变更回调。
  * @returns 圆角预设按钮组。
  */
+const radiusOptionStyles: Record<string, string> = {
+  '0': 'rounded-none',
+  '0.25': 'rounded-[3px]',
+  '0.5': 'rounded-[6px]',
+  '0.75': 'rounded-[10px]',
+  '1': 'rounded-[14px]'
+}
+
 export function RadiusPicker({ radius, setRadius }: RadiusPickerProps) {
   return (
     <div className="grid grid-cols-5 gap-2">
@@ -252,7 +260,8 @@ export function RadiusPicker({ radius, setRadius }: RadiusPickerProps) {
             aria-pressed={active}
             data-active={active ? 'true' : undefined}
             className={cn(
-              'h-8 rounded-sm border bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground',
+              'h-8 border bg-background text-sm font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground cursor-pointer',
+              radiusOptionStyles[option] ?? 'rounded-sm',
               active &&
                 'border-primary bg-primary text-primary-foreground shadow-none hover:bg-primary/90 hover:text-primary-foreground'
             )}
@@ -289,11 +298,10 @@ export function FontSizeStepper({ fontSize, locale, setFontSize }: FontSizeStepp
             'decrease',
             messages.preferences.appearance.fontSize
           )}
-          className="rounded-none"
+          className="rounded-none !size-full !p-0"
           onClick={() => setFontSize(fontSize - 1)}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
+          theme="borderless"
+          type="tertiary"
         >
           <span className="text-lg leading-none">-</span>
         </Button>
@@ -304,14 +312,12 @@ export function FontSizeStepper({ fontSize, locale, setFontSize }: FontSizeStepp
             'increase',
             messages.preferences.appearance.fontSize
           )}
-          className="rounded-none"
+          className="rounded-none !size-full !p-0"
           onClick={() => setFontSize(fontSize + 1)}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <Plus className="size-4" />
-        </Button>
+          theme="borderless"
+          type="tertiary"
+          icon={<Plus className="size-4" />}
+        />
         <span className="px-2 text-xs text-muted-foreground">px</span>
       </div>
       <div className="text-xs text-muted-foreground">

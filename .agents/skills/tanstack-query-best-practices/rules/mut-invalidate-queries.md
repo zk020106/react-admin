@@ -11,18 +11,18 @@ After mutations, invalidate all queries whose data might be affected. This ensur
 ```tsx
 // No invalidation - cache remains stale
 const createTodo = useMutation({
-  mutationFn: (newTodo) => api.createTodo(newTodo),
+  mutationFn: newTodo => api.createTodo(newTodo)
   // Missing onSuccess handler - todo list won't show new item
 })
 
 // Partial invalidation - misses related queries
 const deleteTodo = useMutation({
-  mutationFn: (todoId) => api.deleteTodo(todoId),
+  mutationFn: todoId => api.deleteTodo(todoId),
   onSuccess: () => {
     // Only invalidates list, not summary/counts
     queryClient.invalidateQueries({ queryKey: ['todos', 'list'] })
     // Missing: ['todos', 'count'], ['todos', 'completed-count'], etc.
-  },
+  }
 })
 ```
 
@@ -31,11 +31,11 @@ const deleteTodo = useMutation({
 ```tsx
 // Comprehensive invalidation
 const createTodo = useMutation({
-  mutationFn: (newTodo) => api.createTodo(newTodo),
+  mutationFn: newTodo => api.createTodo(newTodo),
   onSuccess: () => {
     // Invalidate all todo-related queries
     queryClient.invalidateQueries({ queryKey: ['todos'] })
-  },
+  }
 })
 
 // Targeted invalidation with all affected queries
@@ -49,7 +49,7 @@ const updateTodo = useMutation({
     // If todo status changed, invalidate filtered views
     queryClient.invalidateQueries({ queryKey: ['todos', 'completed'] })
     queryClient.invalidateQueries({ queryKey: ['todos', 'active'] })
-  },
+  }
 })
 
 // Cross-entity invalidation
@@ -63,10 +63,10 @@ const assignTodoToUser = useMutation({
     // Invalidate previous assignee's list if available
     if (data.previousAssignee) {
       queryClient.invalidateQueries({
-        queryKey: ['users', data.previousAssignee, 'todos'],
+        queryKey: ['users', data.previousAssignee, 'todos']
       })
     }
-  },
+  }
 })
 ```
 
@@ -76,14 +76,14 @@ const assignTodoToUser = useMutation({
 const mutation = useMutation({
   mutationFn: updatePost,
   onSuccess: (
-    data,      // Server response
+    data, // Server response
     variables, // What you passed to mutate()
-    context    // What onMutate returned
+    context // What onMutate returned
   ) => {
     // Use variables to know which queries to invalidate
     queryClient.invalidateQueries({ queryKey: ['posts', variables.id] })
     queryClient.invalidateQueries({ queryKey: ['posts', 'list', variables.category] })
-  },
+  }
 })
 ```
 
@@ -96,12 +96,12 @@ onSuccess: () => {
 }
 
 // Option 2: Update cache directly (no network request)
-onSuccess: (newTodo) => {
+onSuccess: newTodo => {
   queryClient.setQueryData(['todos'], (old: Todo[]) => [...old, newTodo])
 }
 
 // Option 3: Hybrid - update one, invalidate others
-onSuccess: (newTodo) => {
+onSuccess: newTodo => {
   // Immediately add to list
   queryClient.setQueryData(['todos', 'list'], (old: Todo[]) => [...old, newTodo])
   // Invalidate counts/summaries for eventual consistency

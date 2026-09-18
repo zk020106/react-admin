@@ -1,10 +1,10 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>antd-react-admin</title>
+    <title>React Admin</title>
     <script>
       // 首帧前同步主题 class，避免暗色偏好下出现亮色闪烁。
       // 存储键与默认值需与 src/store/preferences.ts 保持一致。
@@ -12,7 +12,7 @@
         var mode = 'dark'
 
         try {
-          var raw = window.localStorage.getItem('antd-react-admin:preferences')
+          var raw = window.localStorage.getItem('react-admin:preferences')
 
           if (raw) {
             var parsed = JSON.parse(raw)

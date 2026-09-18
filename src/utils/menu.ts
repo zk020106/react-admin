@@ -1,5 +1,5 @@
 import type { MenuManagementRecord, UserRecord } from '@/mock/admin-mock'
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 
 export interface WorkspaceSearchItem {
   description: string
@@ -50,8 +50,8 @@ export function searchMenu(menu: MenuRecord[], query: string) {
 /** 构建全局搜索候选项，覆盖菜单、权限和系统用户。 */
 export function buildWorkspaceSearchItems(
   menu: MenuRecord[],
-  users: UserRecord[],
-  permissions: MenuManagementRecord[]
+  users: UserRecord[] = [],
+  permissions: MenuManagementRecord[] = []
 ): WorkspaceSearchItem[] {
   const menuItems = flattenMenu(menu).map(item => ({
     description: item.path,

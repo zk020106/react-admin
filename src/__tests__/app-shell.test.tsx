@@ -4,27 +4,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import App from '../App'
 import { queryClient } from '@/lib/query-client'
-import { resetMockUsers } from '@/mock/admin-mock'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
-
-async function openSystemMenu(sidebarNavigation: HTMLElement) {
-  const systemTrigger = within(sidebarNavigation).getByRole('button', {
-    name: /系统管理/
-  })
-
-  if (systemTrigger.getAttribute('aria-expanded') !== 'true') {
-    await userEvent.click(systemTrigger)
-  }
-
-  return {
-    departmentsLink: await within(sidebarNavigation).findByRole('link', { name: /部门管理/ }),
-    menusLink: await within(sidebarNavigation).findByRole('link', { name: /菜单管理/ }),
-    rolesLink: await within(sidebarNavigation).findByRole('link', { name: /角色管理/ }),
-    systemTrigger,
-    usersLink: await within(sidebarNavigation).findByRole('link', { name: /用户管理/ })
-  }
-}
 
 function resizeViewport(width: number) {
   Object.defineProperty(window, 'innerWidth', {
@@ -60,7 +41,6 @@ describe('admin app shell', () => {
     cleanup()
     preferenceStore.getState().resetPreferences()
     resetGlobalTabs()
-    resetMockUsers()
     queryClient.clear()
     resizeViewport(1024)
     window.history.replaceState(null, '', '/')
@@ -82,23 +62,29 @@ describe('admin app shell', () => {
     await userEvent.click(screen.getByRole('button', { name: '偏好设置' }))
 
     // 偏好设置面板懒加载，首次打开需等待 chunk 转换和解析。
-    expect(
-      await screen.findByRole('dialog', { name: '偏好设置' }, { timeout: 5000 })
-    ).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '外观' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '布局' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '快捷键' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '通用' })).toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: '拓展' })).not.toBeInTheDocument()
+    const preferencesDialog = await screen.findByRole(
+      'dialog',
+      { name: '偏好设置' },
+      { timeout: 5000 }
+    )
+    expect(preferencesDialog).toBeInTheDocument()
+    expect(within(preferencesDialog).getByRole('tab', { name: '外观' })).toBeInTheDocument()
+    expect(within(preferencesDialog).getByRole('tab', { name: '布局' })).toBeInTheDocument()
+    expect(within(preferencesDialog).getByRole('tab', { name: '快捷键' })).toBeInTheDocument()
+    expect(within(preferencesDialog).getByRole('tab', { name: '通用' })).toBeInTheDocument()
+    expect(within(preferencesDialog).queryByRole('tab', { name: '拓展' })).not.toBeInTheDocument()
     expect(screen.getByText('主题')).toBeInTheDocument()
 
-    expect(screen.getByRole('tablist')).toHaveClass('grid')
-    expect(screen.getByRole('tablist')).toHaveClass('sticky')
-    expect(screen.getByRole('tab', { name: '外观' }).closest("[data-slot='tabs']")).toHaveClass(
-      'data-[orientation=horizontal]:flex-col'
+    expect(within(preferencesDialog).getByRole('tablist')).toHaveClass('grid')
+    expect(within(preferencesDialog).getByRole('tablist')).toHaveClass('sticky')
+    expect(
+      within(preferencesDialog).getByRole('tab', { name: '外观' }).closest("[data-slot='tabs']")
+    ).toHaveClass('data-[orientation=horizontal]:flex-col')
+    expect(within(preferencesDialog).getByRole('tab', { name: '外观' })).toHaveAttribute(
+      'data-state',
+      'active'
     )
-    expect(screen.getByRole('tab', { name: '外观' })).toHaveAttribute('data-state', 'active')
-    expect(screen.getByRole('tab', { name: '外观' })).toHaveClass(
+    expect(within(preferencesDialog).getByRole('tab', { name: '外观' })).toHaveClass(
       'data-[state=active]:bg-background'
     )
     expect(screen.getByRole('button', { name: '深色' })).toHaveAttribute('aria-pressed', 'true')
@@ -123,7 +109,6 @@ describe('admin app shell', () => {
       'true'
     )
     expect(screen.getByRole('button', { name: '布局 双列菜单' })).toBeInTheDocument()
-    const preferencesDialog = screen.getByRole('dialog', { name: '偏好设置' })
     expect(within(preferencesDialog).getByRole('heading', { name: '导航菜单' })).toBeInTheDocument()
     expect(within(preferencesDialog).getByRole('heading', { name: '界面功能' })).toBeInTheDocument()
     const sidebarToggleRow = within(preferencesDialog).getByText('显示侧栏').closest('div')
@@ -177,7 +162,7 @@ describe('admin app shell', () => {
     const sidebarDialog = await screen.findByRole('dialog', { name: '侧边栏' })
     const sidebarNavigation = within(sidebarDialog).getByRole('navigation', { name: '侧栏导航' })
 
-    expect(within(sidebarNavigation).getByRole('button', { name: /系统管理/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).getByRole('button', { name: /组件示例/ })).toBeInTheDocument()
   })
 
   it('downgrades desktop header and mixed layouts on mobile', async () => {
@@ -202,7 +187,7 @@ describe('admin app shell', () => {
     const sidebarNavigation = within(sidebarDialog).getByRole('navigation', { name: '侧栏导航' })
 
     expect(within(sidebarNavigation).getByRole('link', { name: /概览/ })).toBeInTheDocument()
-    expect(within(sidebarNavigation).getByRole('button', { name: /系统管理/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).getByRole('button', { name: /组件示例/ })).toBeInTheDocument()
   })
 
   it('renders shortcut and general preference controls', async () => {
@@ -243,7 +228,7 @@ describe('admin app shell', () => {
     expect(headerNavigation).toBeInTheDocument()
     expect(headerNavigation).toHaveTextContent('概览')
     expect(headerNavigation).toHaveTextContent('工作台')
-    expect(headerNavigation).toHaveTextContent('系统管理')
+    expect(headerNavigation).toHaveTextContent('组件示例')
     expect(headerNavigation).toHaveTextContent('关于')
     expect(screen.queryByText('管理套件')).not.toBeInTheDocument()
   })
@@ -304,7 +289,7 @@ describe('admin app shell', () => {
           title: '旧概览'
         },
         { key: '/workplace', path: '/workplace', title: '旧工作台' },
-        { key: '/system/users', path: '/system/users', title: '旧用户' }
+        { key: '/about', path: '/about', title: '旧关于' }
       ]
     })
     window.history.replaceState(null, '', '/workplace')
@@ -319,11 +304,11 @@ describe('admin app shell', () => {
 
     expect(screen.getByRole('tab', { name: '概览' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '工作台' })).toHaveAttribute('data-state', 'active')
-    expect(screen.getByRole('tab', { name: '用户管理' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '关于' })).toBeInTheDocument()
     expect(tabsStore.getState().tabs.map(tab => tab.key)).toEqual([
       '/overview',
       '/workplace',
-      '/system/users'
+      '/about'
     ])
   })
 
@@ -362,183 +347,6 @@ describe('admin app shell', () => {
     await waitFor(() => {
       expect(document.title).toBe('工作台 - React Admin')
     })
-  })
-
-  it('opens the user management page and filters user records', { timeout: 45000 }, async () => {
-    preferenceStore.getState().resetPreferences()
-    await renderApp()
-
-    const sidebarNavigation = screen.getByRole('navigation', {
-      name: '侧栏导航'
-    })
-    const { usersLink } = await openSystemMenu(sidebarNavigation)
-
-    await userEvent.click(usersLink)
-
-    await waitFor(() => {
-      expect(
-        document.querySelector("[data-slot='page-surface'][data-route-key='/system/users']")
-      ).toBeInTheDocument()
-    })
-
-    const pageSurface = document.querySelector(
-      "[data-slot='page-surface'][data-route-key='/system/users']"
-    ) as HTMLElement
-
-    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
-    expect(
-      await within(pageSurface).findByText('用户管理', undefined, { timeout: 30000 })
-    ).toBeInTheDocument()
-    const page = pageSurface.querySelector("[data-slot='page']") as HTMLElement
-    const pageHeader = pageSurface.querySelector("[data-slot='page-header']") as HTMLElement
-    const pageSections = pageSurface.querySelectorAll("[data-slot='page-section']")
-    const summarySectionContent = pageSections[0]?.querySelector(
-      "[data-slot='page-section-content']"
-    ) as HTMLElement
-
-    expect(page).toHaveClass('p-4')
-    expect(page).toHaveClass('gap-4')
-    expect(pageHeader).toHaveClass('rounded-lg')
-    expect(pageSections).toHaveLength(2)
-    expect(summarySectionContent).toHaveClass('grid')
-    expect(summarySectionContent).toHaveClass('md:grid-cols-4')
-    expect(within(pageSurface).getByText('风险关注')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('密码 + MFA')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('2026-06-10 09:24')).toBeInTheDocument()
-
-    const searchInput = within(pageSurface).getByLabelText('搜索用户')
-    await userEvent.type(searchInput, 'audit')
-
-    expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
-    expect(within(pageSurface).queryByText('超级管理员')).not.toBeInTheDocument()
-
-    await userEvent.clear(searchInput)
-    await userEvent.click(within(pageSurface).getByRole('button', { name: '复核中' }))
-
-    expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
-    expect(within(pageSurface).queryByText('运营账号')).not.toBeInTheDocument()
-  })
-
-  it('creates a user from the users page', { timeout: 45000 }, async () => {
-    preferenceStore.getState().resetPreferences()
-    await renderApp()
-
-    const sidebarNavigation = screen.getByRole('navigation', { name: '侧栏导航' })
-    const { usersLink } = await openSystemMenu(sidebarNavigation)
-
-    await userEvent.click(usersLink)
-    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
-    expect(await screen.findByText('超级管理员', undefined, { timeout: 30000 })).toBeInTheDocument()
-
-    // 新增用户：弹窗表单提交后列表自动失效刷新。
-    await userEvent.click(screen.getByRole('button', { name: /新增用户/ }))
-    const dialog = await screen.findByRole('dialog')
-
-    await userEvent.type(within(dialog).getByLabelText('姓名'), '测试账号')
-    await userEvent.type(within(dialog).getByLabelText('邮箱'), 'qa@example.com')
-    await userEvent.type(within(dialog).getByLabelText('角色'), '测试员')
-    await userEvent.type(within(dialog).getByLabelText('部门'), '质量部')
-    await userEvent.click(within(dialog).getByRole('button', { name: /确 定|OK/ }))
-
-    // 新增成功：等用户出现在表格(mutation + invalidate 完成)。
-    expect(await screen.findByText('测试账号', undefined, { timeout: 10000 })).toBeInTheDocument()
-    await waitFor(
-      () => {
-        expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-      },
-      { timeout: 3000 }
-    )
-  })
-
-  it('opens the menu management page from the sidebar', async () => {
-    preferenceStore.getState().resetPreferences()
-    await renderApp()
-
-    const sidebarNavigation = screen.getByRole('navigation', {
-      name: '侧栏导航'
-    })
-    const { menusLink } = await openSystemMenu(sidebarNavigation)
-
-    await userEvent.click(menusLink)
-
-    await waitFor(() => {
-      expect(
-        document.querySelector("[data-slot='page-surface'][data-route-key='/system/menus']")
-      ).toBeInTheDocument()
-    })
-
-    const pageSurface = document.querySelector(
-      "[data-slot='page-surface'][data-route-key='/system/menus']"
-    ) as HTMLElement
-
-    expect((await within(pageSurface).findAllByText('菜单管理')).length).toBeGreaterThan(0)
-    expect(within(pageSurface).getByText('路由记录')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('目录节点')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('DepartmentsPage')).toBeInTheDocument()
-    expect(within(pageSurface).getAllByText('系统管理').length).toBeGreaterThan(0)
-    expect(within(pageSurface).getByText('system:department:read')).toBeInTheDocument()
-  })
-
-  it('opens the role management page from the sidebar', async () => {
-    preferenceStore.getState().resetPreferences()
-    await renderApp()
-
-    const sidebarNavigation = screen.getByRole('navigation', {
-      name: '侧栏导航'
-    })
-    const { rolesLink } = await openSystemMenu(sidebarNavigation)
-
-    await userEvent.click(rolesLink)
-
-    await waitFor(() => {
-      expect(
-        document.querySelector("[data-slot='page-surface'][data-route-key='/system/roles']")
-      ).toBeInTheDocument()
-    })
-
-    const pageSurface = document.querySelector(
-      "[data-slot='page-surface'][data-route-key='/system/roles']"
-    ) as HTMLElement
-
-    expect(await within(pageSurface).findByText('权限矩阵')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('授权成员')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('全部数据')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('只读审计数据')).toBeInTheDocument()
-    expect(within(pageSurface).getAllByText('system:menu:read').length).toBeGreaterThan(0)
-    expect(within(pageSurface).getByText('auditor')).toBeInTheDocument()
-  })
-
-  it('opens the department management page from the sidebar', async () => {
-    preferenceStore.getState().resetPreferences()
-    await renderApp()
-
-    const sidebarNavigation = screen.getByRole('navigation', {
-      name: '侧栏导航'
-    })
-    const { departmentsLink } = await openSystemMenu(sidebarNavigation)
-
-    await userEvent.click(departmentsLink)
-
-    await waitFor(() => {
-      expect(
-        document.querySelector("[data-slot='page-surface'][data-route-key='/system/departments']")
-      ).toBeInTheDocument()
-    })
-
-    const pageSurface = document.querySelector(
-      "[data-slot='page-surface'][data-route-key='/system/departments']"
-    ) as HTMLElement
-
-    expect(await within(pageSurface).findByText('组织明细')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('成员总数')).toBeInTheDocument()
-    expect(
-      await within(pageSurface).findByText('负责后台基础能力、权限体系和工程框架。')
-    ).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('dept-risk')).toBeInTheDocument()
-    expect(
-      within(pageSurface).getByText('负责风险复核、审计追踪和异常流程处置。')
-    ).toBeInTheDocument()
-    expect(within(pageSurface).getAllByText('运营部').length).toBeGreaterThan(0)
   })
 
   it('renders header widgets in admin order', async () => {
@@ -597,7 +405,7 @@ describe('admin app shell', () => {
     await renderApp()
 
     await userEvent.click(screen.getByRole('button', { name: '语言' }))
-    await userEvent.click(await screen.findByRole('menuitemradio', { name: 'English' }))
+    await userEvent.click(await screen.findByRole('menuitem', { name: 'English' }))
     expect(preferenceStore.getState().preferences.appLocale).toBe('en-US')
     expect(await screen.findByRole('link', { name: /概览/ })).toBeInTheDocument()
     expect(await screen.findByRole('tab', { name: '概览' })).toBeInTheDocument()
@@ -672,7 +480,7 @@ describe('admin app shell', () => {
     expect(await screen.findByText('基本信息')).toBeInTheDocument()
     expect(await screen.findByText('生产环境依赖')).toBeInTheDocument()
     expect(await screen.findByText('开发环境依赖')).toBeInTheDocument()
-    expect(await screen.findByText('antd-react-admin')).toBeInTheDocument()
+    expect(await screen.findByText('react-admin')).toBeInTheDocument()
     expect(await screen.findByText('@tanstack/react-query')).toBeInTheDocument()
     expect(await screen.findByText('vite')).toBeInTheDocument()
   })
@@ -685,22 +493,22 @@ describe('admin app shell', () => {
     const sidebarNavigation = screen.getByRole('navigation', {
       name: '侧栏导航'
     })
-    const systemTrigger = within(sidebarNavigation).getByRole('button', {
-      name: /系统管理/
+    const effectsTrigger = within(sidebarNavigation).getByRole('button', {
+      name: /组件示例/
     })
 
-    expect(systemTrigger).toHaveAttribute('aria-expanded', 'false')
+    expect(effectsTrigger).toHaveAttribute('aria-expanded', 'false')
     expect(
-      within(sidebarNavigation).queryByRole('link', { name: /用户管理/ })
+      within(sidebarNavigation).queryByRole('link', { name: /弹窗抽屉/ })
     ).not.toBeInTheDocument()
 
-    await userEvent.click(systemTrigger)
+    await userEvent.click(effectsTrigger)
 
-    expect(systemTrigger).toHaveAttribute('aria-expanded', 'true')
-    expect(within(sidebarNavigation).getByRole('link', { name: /用户管理/ })).toBeInTheDocument()
+    expect(effectsTrigger).toHaveAttribute('aria-expanded', 'true')
+    expect(within(sidebarNavigation).getByRole('link', { name: /弹窗抽屉/ })).toBeInTheDocument()
   })
 
-  it('renders system management children from the mock menu', async () => {
+  it('renders nested menu children from the mock menu', async () => {
     preferenceStore.getState().resetPreferences()
 
     await renderApp()
@@ -709,11 +517,9 @@ describe('admin app shell', () => {
       name: '侧栏导航'
     })
 
-    await userEvent.click(within(sidebarNavigation).getByRole('button', { name: /系统管理/ }))
-    expect(within(sidebarNavigation).getByRole('link', { name: /用户管理/ })).toBeInTheDocument()
-    expect(within(sidebarNavigation).getByRole('link', { name: /角色管理/ })).toBeInTheDocument()
-    expect(within(sidebarNavigation).getByRole('link', { name: /菜单管理/ })).toBeInTheDocument()
-    expect(within(sidebarNavigation).getByRole('link', { name: /部门管理/ })).toBeInTheDocument()
+    await userEvent.click(within(sidebarNavigation).getByRole('button', { name: /组件示例/ }))
+    expect(within(sidebarNavigation).getByRole('link', { name: /弹窗抽屉/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).getByRole('link', { name: /表单控件/ })).toBeInTheDocument()
   })
 
   it('commits sidebar drag width only after release', async () => {
@@ -811,22 +617,22 @@ describe('admin app shell', () => {
 
     expect(headerBrand).not.toBeInTheDocument()
     expect(sidebarBrand).toHaveTextContent('React Admin')
-    await userEvent.click(within(headerNavigation).getByRole('button', { name: /系统管理/ }))
+    await userEvent.click(within(headerNavigation).getByRole('button', { name: /组件示例/ }))
 
     const sidebarNavigation = screen.getByRole('navigation', {
       name: '侧栏导航'
     })
 
     expect(
-      within(headerNavigation).queryByRole('link', { name: /用户管理/ })
+      within(headerNavigation).queryByRole('link', { name: /弹窗抽屉/ })
     ).not.toBeInTheDocument()
-    expect(within(sidebarNavigation).getByRole('link', { name: /用户管理/ })).toBeInTheDocument()
+    expect(within(sidebarNavigation).getByRole('link', { name: /弹窗抽屉/ })).toBeInTheDocument()
     expect(within(sidebarNavigation).queryByRole('link', { name: /概览/ })).not.toBeInTheDocument()
 
     await userEvent.click(within(headerNavigation).getByRole('button', { name: /关于/ }))
 
     expect(
-      within(sidebarNavigation).queryByRole('link', { name: /用户管理/ })
+      within(sidebarNavigation).queryByRole('link', { name: /弹窗抽屉/ })
     ).not.toBeInTheDocument()
     expect(within(sidebarNavigation).queryByRole('link', { name: /关于/ })).not.toBeInTheDocument()
   })
@@ -841,7 +647,7 @@ describe('admin app shell', () => {
       name: '混合主导航'
     })
 
-    await userEvent.click(within(rootNavigation).getByRole('button', { name: /系统管理/ }))
+    await userEvent.click(within(rootNavigation).getByRole('button', { name: /组件示例/ }))
 
     const secondaryNavigation = screen.getByRole('navigation', {
       name: '混合次级导航'
@@ -851,15 +657,15 @@ describe('admin app shell', () => {
       'data-active',
       'true'
     )
-    expect(within(rootNavigation).getByRole('button', { name: /系统管理/ })).toHaveAttribute(
+    expect(within(rootNavigation).getByRole('button', { name: /组件示例/ })).toHaveAttribute(
       'data-active',
       'true'
     )
     const extraTitle = document.querySelector("[data-slot='mixed-sidebar-extra-title']")
     expect(extraTitle).toHaveTextContent('React Admin')
     expect(extraTitle?.querySelector('svg')).not.toBeInTheDocument()
-    expect(within(secondaryNavigation).getByRole('link', { name: /用户管理/ })).toBeInTheDocument()
-    expect(screen.queryByRole('tab', { name: '用户管理' })).not.toBeInTheDocument()
+    expect(within(secondaryNavigation).getByRole('link', { name: /弹窗抽屉/ })).toBeInTheDocument()
+    expect(screen.queryByRole('tab', { name: '弹窗抽屉' })).not.toBeInTheDocument()
   })
 
   it('keeps collapsed sidebar mixed secondary menu visible and clickable', async () => {
@@ -875,21 +681,21 @@ describe('admin app shell', () => {
       name: '混合主导航'
     })
 
-    await userEvent.click(within(rootNavigation).getByRole('button', { name: /系统管理/ }))
+    await userEvent.click(within(rootNavigation).getByRole('button', { name: /组件示例/ }))
 
     const secondaryNavigation = screen.getByRole('navigation', {
       name: '混合次级导航'
     })
-    const usersButton = within(secondaryNavigation).getByRole('button', { name: '用户管理' })
+    const popupMenuItem = within(secondaryNavigation).getByRole('button', { name: /弹窗抽屉/ })
 
-    expect(usersButton).toBeInTheDocument()
+    expect(popupMenuItem).toBeInTheDocument()
     expect(
-      within(secondaryNavigation).queryByRole('link', { name: /用户管理/ })
+      within(secondaryNavigation).queryByRole('link', { name: /弹窗抽屉/ })
     ).not.toBeInTheDocument()
 
-    await userEvent.click(usersButton)
+    await userEvent.click(popupMenuItem)
 
-    expect(screen.getByRole('tab', { name: '用户管理' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '弹窗抽屉' })).toBeInTheDocument()
   })
 
   it('shows sidebar mixed extra menu on hover when it is not fixed', async () => {
@@ -905,7 +711,7 @@ describe('admin app shell', () => {
       name: '混合主导航'
     })
 
-    await userEvent.hover(within(rootNavigation).getByRole('button', { name: /系统管理/ }))
+    await userEvent.hover(within(rootNavigation).getByRole('button', { name: /组件示例/ }))
 
     expect(document.querySelector("[data-extra-visible='true']")).toBeInTheDocument()
 
@@ -913,12 +719,12 @@ describe('admin app shell', () => {
       name: '混合次级导航'
     })
 
-    expect(within(secondaryNavigation).getByRole('link', { name: /用户管理/ })).toBeInTheDocument()
+    expect(within(secondaryNavigation).getByRole('link', { name: /弹窗抽屉/ })).toBeInTheDocument()
     expect(
       within(secondaryNavigation).queryByRole('link', { name: /概览/ })
     ).not.toBeInTheDocument()
 
-    await userEvent.unhover(within(rootNavigation).getByRole('button', { name: /系统管理/ }))
+    await userEvent.unhover(within(rootNavigation).getByRole('button', { name: /组件示例/ }))
 
     expect(document.querySelector("[data-extra-visible='true']")).not.toBeInTheDocument()
   })
@@ -935,17 +741,17 @@ describe('admin app shell', () => {
 
     expect(screen.queryByRole('navigation', { name: '混合侧栏导航' })).not.toBeInTheDocument()
 
-    await userEvent.click(within(headerNavigation).getByRole('button', { name: /系统管理/ }))
+    await userEvent.click(within(headerNavigation).getByRole('button', { name: /组件示例/ }))
 
     const mixedSidebarNavigation = screen.getByRole('navigation', {
       name: '混合侧栏导航'
     })
 
     expect(
-      within(mixedSidebarNavigation).getByRole('button', { name: /用户管理/ })
+      within(mixedSidebarNavigation).getByRole('button', { name: /弹窗抽屉/ })
     ).toBeInTheDocument()
     expect(
-      within(mixedSidebarNavigation).getByRole('button', { name: /角色管理/ })
+      within(mixedSidebarNavigation).getByRole('button', { name: /表单控件/ })
     ).toBeInTheDocument()
     expect(
       within(mixedSidebarNavigation).queryByRole('button', { name: /概览/ })
@@ -953,9 +759,9 @@ describe('admin app shell', () => {
     expect(screen.queryByRole('navigation', { name: '混合次级导航' })).not.toBeInTheDocument()
     expect(document.querySelector("[data-extra-visible='true']")).not.toBeInTheDocument()
 
-    await userEvent.click(within(mixedSidebarNavigation).getByRole('button', { name: /用户管理/ }))
+    await userEvent.click(within(mixedSidebarNavigation).getByRole('button', { name: /弹窗抽屉/ }))
 
-    expect(screen.getByRole('tab', { name: '用户管理' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '弹窗抽屉' })).toBeInTheDocument()
   })
 
   it('applies admin header-sidebar layout offset class', async () => {
@@ -1028,11 +834,9 @@ describe('admin app shell', () => {
     })
 
     await userEvent.click(within(sidebarNavigation).getByRole('link', { name: /关于/ }))
-    const { usersLink } = await openSystemMenu(sidebarNavigation)
+    await userEvent.click(within(sidebarNavigation).getByRole('link', { name: /工作台/ }))
 
-    await userEvent.click(usersLink)
-
-    expect(screen.getByRole('tab', { name: '用户管理' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '工作台' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: '关于' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: '概览' })).not.toBeInTheDocument()
   })
@@ -1047,15 +851,12 @@ describe('admin app shell', () => {
       name: '侧栏导航'
     })
 
-    let systemLinks = await openSystemMenu(sidebarNavigation)
-    await userEvent.click(systemLinks.usersLink)
-    systemLinks = await openSystemMenu(sidebarNavigation)
-    await userEvent.click(systemLinks.rolesLink)
-    systemLinks = await openSystemMenu(sidebarNavigation)
-    await userEvent.click(systemLinks.usersLink)
+    await userEvent.click(within(sidebarNavigation).getByRole('link', { name: /关于/ }))
+    await userEvent.click(within(sidebarNavigation).getByRole('link', { name: /工作台/ }))
+    await userEvent.click(within(sidebarNavigation).getByRole('link', { name: /关于/ }))
 
-    expect(screen.getByRole('tab', { name: '用户管理' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: '角色管理' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '关于' })).toBeInTheDocument()
+    expect(screen.getByRole('tab', { name: '工作台' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: '概览' })).not.toBeInTheDocument()
   })
 

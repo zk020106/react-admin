@@ -68,11 +68,9 @@ function createAdminPageRoute<TPath extends string>(path: TPath) {
 
 const overviewRoute = createAdminPageRoute('/overview')
 const workplaceRoute = createAdminPageRoute('/workplace')
-const systemUsersRoute = createAdminPageRoute('/system/users')
-const systemRolesRoute = createAdminPageRoute('/system/roles')
-const systemMenusRoute = createAdminPageRoute('/system/menus')
-const systemDepartmentsRoute = createAdminPageRoute('/system/departments')
 const effectsRoute = createAdminPageRoute('/effects')
+const effectsPopupRoute = createAdminPageRoute('/effects/popup')
+const effectsFormRoute = createAdminPageRoute('/effects/form')
 const aboutRoute = createAdminPageRoute('/about')
 
 const previewServerErrorRoute = import.meta.env.DEV
@@ -94,11 +92,9 @@ const adminChildRoutes = [
   indexRoute,
   overviewRoute,
   workplaceRoute,
-  systemUsersRoute,
-  systemRolesRoute,
-  systemMenusRoute,
-  systemDepartmentsRoute,
   effectsRoute,
+  effectsPopupRoute,
+  effectsFormRoute,
   aboutRoute,
   ...(previewServerErrorRoute ? [previewServerErrorRoute] : []),
   fallbackRoute

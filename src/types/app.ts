@@ -27,6 +27,7 @@ export type TransitionName = 'fade' | 'fade-down' | 'fade-slide' | 'fade-up'
 // 类型：BuiltinThemeType。定义内置主题预设标识。
 export type BuiltinThemeType =
   | 'custom'
+  | 'cyber-blue'
   | 'deep-blue'
   | 'deep-green'
   | 'default'

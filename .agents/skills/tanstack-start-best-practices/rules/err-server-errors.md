@@ -13,20 +13,19 @@ Server function errors cross the network boundary. Handle them gracefully with a
 export const createUser = createServerFn({ method: 'POST' })
   .validator(createUserSchema)
   .handler(async ({ data }) => {
-    const user = await db.users.create({ data })  // May throw DB error
+    const user = await db.users.create({ data }) // May throw DB error
     return user
     // Prisma error with stack trace sent to client
   })
 
 // Generic error handling - no useful info for client
-export const getPost = createServerFn()
-  .handler(async ({ data }) => {
-    try {
-      return await fetchPost(data.id)
-    } catch (e) {
-      throw new Error('Something went wrong')  // Too vague
-    }
-  })
+export const getPost = createServerFn().handler(async ({ data }) => {
+  try {
+    return await fetchPost(data.id)
+  } catch (e) {
+    throw new Error('Something went wrong') // Too vague
+  }
+})
 ```
 
 ## Good Example: Structured Error Handling
@@ -57,7 +56,10 @@ export class UnauthorizedError extends AppError {
 }
 
 export class ValidationError extends AppError {
-  constructor(message: string, public fields?: Record<string, string>) {
+  constructor(
+    message: string,
+    public fields?: Record<string, string>
+  ) {
     super(message, 'VALIDATION_ERROR', 400)
   }
 }
@@ -73,7 +75,7 @@ export const getPost = createServerFn()
   .validator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     const post = await db.posts.findUnique({
-      where: { id: data.id },
+      where: { id: data.id }
     })
 
     if (!post) {
@@ -117,7 +119,7 @@ function CreatePostForm() {
 
   const createMutation = useMutation({
     mutationFn: createPost,
-    onError: (error) => {
+    onError: error => {
       if (error instanceof AppError) {
         setError(error.message)
       } else if (error instanceof ValidationError) {
@@ -129,9 +131,9 @@ function CreatePostForm() {
         setError('An unexpected error occurred')
       }
     },
-    onSuccess: (post) => {
+    onSuccess: post => {
       navigate({ to: '/posts/$postId', params: { postId: post.id } })
-    },
+    }
   })
 
   return (
@@ -155,27 +157,27 @@ export const updateProfile = createServerFn({ method: 'POST' })
       // Redirect to login for auth errors
       throw redirect({
         to: '/login',
-        search: { redirect: '/settings' },
+        search: { redirect: '/settings' }
       })
     }
 
     return await db.users.update({
       where: { id: session.userId },
-      data,
+      data
     })
   })
 ```
 
 ## Error Response Best Practices
 
-| Scenario | HTTP Status | Response |
-|----------|-------------|----------|
-| Validation failed | 400 | Field-specific errors |
-| Not authenticated | 401 | Redirect to login |
-| Not authorized | 403 | Generic forbidden message |
-| Resource not found | 404 | Use `notFound()` |
-| Conflict (duplicate) | 409 | Specific conflict message |
-| Server error | 500 | Generic message, log details |
+| Scenario             | HTTP Status | Response                     |
+| -------------------- | ----------- | ---------------------------- |
+| Validation failed    | 400         | Field-specific errors        |
+| Not authenticated    | 401         | Redirect to login            |
+| Not authorized       | 403         | Generic forbidden message    |
+| Resource not found   | 404         | Use `notFound()`             |
+| Conflict (duplicate) | 409         | Specific conflict message    |
+| Server error         | 500         | Generic message, log details |
 
 ## Context
 

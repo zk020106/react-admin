@@ -35,7 +35,7 @@ describe('admin modal', () => {
     })
 
     await screen.findByRole('dialog')
-    await userEvent.click(screen.getByRole('button', { name: /取 消|Cancel/ }))
+    await userEvent.click(screen.getByRole('button', { name: /取\s*消|Cancel/ }))
 
     expect(api.getState().isOpen).toBe(true)
   })
@@ -52,7 +52,7 @@ describe('admin modal', () => {
     await screen.findByRole('dialog')
 
     await waitFor(() => {
-      expect(document.querySelector('.ant-btn-loading')).not.toBeNull()
+      expect(document.querySelector('.semi-button-loading, .ant-btn-loading')).not.toBeNull()
     })
   })
 
@@ -66,7 +66,7 @@ describe('admin modal', () => {
     })
 
     await screen.findByRole('dialog')
-    await userEvent.click(screen.getByRole('button', { name: /确 定|OK/ }))
+    await userEvent.click(screen.getByRole('button', { name: /确\s*定|OK/ }))
 
     expect(onConfirm).toHaveBeenCalledTimes(1)
   })
@@ -91,11 +91,11 @@ describe('admin drawer', () => {
     })
 
     expect(await screen.findByText('抽屉内容')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /确 定/ }))
+    await userEvent.click(screen.getByRole('button', { name: /确\s*定/ }))
 
     expect(onConfirm).toHaveBeenCalledTimes(1)
 
-    await userEvent.click(screen.getByRole('button', { name: /取 消/ }))
+    await userEvent.click(screen.getByRole('button', { name: /取\s*消/ }))
 
     await waitFor(() => {
       expect(api.getState().isOpen).toBe(false)

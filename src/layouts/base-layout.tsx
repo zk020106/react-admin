@@ -21,11 +21,8 @@ import { authStore } from '@/store/auth'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
 import { applyAdminTheme } from '@/theme'
-import type { AdminPreferences, MenuRecord, TabRecord } from '@/types/admin'
-import { Button } from '@/components/ui/button'
-import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { Toaster } from '@/components/ui/sonner'
-import { TooltipProvider } from '@/components/ui/tooltip'
+import type { AdminPreferences, MenuRecord, TabRecord } from '@/types'
+import { SidebarInset, SidebarProvider } from '@/layouts/sidebar-context'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { cn } from '@/lib/utils'
 import { findActiveMenuRecord } from '@/layouts/navigation'
@@ -36,10 +33,10 @@ import { PageSurface } from '@/layouts/page-surface'
 import { resolvePreferencesButtonPlacement } from '@/layouts/preferences-options'
 import { Tabbar } from '@/layouts/tabbar'
 import { getWorkspaceRootMenu, resolveWorkspaceTab } from '@/layouts/workspace-navigation'
-import { navigationQueries } from '@/pages/admin-queries'
+import { navigationQueries } from '@/api/queries'
 import ForbiddenPage from '@/pages/forbidden-page'
 
-// 按需弹层走懒加载，避免 cmdk、偏好设置面板等只在特定场景使用的依赖进入首屏主包。
+// 按需弹层走懒加载，避免全局搜索、偏好设置面板等只在特定场景使用的依赖进入首屏主包。
 const loadPreferencesSheet = () => import('@/layouts/preferences-sheet')
 const loadWorkspaceOverlays = () => import('@/layouts/workspace-overlays')
 
@@ -59,7 +56,7 @@ const LockScreenOverlay = lazy(() =>
 const emptyMenu: MenuRecord[] = []
 const anonymousPermissions: readonly string[] = []
 const unrestrictedPermissions: readonly string[] = ['*']
-const lockScreenSessionKey = 'antd-react-admin:lock-screen'
+const lockScreenSessionKey = 'react-admin:lock-screen'
 
 type LockScreenSessionState = {
   password: string
@@ -808,17 +805,15 @@ function AdminWorkspace() {
         </Suspense>
       )}
       {preferencesButtonPlacement.fixed && (
-        <Button
+        <button
           aria-label={messages.header.preferences}
-          className="fixed top-1/2 right-0 z-50 size-9 -translate-y-1/2 rounded-r-none rounded-l-md bg-primary text-primary-foreground shadow-lg hover:bg-primary/90"
+          className="fixed top-1/2 right-0 z-50 flex items-center justify-center size-9 -translate-y-1/2 rounded-r-none rounded-l-md bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 cursor-pointer border-0"
           data-preferences-position="fixed"
           onClick={preferencesActions.setTrue}
-          size="icon"
           type="button"
-          variant="default"
         >
           <Settings2 className="size-4" />
-        </Button>
+        </button>
       )}
       {searchMounted && (
         <Suspense fallback={null}>
@@ -851,7 +846,6 @@ function AdminWorkspace() {
           />
         </Suspense>
       )}
-      <Toaster position="top-center" />
     </SidebarProvider>
   )
 }
@@ -865,9 +859,5 @@ export function BaseLayout() {
     return <Navigate replace to="/login" />
   }
 
-  return (
-    <TooltipProvider>
-      <AdminWorkspace />
-    </TooltipProvider>
-  )
+  return <AdminWorkspace />
 }

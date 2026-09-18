@@ -17,7 +17,7 @@ const { data } = useQuery({
     // Three requests fire, all complete, wasting bandwidth
     const response = await fetch(`/api/search?q=${searchTerm}`)
     return response.json()
-  },
+  }
 })
 
 // Component unmounts but request keeps running
@@ -26,8 +26,8 @@ function UserProfile({ userId }: { userId: string }) {
     queryKey: ['user', userId],
     queryFn: async () => {
       const response = await fetch(`/api/users/${userId}`)
-      return response.json()  // Completes even if user navigated away
-    },
+      return response.json() // Completes even if user navigated away
+    }
   })
 }
 ```
@@ -39,10 +39,10 @@ const { data } = useQuery({
   queryKey: ['search', searchTerm],
   queryFn: async ({ signal }) => {
     const response = await fetch(`/api/search?q=${searchTerm}`, {
-      signal,  // Pass abort signal to fetch
+      signal // Pass abort signal to fetch
     })
     return response.json()
-  },
+  }
 })
 
 // Now when user types "a", "ab", "abc" quickly:
@@ -60,10 +60,10 @@ const { data } = useQuery({
   queryKey: ['users', userId],
   queryFn: async ({ signal }) => {
     const response = await axios.get(`/api/users/${userId}`, {
-      signal,  // Axios supports AbortSignal
+      signal // Axios supports AbortSignal
     })
     return response.data
-  },
+  }
 })
 ```
 
@@ -80,7 +80,7 @@ function SearchResults() {
       const response = await fetch(`/api/search?q=${searchTerm}`, { signal })
       return response.json()
     },
-    enabled: searchTerm.length > 0,
+    enabled: searchTerm.length > 0
   })
 
   // Cancel all search queries manually
@@ -91,10 +91,7 @@ function SearchResults() {
 
   return (
     <div>
-      <input
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-      />
+      <input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
       <button onClick={handleClear}>Clear</button>
       <Results data={data} />
     </div>
@@ -138,8 +135,8 @@ const { data } = useQuery({
       const worker = new Worker('computation.js')
       worker.postMessage(params)
 
-      worker.onmessage = (e) => resolve(e.data)
-      worker.onerror = (e) => reject(e)
+      worker.onmessage = e => resolve(e.data)
+      worker.onerror = e => reject(e)
 
       // Listen for cancellation
       signal.addEventListener('abort', () => {
@@ -147,19 +144,19 @@ const { data } = useQuery({
         reject(new DOMException('Aborted', 'AbortError'))
       })
     })
-  },
+  }
 })
 ```
 
 ## When Queries Are Cancelled
 
-| Scenario | Cancelled? |
-|----------|------------|
-| Query key changes | Yes |
-| Component unmounts | Yes |
-| `queryClient.cancelQueries()` called | Yes |
-| Refetch triggered | Previous request cancelled |
-| `enabled` becomes false | Yes |
+| Scenario                             | Cancelled?                 |
+| ------------------------------------ | -------------------------- |
+| Query key changes                    | Yes                        |
+| Component unmounts                   | Yes                        |
+| `queryClient.cancelQueries()` called | Yes                        |
+| Refetch triggered                    | Previous request cancelled |
+| `enabled` becomes false              | Yes                        |
 
 ## Context
 

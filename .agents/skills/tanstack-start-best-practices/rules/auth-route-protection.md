@@ -15,11 +15,11 @@ function DashboardPage() {
 
   useEffect(() => {
     if (!user) {
-      navigate({ to: '/login' })  // Redirect after render
+      navigate({ to: '/login' }) // Redirect after render
     }
   }, [user])
 
-  if (!user) return null  // Flash of content possible
+  if (!user) return null // Flash of content possible
 
   return <Dashboard user={user} />
 }
@@ -30,7 +30,7 @@ export const Route = createFileRoute('/dashboard')({
     // Fetches sensitive data even for unauthenticated users
     return await fetchDashboardData()
   },
-  component: DashboardPage,
+  component: DashboardPage
 })
 ```
 
@@ -49,17 +49,17 @@ export const Route = createFileRoute('/_authenticated')({
       throw redirect({
         to: '/login',
         search: {
-          redirect: location.href,
-        },
+          redirect: location.href
+        }
       })
     }
 
     // Extend context with user for all child routes
     return {
-      user: session,
+      user: session
     }
   },
-  component: AuthenticatedLayout,
+  component: AuthenticatedLayout
 })
 
 function AuthenticatedLayout() {
@@ -67,7 +67,7 @@ function AuthenticatedLayout() {
     <div>
       <AuthenticatedNav />
       <main>
-        <Outlet />  {/* Child routes render here */}
+        <Outlet /> {/* Child routes render here */}
       </main>
     </div>
   )
@@ -80,7 +80,7 @@ export const Route = createFileRoute('/_authenticated/dashboard')({
     // context.user is guaranteed to exist
     return await fetchDashboardData(context.user.id)
   },
-  component: DashboardPage,
+  component: DashboardPage
 })
 
 function DashboardPage() {
@@ -102,7 +102,7 @@ export const Route = createFileRoute('/_admin')({
       throw redirect({ to: '/unauthorized' })
     }
   },
-  component: AdminLayout,
+  component: AdminLayout
 })
 
 // File structure:
@@ -125,9 +125,9 @@ import { z } from 'zod'
 
 export const Route = createFileRoute('/login')({
   validateSearch: z.object({
-    redirect: z.string().optional(),
+    redirect: z.string().optional()
   }),
-  component: LoginPage,
+  component: LoginPage
 })
 
 function LoginPage() {
@@ -137,7 +137,7 @@ function LoginPage() {
     onSuccess: () => {
       // Redirect to original destination or default
       navigate({ to: redirect ?? '/dashboard' })
-    },
+    }
   })
 
   return <LoginForm onSubmit={loginMutation.mutate} />
@@ -148,7 +148,7 @@ beforeLoad: async ({ location }) => {
   if (!session) {
     throw redirect({
       to: '/login',
-      search: { redirect: location.href },
+      search: { redirect: location.href }
     })
   }
 }
@@ -163,7 +163,7 @@ export const Route = createFileRoute('/')({
     const session = await getSessionData()
     return { user: session?.user ?? null }
   },
-  component: HomePage,
+  component: HomePage
 })
 
 function HomePage() {
@@ -172,11 +172,7 @@ function HomePage() {
   return (
     <div>
       <Hero />
-      {user ? (
-        <PersonalizedContent user={user} />
-      ) : (
-        <SignUpCTA />
-      )}
+      {user ? <PersonalizedContent user={user} /> : <SignUpCTA />}
     </div>
   )
 }

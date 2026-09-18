@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
-import { createAdminApi, createHttpAdminApi, type AdminApiHttpClient } from '@/api/admin'
+import { createAdminApi, createHttpAdminApi, type AdminApiHttpClient } from '@/api/system'
 import type { HttpRequestConfig } from '@/lib/http'
 import { mockAdminMenu, resetMockUsers, type UserInput } from '@/mock/admin-mock'
 

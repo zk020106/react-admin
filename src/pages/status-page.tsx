@@ -1,10 +1,9 @@
-import type { VariantProps } from 'class-variance-authority'
 import type { CSSProperties, ReactNode } from 'react'
+import { Button } from '@douyinfe/semi-ui-19'
 
 import { cn } from '@/lib/utils'
-import { Button, type buttonVariants } from '@/components/ui/button'
 
-type ButtonVariant = NonNullable<VariantProps<typeof buttonVariants>['variant']>
+export type ButtonVariant = 'default' | 'outline' | 'ghost' | 'secondary'
 
 export interface StatusPageAction {
   className?: string
@@ -58,9 +57,10 @@ const lightBeamStyle = {
 } satisfies CSSProperties
 
 const codeShadowStyle = {
-  textShadow: '0 30px 38px hsl(var(--foreground) / 0.12), 0 8px 18px hsl(var(--foreground) / 0.1)'
+  textShadow: '0 28px 80px hsl(var(--foreground) / 0.12)'
 } satisfies CSSProperties
 
+/** 渲染异常状态页面（403、404、500 等）。 */
 export function StatusPage({
   actions,
   code,
@@ -71,67 +71,76 @@ export function StatusPage({
   title,
   tone = 'neutral'
 }: StatusPageProps) {
-  const styles = toneClasses[tone]
+  const currentTone = toneClasses[tone]
 
   return (
     <section
-      className="relative isolate flex min-h-[calc(100svh-9rem)] flex-col items-center justify-center overflow-hidden bg-background px-4 py-14 text-center sm:px-6"
+      className="relative flex min-h-[calc(100vh-var(--admin-header-height))] w-full flex-col justify-between overflow-hidden px-6 py-10"
       data-slot={dataSlot}
       style={statusPageBackgroundStyle}
     >
-      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,hsl(var(--background))_0%,hsl(var(--muted)/0.18)_100%)]" />
       <div
+        aria-hidden="true"
         className={cn(
-          'pointer-events-none absolute top-[33%] left-1/2 h-36 w-[min(44rem,82vw)] -translate-x-1/2 rounded-[50%] blur-3xl',
-          styles.glow
+          'pointer-events-none absolute top-16 left-1/2 h-72 w-96 -translate-x-1/2 rounded-full blur-3xl',
+          currentTone.glow
         )}
       />
+
       <div
-        className="pointer-events-none absolute top-[41%] left-1/2 h-52 w-[min(48rem,86vw)] -translate-x-1/2 opacity-80"
+        aria-hidden="true"
+        className="pointer-events-none absolute top-0 left-1/2 h-96 w-[680px] -translate-x-1/2 opacity-70"
         style={lightBeamStyle}
       />
+
       <div
-        className="pointer-events-none absolute top-[48%] left-1/2 h-24 w-[min(42rem,82vw)] -translate-x-1/2 blur-md"
+        aria-hidden="true"
+        className="pointer-events-none absolute top-72 left-0 h-28 w-full opacity-60"
         style={horizonMistStyle}
       />
 
-      <div className="relative z-10 flex w-full max-w-3xl flex-1 flex-col items-center justify-center">
-        <div className="relative grid w-full place-items-center pb-8 sm:pb-10">
-          <div
-            className={cn(
-              'select-none text-[clamp(8rem,24vw,18rem)] font-semibold leading-[0.82]',
-              styles.code
-            )}
-            style={codeShadowStyle}
-          >
-            {code}
-          </div>
+      <div />
+
+      <div className="relative z-10 mx-auto flex w-full max-w-xl flex-col items-center text-center">
+        <div
+          aria-hidden="true"
+          className={cn(
+            'select-none font-mono text-7xl font-black tracking-widest sm:text-8xl md:text-9xl',
+            currentTone.code
+          )}
+          style={codeShadowStyle}
+        >
+          {code}
         </div>
 
-        <div className="relative space-y-3">
-          <h1 className="text-2xl font-medium text-foreground/80 sm:text-3xl">{title}</h1>
-          <p className="mx-auto max-w-xl text-sm leading-6 text-muted-foreground sm:text-base">
-            {description}
-          </p>
-        </div>
+        <h1 className="mt-6 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
+          {title}
+        </h1>
+
+        <p className="mt-3 max-w-md text-sm text-muted-foreground/80 sm:text-base">{description}</p>
 
         {detail ? (
-          <div className="mt-7 w-full max-w-2xl overflow-hidden rounded-lg border bg-muted/30 p-3 text-left">
+          <div className="mt-4 max-w-lg rounded-md border border-border/60 bg-background/80 px-4 py-2.5 text-left text-xs font-mono text-muted-foreground">
             {detail}
           </div>
         ) : null}
 
-        <div className="mt-9 flex flex-wrap justify-center gap-2">
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           {actions.map(action => (
             <Button
-              className={cn(
-                'h-11 min-w-44 rounded-md bg-slate-800 px-8 text-base text-white shadow-[0_14px_32px_hsl(var(--foreground)/0.14)] hover:bg-slate-700 dark:bg-slate-100 dark:text-slate-950 dark:hover:bg-slate-200',
-                action.className
-              )}
+              className={cn('min-w-24', action.className)}
               key={action.label}
               onClick={action.onClick}
-              type="button"
-              variant={action.variant ?? 'default'}
+              theme={
+                action.variant === 'outline'
+                  ? 'light'
+                  : action.variant === 'ghost'
+                    ? 'borderless'
+                    : 'solid'
+              }
+              type={
+                action.variant === 'outline' || action.variant === 'ghost' ? 'tertiary' : 'primary'
+              }
             >
               {action.label}
             </Button>
@@ -147,7 +156,10 @@ export function StatusPage({
           {footerLinks.map((link, index) => (
             <span className="flex items-center gap-5" key={link}>
               {index > 0 ? <span className="h-3 w-px bg-border" aria-hidden="true" /> : null}
-              <button className="hover:text-foreground" type="button">
+              <button
+                className="hover:text-foreground border-0 bg-transparent cursor-pointer"
+                type="button"
+              >
                 {link}
               </button>
             </span>

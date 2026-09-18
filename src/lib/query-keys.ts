@@ -21,14 +21,6 @@ export const workplaceKeys = {
   summary: () => [...workplaceKeys.all, 'summary'] as const
 }
 
-export const systemKeys = {
-  all: ['system'] as const,
-  departments: () => [...systemKeys.all, 'departments'] as const,
-  menus: () => [...systemKeys.all, 'menus'] as const,
-  roles: () => [...systemKeys.all, 'roles'] as const,
-  users: () => [...systemKeys.all, 'users'] as const
-}
-
 export const aboutKeys = {
   all: ['about'] as const,
   project: () => [...aboutKeys.all, 'project'] as const
@@ -42,22 +34,6 @@ export function getRouteRefreshQueryKeys(path: string): QueryKey[] {
 
   if (path === '/workplace') {
     return [workplaceKeys.summary()]
-  }
-
-  if (path === '/system/users') {
-    return [systemKeys.users()]
-  }
-
-  if (path === '/system/roles') {
-    return [systemKeys.roles()]
-  }
-
-  if (path === '/system/menus') {
-    return [systemKeys.menus(), navigationKeys.menu()]
-  }
-
-  if (path === '/system/departments') {
-    return [systemKeys.departments()]
   }
 
   if (path === '/about') {

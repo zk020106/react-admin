@@ -11,7 +11,7 @@ import {
   type UserRecord,
   type WorkplaceSummary
 } from '@/mock/admin-mock'
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 import type { ProjectInfo } from '@/types/project-info'
 
 export interface AdminApi {
@@ -58,3 +58,5 @@ export function createAdminApi(options: { useMock?: boolean } = {}): AdminApi {
 }
 
 export const adminApi = createAdminApi()
+export const systemApi = adminApi
+export type SystemApi = AdminApi

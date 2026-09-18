@@ -1,4 +1,4 @@
-import type { AdminPreferences } from '@/types/admin'
+import type { AdminPreferences } from '@/types'
 
 export type AdminLocale = 'en-US' | 'zh-CN'
 export type PreferenceTabValue = 'appearance' | 'general' | 'layout' | 'shortcut'
@@ -163,6 +163,7 @@ export const adminMessages = {
       },
       themePreset: {
         custom: 'Custom',
+        'cyber-blue': 'Cyber Blue',
         'deep-blue': 'Deep blue',
         'deep-green': 'Deep green',
         default: 'Default',
@@ -554,6 +555,7 @@ export const adminMessages = {
       },
       themePreset: {
         custom: '自定义',
+        'cyber-blue': '极光科技',
         'deep-blue': '深蓝',
         'deep-green': '深绿',
         default: '默认',

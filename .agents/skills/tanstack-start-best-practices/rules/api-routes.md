@@ -10,18 +10,16 @@ While server functions are ideal for internal RPC, server routes provide traditi
 
 ```tsx
 // Using server functions for webhook endpoints
-export const stripeWebhook = createServerFn({ method: 'POST' })
-  .handler(async ({ request }) => {
-    // Server functions aren't designed for raw request handling
-    // No easy access to raw body for signature verification
-    // Response format is JSON by default
-  })
+export const stripeWebhook = createServerFn({ method: 'POST' }).handler(async ({ request }) => {
+  // Server functions aren't designed for raw request handling
+  // No easy access to raw body for signature verification
+  // Response format is JSON by default
+})
 
 // Or exposing internal functions to external consumers
-export const getUsers = createServerFn()
-  .handler(async () => {
-    return db.users.findMany()
-  })
+export const getUsers = createServerFn().handler(async () => {
+  return db.users.findMany()
+})
 // No versioning, no standard REST semantics
 ```
 
@@ -37,13 +35,13 @@ export const Route = createFileRoute('/api/users')({
     handlers: {
       GET: async ({ request }) => {
         const users = await db.users.findMany({
-          select: { id: true, name: true, email: true },
+          select: { id: true, name: true, email: true }
         })
 
         return json(users, {
           headers: {
-            'Cache-Control': 'public, max-age=60',
-          },
+            'Cache-Control': 'public, max-age=60'
+          }
         })
       },
 
@@ -58,9 +56,9 @@ export const Route = createFileRoute('/api/users')({
 
         const user = await db.users.create({ data: parsed.data })
         return json(user, { status: 201 })
-      },
-    },
-  },
+      }
+    }
+  }
 })
 ```
 
@@ -110,9 +108,9 @@ export const Route = createFileRoute('/api/webhooks/stripe')({
         }
 
         return new Response('OK', { status: 200 })
-      },
-    },
-  },
+      }
+    }
+  }
 })
 ```
 
@@ -128,7 +126,7 @@ export const Route = createFileRoute('/api/posts/$postId')({
     handlers: {
       GET: async ({ params }) => {
         const post = await db.posts.findUnique({
-          where: { id: params.postId },
+          where: { id: params.postId }
         })
 
         if (!post) {
@@ -148,7 +146,7 @@ export const Route = createFileRoute('/api/posts/$postId')({
 
         const post = await db.posts.update({
           where: { id: params.postId },
-          data: parsed.data,
+          data: parsed.data
         })
 
         return json(post)
@@ -157,9 +155,9 @@ export const Route = createFileRoute('/api/posts/$postId')({
       DELETE: async ({ params }) => {
         await db.posts.delete({ where: { id: params.postId } })
         return new Response(null, { status: 204 })
-      },
-    },
-  },
+      }
+    }
+  }
 })
 ```
 
@@ -180,9 +178,9 @@ export const Route = createFileRoute('/api/protected/data')({
         // context.client available from middleware
         const data = await fetchDataForClient(context.client.id)
         return json(data)
-      },
-    },
-  },
+      }
+    }
+  }
 })
 ```
 
@@ -195,8 +193,8 @@ import { json } from '@tanstack/react-start'
 
 export const Route = createFileRoute('/api/admin/users')({
   server: {
-    middleware: [authMiddleware],  // All handlers require auth
-    handlers: (createHandlers) => ({
+    middleware: [authMiddleware], // All handlers require auth
+    handlers: createHandlers => ({
       GET: createHandlers.GET(async ({ context }) => {
         const users = await db.users.findMany()
         return json(users)
@@ -209,23 +207,23 @@ export const Route = createFileRoute('/api/admin/users')({
           const { userId } = await request.json()
           await db.users.delete({ where: { id: userId } })
           return json({ deleted: true })
-        },
-      }),
-    }),
-  },
+        }
+      })
+    })
+  }
 })
 ```
 
 ## Server Functions vs Server Routes
 
-| Feature | Server Functions | Server Routes |
-|---------|-----------------|--------------|
-| Primary use | Internal RPC | External consumers |
-| Type safety | Full end-to-end | Manual |
-| Response format | JSON (automatic) | Any (manual) |
-| Raw request access | Limited | Full |
-| URL structure | Auto-generated | Explicit paths |
-| Webhooks | Not ideal | Designed for |
+| Feature            | Server Functions | Server Routes      |
+| ------------------ | ---------------- | ------------------ |
+| Primary use        | Internal RPC     | External consumers |
+| Type safety        | Full end-to-end  | Manual             |
+| Response format    | JSON (automatic) | Any (manual)       |
+| Raw request access | Limited          | Full               |
+| URL structure      | Auto-generated   | Explicit paths     |
+| Webhooks           | Not ideal        | Designed for       |
 
 ## Context
 

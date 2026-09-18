@@ -14,7 +14,7 @@ async function createPost(data: CreatePostInput) {
   const response = await fetch('/api/posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
+    body: JSON.stringify(data)
   })
   if (!response.ok) throw new Error('Failed to create post')
   return response.json()
@@ -41,7 +41,7 @@ import { db } from './db.server'
 const createPostSchema = z.object({
   title: z.string().min(1).max(200),
   content: z.string().min(1),
-  published: z.boolean().default(false),
+  published: z.boolean().default(false)
 })
 
 export const createPost = createServerFn({ method: 'POST' })
@@ -52,8 +52,8 @@ export const createPost = createServerFn({ method: 'POST' })
       data: {
         title: data.title,
         content: data.content,
-        published: data.published,
-      },
+        published: data.published
+      }
     })
     return post
   })
@@ -68,8 +68,8 @@ function CreatePostForm() {
         data: {
           title: formData.get('title') as string,
           content: formData.get('content') as string,
-          published: false,
-        },
+          published: false
+        }
       })
       // post is fully typed
       console.log('Created post:', post.id)
@@ -84,11 +84,11 @@ function CreatePostForm() {
 
 ```tsx
 // lib/posts.functions.ts
-export const getPosts = createServerFn()  // GET is default
+export const getPosts = createServerFn() // GET is default
   .handler(async () => {
     const posts = await db.posts.findMany({
       orderBy: { createdAt: 'desc' },
-      take: 20,
+      take: 20
     })
     return posts
   })
@@ -97,7 +97,7 @@ export const getPost = createServerFn()
   .validator(z.object({ id: z.string() }))
   .handler(async ({ data }) => {
     const post = await db.posts.findUnique({
-      where: { id: data.id },
+      where: { id: data.id }
     })
     if (!post) {
       throw notFound()
@@ -109,7 +109,7 @@ export const getPost = createServerFn()
 export const Route = createFileRoute('/posts/$postId')({
   loader: async ({ params }) => {
     return await getPost({ data: { id: params.postId } })
-  },
+  }
 })
 ```
 
@@ -122,7 +122,7 @@ export const getPostWithComments = createServerFn()
   .handler(async ({ data }) => {
     const [post, comments] = await Promise.all([
       getPost({ data: { id: data.postId } }),
-      getComments({ data: { postId: data.postId } }),
+      getComments({ data: { postId: data.postId } })
     ])
 
     return { post, comments }

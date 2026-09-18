@@ -27,7 +27,7 @@ import {
 } from '@/layouts/preferences-pickers'
 import { preferenceTimezoneOptions } from '@/layouts/preferences-options'
 import type { PreferenceStoreState } from '@/store/preferences'
-import type { AdminPreferences } from '@/types/admin'
+import type { AdminPreferences } from '@/types'
 
 type PreferencesSectionProps = {
   preferences: AdminPreferences

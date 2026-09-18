@@ -1,5 +1,5 @@
 import { mockAdminMenu } from '@/mock/admin-mock'
-import type { MenuRecord, TabRecord } from '@/types/admin'
+import type { MenuRecord, TabRecord } from '@/types'
 
 export const ADMIN_DEFAULT_PATH = '/overview'
 

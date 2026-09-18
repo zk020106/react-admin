@@ -15,7 +15,7 @@ export const Route = createFileRoute('/about')({
     // Fetching static content on every request
     const content = await fetchAboutPageContent()
     return { content }
-  },
+  }
 })
 
 // Or no caching headers for semi-static content
@@ -24,7 +24,7 @@ export const Route = createFileRoute('/blog/$slug')({
     const post = await fetchPost(params.slug)
     return { post }
     // Every request hits the database
-  },
+  }
 })
 ```
 
@@ -38,16 +38,11 @@ export default defineConfig({
   server: {
     prerender: {
       // Routes to prerender at build time
-      routes: [
-        '/',
-        '/about',
-        '/contact',
-        '/pricing',
-      ],
+      routes: ['/', '/about', '/contact', '/pricing'],
       // Or crawl from root
-      crawlLinks: true,
-    },
-  },
+      crawlLinks: true
+    }
+  }
 })
 
 // routes/about.tsx - Will be prerendered
@@ -57,7 +52,7 @@ export const Route = createFileRoute('/about')({
     const content = await fetchAboutPageContent()
     return { content }
   },
-  component: AboutPage,
+  component: AboutPage
 })
 ```
 
@@ -72,17 +67,13 @@ export default defineConfig({
       routes: async () => {
         const posts = await db.posts.findMany({
           where: { published: true },
-          select: { slug: true },
+          select: { slug: true }
         })
 
-        return [
-          '/',
-          '/blog',
-          ...posts.map(p => `/blog/${p.slug}`),
-        ]
-      },
-    },
-  },
+        return ['/', '/blog', ...posts.map(p => `/blog/${p.slug}`)]
+      }
+    }
+  }
 })
 ```
 
@@ -99,12 +90,12 @@ export const Route = createFileRoute('/blog/$slug')({
 
     // ISR: Cache for 60 seconds, then revalidate
     setHeaders({
-      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+      'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300'
     })
 
     return { post }
   },
-  component: BlogPost,
+  component: BlogPost
 })
 
 // First request: SSR and cache
@@ -122,7 +113,7 @@ export const Route = createFileRoute('/products')({
     // Featured products - prerendered at build
     const featured = await fetchFeaturedProducts()
     return { featured }
-  },
+  }
 })
 
 // routes/products/$productId.tsx - ISR
@@ -134,11 +125,11 @@ export const Route = createFileRoute('/products/$productId')({
 
     // Cache product pages for 5 minutes
     setHeaders({
-      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+      'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600'
     })
 
     return { product }
-  },
+  }
 })
 
 // routes/cart.tsx - Always SSR (user-specific)
@@ -146,12 +137,12 @@ export const Route = createFileRoute('/cart')({
   loader: async ({ context }) => {
     // No caching - user-specific data
     setHeaders({
-      'Cache-Control': 'private, no-store',
+      'Cache-Control': 'private, no-store'
     })
 
     const cart = await fetchUserCart(context.user.id)
     return { cart }
-  },
+  }
 })
 ```
 
@@ -173,7 +164,7 @@ export const APIRoute = createAPIFileRoute('/api/revalidate')({
     await revalidatePath(path)
 
     return json({ revalidated: true, path })
-  },
+  }
 })
 
 // Usage: POST /api/revalidate { "secret": "...", "path": "/blog/my-post" }
@@ -181,13 +172,13 @@ export const APIRoute = createAPIFileRoute('/api/revalidate')({
 
 ## Cache-Control Directives
 
-| Directive | Meaning |
-|-----------|---------|
-| `s-maxage=N` | CDN cache duration (seconds) |
-| `max-age=N` | Browser cache duration |
-| `stale-while-revalidate=N` | Serve stale while fetching fresh |
-| `private` | Don't cache on CDN (user-specific) |
-| `no-store` | Never cache |
+| Directive                  | Meaning                            |
+| -------------------------- | ---------------------------------- |
+| `s-maxage=N`               | CDN cache duration (seconds)       |
+| `max-age=N`                | Browser cache duration             |
+| `stale-while-revalidate=N` | Serve stale while fetching fresh   |
+| `private`                  | Don't cache on CDN (user-specific) |
+| `no-store`                 | Never cache                        |
 
 ## Context
 

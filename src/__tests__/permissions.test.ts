@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { filterAuthorizedMenu, hasPermission } from '@/lib/permissions'
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 
 const menu: MenuRecord[] = [
   {

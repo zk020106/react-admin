@@ -2,6 +2,7 @@ import { TinyColor } from '@ctrl/tinycolor'
 
 export type BuiltinThemeType =
   | 'custom'
+  | 'cyber-blue'
   | 'deep-blue'
   | 'deep-green'
   | 'default'
@@ -42,6 +43,12 @@ export interface AdminThemeOptions {
 
 export const BUILT_IN_THEME_PRESETS: BuiltinThemePreset[] = [
   { color: 'hsl(212 100% 45%)', type: 'default' },
+  {
+    color: '#07bdfd',
+    darkPrimaryColor: '#07bdfd',
+    primaryColor: '#006be6',
+    type: 'cyber-blue'
+  },
   { color: 'hsl(245 82% 67%)', type: 'violet' },
   { color: 'hsl(347 77% 60%)', type: 'pink' },
   { color: 'hsl(42 84% 61%)', type: 'yellow' },
@@ -91,12 +98,104 @@ export function isDarkTheme(mode: AdminThemeMode) {
   return mode === 'dark'
 }
 
+/**
+ * 解析并生成 Semi Design 全套圆角 CSS 变量映射。
+ *
+ * Semi Design 组件圆角消费约定：
+ * - small: Button (按钮)、Input (输入框)、Select (选择器)、Tag (标签)、ButtonGroup
+ * - extra-small: 微型指示器、微型标签
+ * - medium: Card (卡片)、Dropdown (下拉菜单)、Tooltip (文字提示)、Popover (气泡卡片)
+ * - large: Modal (弹窗内容区)、SideSheet (抽屉)
+ *
+ * @param radiusRem - 主题配置中的圆角字符串（如 '0', '0.25', '0.5', '0.75', '1'）
+ */
+export function resolveSemiRadiusTokens(radiusRem: string): Record<string, string> {
+  const r = parseFloat(radiusRem)
+  if (r === 0) {
+    return {
+      '--semi-border-radius-extra-small': '0px',
+      '--semi-border-radius-small': '0px',
+      '--semi-border-radius-medium': '0px',
+      '--semi-border-radius-large': '0px'
+    }
+  }
+
+  return {
+    '--semi-border-radius-extra-small': `calc(${radiusRem}rem * 0.5)`,
+    '--semi-border-radius-small': `${radiusRem}rem`,
+    '--semi-border-radius-medium': `calc(${radiusRem}rem * 1.25)`,
+    '--semi-border-radius-large': `calc(${radiusRem}rem * 1.75)`
+  }
+}
+
+/**
+ * 解析并生成 Semi Design 完整的状态色阶与交互色彩 Token。
+ */
+export function resolveSemiColorTokens(
+  options: AdminThemeOptions,
+  primaryColorHex: string,
+  dark: boolean
+): Record<string, string> {
+  const primary = new TinyColor(primaryColorHex)
+  const hexPrimary = primary.toHexString()
+
+  const hoverColor = dark ? primary.lighten(8).toHexString() : primary.darken(6).toHexString()
+  const activeColor = dark ? primary.lighten(15).toHexString() : primary.darken(12).toHexString()
+  const disabledColor = dark
+    ? primary.setAlpha(0.35).toRgbString()
+    : primary.lighten(30).toHexString()
+  const lightDefaultColor = primary.setAlpha(dark ? 0.18 : 0.1).toRgbString()
+  const lightHoverColor = primary.setAlpha(dark ? 0.28 : 0.2).toRgbString()
+  const lightActiveColor = primary.setAlpha(dark ? 0.38 : 0.3).toRgbString()
+
+  const tokens: Record<string, string> = {
+    '--semi-color-primary': hexPrimary,
+    '--semi-color-primary-hover': hoverColor,
+    '--semi-color-primary-active': activeColor,
+    '--semi-color-primary-disabled': disabledColor,
+    '--semi-color-primary-light-default': lightDefaultColor,
+    '--semi-color-primary-light-hover': lightHoverColor,
+    '--semi-color-primary-light-active': lightActiveColor,
+    '--semi-color-focus-border': hexPrimary,
+    '--semi-color-link': hexPrimary,
+    '--semi-color-link-hover': hoverColor,
+    '--semi-color-link-active': activeColor
+  }
+
+  if (options.colorSuccess) {
+    const success = new TinyColor(options.colorSuccess)
+    tokens['--semi-color-success'] = success.toHexString()
+    tokens['--semi-color-success-hover'] = success.darken(6).toHexString()
+    tokens['--semi-color-success-active'] = success.darken(12).toHexString()
+    tokens['--semi-color-success-light-default'] = success.setAlpha(dark ? 0.18 : 0.1).toRgbString()
+  }
+
+  if (options.colorWarning) {
+    const warning = new TinyColor(options.colorWarning)
+    tokens['--semi-color-warning'] = warning.toHexString()
+    tokens['--semi-color-warning-hover'] = warning.darken(6).toHexString()
+    tokens['--semi-color-warning-active'] = warning.darken(12).toHexString()
+    tokens['--semi-color-warning-light-default'] = warning.setAlpha(dark ? 0.18 : 0.1).toRgbString()
+  }
+
+  if (options.colorDestructive) {
+    const danger = new TinyColor(options.colorDestructive)
+    tokens['--semi-color-danger'] = danger.toHexString()
+    tokens['--semi-color-danger-hover'] = danger.darken(6).toHexString()
+    tokens['--semi-color-danger-active'] = danger.darken(12).toHexString()
+    tokens['--semi-color-danger-light-default'] = danger.setAlpha(dark ? 0.18 : 0.1).toRgbString()
+  }
+
+  return tokens
+}
+
 // 函数：applyAdminTheme。把主题配置同步到根节点 class、data-theme 和 CSS 变量。
 export function applyAdminTheme(options: AdminThemeOptions) {
   const root = document.documentElement
+  const body = typeof document !== 'undefined' ? document.body : undefined
   const dark = isDarkTheme(options.mode)
 
-  // 同步 class、data-theme 和 CSS 变量，确保 Tailwind 与自定义样式一致。
+  // 同步 class、data-theme 和 CSS 变量，确保 Tailwind、Semi 与自定义样式一致。
   root.classList.toggle('dark', dark)
   root.classList.toggle('light', !dark)
   root.dataset.theme = options.builtinType
@@ -104,7 +203,34 @@ export function applyAdminTheme(options: AdminThemeOptions) {
   root.style.setProperty('--font-size-base', `${options.fontSize}px`)
   root.style.setProperty('--menu-font-size', `calc(${options.fontSize}px * 0.875)`)
 
+  // 同步 Semi Design 的明暗主题模式
+  if (body) {
+    if (dark) {
+      body.setAttribute('theme-mode', 'dark')
+    } else {
+      body.removeAttribute('theme-mode')
+    }
+  }
+
   const primary = resolvePrimaryColor(options, dark)
+  const hexPrimary = new TinyColor(primary).toHexString()
+
+  // 解析并同步 Semi Design 全套圆角与色彩 Token
+  const semiRadiusTokens = resolveSemiRadiusTokens(options.radius)
+  const semiColorTokens = resolveSemiColorTokens(options, hexPrimary, dark)
+  const allSemiTokens = {
+    ...semiRadiusTokens,
+    ...semiColorTokens
+  }
+
+  // 同步应用到 document.documentElement 及 document.body（针对挂载在 body 上的 Portal / Modal / Tooltip）
+  Object.entries(allSemiTokens).forEach(([name, value]) => {
+    root.style.setProperty(name, value)
+    if (body) {
+      body.style.setProperty(name, value)
+    }
+  })
+
   const colorVariables = {
     '--destructive': toHslCssVar(options.colorDestructive ?? 'hsl(348 100% 61%)'),
     '--primary': toHslCssVar(primary),
@@ -116,7 +242,14 @@ export function applyAdminTheme(options: AdminThemeOptions) {
   Object.entries(colorVariables).forEach(([name, value]) => {
     root.style.setProperty(name, value)
   })
-  updateCSSVariables(colorVariables)
+  updateCSSVariables(
+    {
+      ...colorVariables,
+      ...allSemiTokens
+    },
+    '__admin-theme-styles__',
+    ':root, body, body[theme-mode="dark"]'
+  )
 }
 
 // 函数：resolveSurfaceVariables。根据暗色和半深色配置生成表面变量。
@@ -205,7 +338,7 @@ function resolvePrimaryColor(
   return (dark ? preset.darkPrimaryColor : preset.primaryColor) || preset.color
 }
 
-// 函数：resolveAdminPrimaryColor。按偏好设置和明暗模式解析当前主色，供 antd 主题桥使用。
+// 函数：resolveAdminPrimaryColor。按偏好设置和明暗模式解析当前主色。
 export function resolveAdminPrimaryColor(
   options: Pick<AdminThemeOptions, 'builtinType' | 'colorPrimary'>,
   dark: boolean

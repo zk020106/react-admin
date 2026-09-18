@@ -14,7 +14,7 @@ function PostPreview({ postId, previewData }: Props) {
   const { data } = useQuery({
     queryKey: ['posts', postId],
     queryFn: () => fetchPost(postId),
-    initialData: previewData,  // Wrong: this becomes cached "truth"
+    initialData: previewData // Wrong: this becomes cached "truth"
     // If previewData is incomplete, it pollutes the cache
     // staleTime applies to this data as if it were fetched
   })
@@ -25,7 +25,7 @@ function UserProfile({ userId }: Props) {
   const { data } = useQuery({
     queryKey: ['users', userId],
     queryFn: () => fetchUser(userId),
-    placeholderData: cachedUserFromList,  // Wrong: won't persist
+    placeholderData: cachedUserFromList // Wrong: won't persist
     // User navigates away and back - placeholder shown again
     // No cache entry created until fetch completes
   })
@@ -46,17 +46,13 @@ function PostDetail({ postId }: { postId: string }) {
       // Use partial data from list cache as placeholder
       const posts = queryClient.getQueryData<Post[]>(['posts'])
       return posts?.find(p => p.id === postId)
-    },
+    }
   })
 
   return (
     <article className={isPlaceholderData ? 'opacity-50' : ''}>
       <h1>{data?.title}</h1>
-      {isPlaceholderData ? (
-        <p>Loading full content...</p>
-      ) : (
-        <div>{data?.content}</div>
-      )}
+      {isPlaceholderData ? <p>Loading full content...</p> : <div>{data?.content}</div>}
     </article>
   )
 }
@@ -72,7 +68,7 @@ function PostPage({ serverData }: { serverData: Post }) {
     queryFn: () => fetchPost(serverData.id),
     initialData: serverData,
     // Specify when this data was fetched for proper stale calculation
-    initialDataUpdatedAt: serverData.fetchedAt,
+    initialDataUpdatedAt: serverData.fetchedAt
   })
 
   return <PostContent post={data} />
@@ -97,7 +93,7 @@ function ProductList({ page }: { page: number }) {
   const { data, isPlaceholderData } = useQuery({
     queryKey: ['products', page],
     queryFn: () => fetchProducts(page),
-    placeholderData: keepPreviousData,  // Built-in helper
+    placeholderData: keepPreviousData // Built-in helper
   })
 
   return (
@@ -113,14 +109,14 @@ function ProductList({ page }: { page: number }) {
 
 ## Comparison Table
 
-| Behavior | `initialData` | `placeholderData` |
-|----------|---------------|-------------------|
-| Persisted to cache | Yes | No |
-| `staleTime` applies | Yes | No (always fetches) |
-| `isPlaceholderData` | `false` | `true` |
-| Shown to other components | Yes (cached) | No |
-| Use case | SSR, complete known data | Preview, previous page |
-| Affects `dataUpdatedAt` | Yes (use `initialDataUpdatedAt`) | No |
+| Behavior                  | `initialData`                    | `placeholderData`      |
+| ------------------------- | -------------------------------- | ---------------------- |
+| Persisted to cache        | Yes                              | No                     |
+| `staleTime` applies       | Yes                              | No (always fetches)    |
+| `isPlaceholderData`       | `false`                          | `true`                 |
+| Shown to other components | Yes (cached)                     | No                     |
+| Use case                  | SSR, complete known data         | Preview, previous page |
+| Affects `dataUpdatedAt`   | Yes (use `initialDataUpdatedAt`) | No                     |
 
 ## Good Example: Combining Both
 
@@ -138,10 +134,10 @@ function PostDetail({ postId, ssrData }: Props) {
 
     // If no SSR data, try to use list preview as placeholder
     placeholderData: () => {
-      if (ssrData) return undefined  // Already have initial
+      if (ssrData) return undefined // Already have initial
       const posts = queryClient.getQueryData<Post[]>(['posts'])
       return posts?.find(p => p.id === postId)
-    },
+    }
   })
 }
 ```

@@ -18,7 +18,7 @@ function UserProfiles({ userIds }: { userIds: string[] }) {
     async function fetchAll() {
       const results = []
       for (const id of userIds) {
-        const user = await fetchUser(id)  // Sequential!
+        const user = await fetchUser(id) // Sequential!
         results.push(user)
       }
       setUsers(results)
@@ -33,10 +33,12 @@ function UserProfiles({ userIds }: { userIds: string[] }) {
 // Multiple useQuery calls - breaks rules of hooks
 function UserProfiles({ userIds }: { userIds: string[] }) {
   // Can't call hooks in a loop!
-  const queries = userIds.map(id => useQuery({
-    queryKey: ['user', id],
-    queryFn: () => fetchUser(id),
-  }))
+  const queries = userIds.map(id =>
+    useQuery({
+      queryKey: ['user', id],
+      queryFn: () => fetchUser(id)
+    })
+  )
 }
 ```
 
@@ -50,8 +52,8 @@ function UserProfiles({ userIds }: { userIds: string[] }) {
     queries: userIds.map(id => ({
       queryKey: ['users', id],
       queryFn: () => fetchUser(id),
-      staleTime: 5 * 60 * 1000,
-    })),
+      staleTime: 5 * 60 * 1000
+    }))
   })
 
   const isLoading = userQueries.some(q => q.isLoading)
@@ -78,14 +80,14 @@ function UserProfiles({ userIds }: { userIds: string[] }) {
   const { data: users, isPending } = useQueries({
     queries: userIds.map(id => ({
       queryKey: ['users', id],
-      queryFn: () => fetchUser(id),
+      queryFn: () => fetchUser(id)
     })),
     // Combine results into single value
-    combine: (results) => ({
+    combine: results => ({
       data: results.map(r => r.data).filter(Boolean),
       isPending: results.some(r => r.isPending),
-      isError: results.some(r => r.isError),
-    }),
+      isError: results.some(r => r.isError)
+    })
   })
 
   if (isPending) return <Loading />
@@ -102,8 +104,8 @@ function PostsWithAuthors({ postIds }: { postIds: string[] }) {
   const postQueries = useQueries({
     queries: postIds.map(id => ({
       queryKey: ['posts', id],
-      queryFn: () => fetchPost(id),
-    })),
+      queryFn: () => fetchPost(id)
+    }))
   })
 
   const posts = postQueries.map(q => q.data).filter(Boolean)
@@ -114,8 +116,8 @@ function PostsWithAuthors({ postIds }: { postIds: string[] }) {
     queries: authorIds.map(id => ({
       queryKey: ['users', id],
       queryFn: () => fetchUser(id),
-      enabled: posts.length > 0,  // Wait for posts
-    })),
+      enabled: posts.length > 0 // Wait for posts
+    }))
   })
 
   // Combine data...
@@ -131,8 +133,8 @@ function UserProfiles({ userIds }: { userIds: string[] }) {
   const userQueries = useSuspenseQueries({
     queries: userIds.map(id => ({
       queryKey: ['users', id],
-      queryFn: () => fetchUser(id),
-    })),
+      queryFn: () => fetchUser(id)
+    }))
   })
 
   // All data guaranteed - no loading states needed

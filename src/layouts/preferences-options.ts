@@ -1,5 +1,5 @@
 import { DEFAULT_PREFERENCES } from '@/store/preferences'
-import type { AdminPreferences } from '@/types/admin'
+import type { AdminPreferences } from '@/types'
 
 /**
  * 偏好设置面板中可选择的圆角预设值。

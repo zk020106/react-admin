@@ -5,7 +5,7 @@ import type {
   LayoutMode,
   PreferencesButtonPosition,
   TransitionName
-} from '@/types/admin'
+} from '@/types'
 
 export const DEFAULT_PREFERENCES: AdminPreferences = {
   animationEnable: true,
@@ -135,7 +135,7 @@ interface PreferenceStoreOptions {
   storageKey?: string
 }
 
-const PREFERENCES_STORAGE_KEY = 'antd-react-admin:preferences'
+const PREFERENCES_STORAGE_KEY = 'react-admin:preferences'
 const PREFERENCES_STORAGE_VERSION = 1
 
 // 函数：clamp。把数值限制在给定范围内。

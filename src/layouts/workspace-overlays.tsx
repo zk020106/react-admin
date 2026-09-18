@@ -1,33 +1,13 @@
 import { useDebounce } from 'ahooks'
-import { CircleUserRound, LockKeyhole, Search } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
+import { CircleUserRound, LockKeyhole, Search } from 'lucide-react'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { Button, Input, Modal } from '@douyinfe/semi-ui-19'
 
-import { Button } from '@/components/ui/button'
-import {
-  Command,
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList
-} from '@/components/ui/command'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { getAdminMessages } from '@/i18n/admin-i18n'
-import type { MenuManagementRecord, UserRecord } from '@/mock/admin-mock'
-import { systemQueries } from '@/pages/admin-queries'
+import { adminMockApi } from '@/mock/admin-mock'
 import { ADMIN_DEFAULT_PATH, getMenuTitle } from '@/router/app-data'
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 import { buildWorkspaceSearchItems } from '@/utils/menu'
 
 type GlobalSearchDialogProps = {
@@ -52,19 +32,8 @@ type LockScreenOverlayProps = {
   timezone: string
 }
 
-const emptyMenuManagementRecords: MenuManagementRecord[] = []
-const emptyUsers: UserRecord[] = []
-
 /**
  * 渲染菜单路由的全局搜索弹窗。
- *
- * @param props - 组件属性。
- * @param props.locale - 当前语言环境。
- * @param props.menu - 可搜索的菜单树。
- * @param props.navigate - 搜索结果跳转回调。
- * @param props.onOpenChange - 弹窗开关状态变更回调。
- * @param props.open - 弹窗是否打开。
- * @returns 全局搜索弹窗。
  */
 export function GlobalSearchDialog({
   locale,
@@ -77,16 +46,22 @@ export function GlobalSearchDialog({
   const [query, setQuery] = useState('')
   const debouncedQuery = useDebounce(query, { wait: 120 })
   const defaultSearchTerm = getMenuTitle(ADMIN_DEFAULT_PATH, menu)
-  const { data: users = emptyUsers } = useQuery({ ...systemQueries.users(), enabled: open })
-  const { data: managementMenus = emptyMenuManagementRecords } = useQuery({
-    ...systemQueries.menus(),
-    enabled: open
+
+  const { data: users = [] } = useQuery({
+    enabled: open,
+    queryFn: ({ signal }) => adminMockApi.users(signal),
+    queryKey: ['users']
   })
+  const { data: managementMenus = [] } = useQuery({
+    enabled: open,
+    queryFn: ({ signal }) => adminMockApi.menus(signal),
+    queryKey: ['management-menus']
+  })
+
   const searchItems = useMemo(
     () =>
       buildWorkspaceSearchItems(menu, users, managementMenus).map(item => ({
         ...item,
-        // 预拼小写检索串，避免每次输入都对全量条目做 join + toLowerCase。
         haystack: `${item.title} ${item.description} ${item.keyword}`.toLowerCase()
       })),
     [managementMenus, menu, users]
@@ -102,48 +77,54 @@ export function GlobalSearchDialog({
   }, [debouncedQuery, defaultSearchTerm, searchItems])
 
   return (
-    <CommandDialog onOpenChange={onOpenChange} open={open} title={messages.search.title}>
-      <Command>
-        <CommandInput
-          onValueChange={setQuery}
-          placeholder={messages.search.placeholder}
+    <Modal
+      motion={false}
+      visible={open}
+      onCancel={() => onOpenChange(false)}
+      footer={null}
+      title={messages.search.title}
+      width={540}
+    >
+      <div className="flex flex-col gap-3 py-1">
+        <Input
+          prefix={<Search className="size-4 text-muted-foreground" />}
           value={query}
+          onChange={val => setQuery(val)}
+          placeholder={messages.search.placeholder}
+          autoFocus
+          showClear
         />
-        <CommandList>
-          <CommandEmpty>{messages.search.empty}</CommandEmpty>
-          <CommandGroup heading={messages.search.group}>
-            {results.map(item => (
-              <CommandItem
+        <div className="max-h-72 overflow-y-auto flex flex-col gap-1 pr-1">
+          {results.length === 0 ? (
+            <div className="py-6 text-center text-sm text-muted-foreground">
+              {messages.search.empty}
+            </div>
+          ) : (
+            results.map(item => (
+              <button
                 key={`${item.type}:${item.title}:${item.path}`}
-                onSelect={() => {
+                className="flex items-center gap-3 w-full text-left p-2 rounded-md hover:bg-muted/80 cursor-pointer border-0 bg-transparent text-inherit transition-colors"
+                onClick={() => {
                   navigate(item.path)
                   onOpenChange(false)
                 }}
-                value={`${item.title} ${item.description} ${item.keyword}`}
               >
-                <Search className="size-4" />
-                <span className="grid gap-0.5">
-                  <span>{item.title}</span>
-                  <span className="text-xs text-muted-foreground">{item.description}</span>
-                </span>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </CommandList>
-      </Command>
-    </CommandDialog>
+                <Search className="size-4 text-muted-foreground shrink-0" />
+                <div className="flex flex-col min-w-0">
+                  <span className="text-sm font-medium leading-tight">{item.title}</span>
+                  <span className="text-xs text-muted-foreground truncate">{item.description}</span>
+                </div>
+              </button>
+            ))
+          )}
+        </div>
+      </div>
+    </Modal>
   )
 }
 
 /**
  * 渲染本次会话的锁屏密码设置弹窗。
- *
- * @param props - 组件属性。
- * @param props.locale - 当前语言环境。
- * @param props.onOpenChange - 弹窗开关状态变更回调。
- * @param props.onSubmit - 锁屏密码提交回调。
- * @param props.open - 弹窗是否打开。
- * @returns 锁屏设置弹窗。
  */
 export function LockScreenSetupDialog({
   locale,
@@ -154,11 +135,6 @@ export function LockScreenSetupDialog({
   const messages = getAdminMessages(locale)
   const [password, setPassword] = useState('')
 
-  /**
-   * 同步锁屏设置弹窗显隐并在关闭时清空密码。
-   *
-   * @param nextOpen - 下一次弹窗开关状态。
-   */
   function handleOpenChange(nextOpen: boolean) {
     onOpenChange(nextOpen)
 
@@ -167,11 +143,6 @@ export function LockScreenSetupDialog({
     }
   }
 
-  /**
-   * 提交锁屏密码并重置输入框。
-   *
-   * @param event - 表单提交事件。
-   */
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -184,52 +155,48 @@ export function LockScreenSetupDialog({
   }
 
   return (
-    <Dialog onOpenChange={handleOpenChange} open={open}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{messages.lock.title}</DialogTitle>
-          <DialogDescription>{messages.lock.description}</DialogDescription>
-        </DialogHeader>
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <div className="grid gap-2">
-            <div className="flex justify-center">
-              <div className="flex size-20 items-center justify-center rounded-full bg-accent text-muted-foreground">
-                <CircleUserRound className="size-10" />
-              </div>
-            </div>
-            <Label htmlFor="lock-screen-password">{messages.lock.password}</Label>
-            <Input
-              autoFocus
-              id="lock-screen-password"
-              onChange={event => setPassword(event.target.value)}
-              placeholder={messages.lock.placeholder}
-              type="password"
-              value={password}
-            />
+    <Modal
+      motion={false}
+      visible={open}
+      onCancel={() => handleOpenChange(false)}
+      footer={null}
+      title={messages.lock.title}
+      width={380}
+    >
+      <form className="grid gap-4 pt-2" onSubmit={handleSubmit}>
+        <div className="flex justify-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-accent text-muted-foreground">
+            <CircleUserRound className="size-8" />
           </div>
-          <DialogFooter>
-            <Button onClick={() => handleOpenChange(false)} type="button" variant="outline">
-              {messages.common.cancel}
-            </Button>
-            <Button disabled={!password.trim()} type="submit">
-              {messages.lock.title}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+        </div>
+        <div className="grid gap-1.5">
+          <label className="text-xs text-muted-foreground" htmlFor="lock-screen-password">
+            {messages.lock.password}
+          </label>
+          <Input
+            autoFocus
+            id="lock-screen-password"
+            mode="password"
+            value={password}
+            onChange={val => setPassword(val)}
+            placeholder={messages.lock.placeholder}
+          />
+        </div>
+        <div className="flex justify-end gap-2 pt-2">
+          <Button onClick={() => handleOpenChange(false)} theme="borderless" type="tertiary">
+            {messages.common.cancel}
+          </Button>
+          <Button disabled={!password.trim()} htmlType="submit" theme="solid" type="primary">
+            {messages.lock.title}
+          </Button>
+        </div>
+      </form>
+    </Modal>
   )
 }
 
 /**
  * 渲染锁屏界面并处理解锁表单。
- *
- * @param props - 组件属性。
- * @param props.locale - 当前语言环境。
- * @param props.onUnlock - 解锁成功回调。
- * @param props.password - 本次会话锁屏密码。
- * @param props.timezone - 锁屏时间展示时区。
- * @returns 锁屏覆盖层。
  */
 export function LockScreenOverlay({
   locale,
@@ -255,7 +222,6 @@ export function LockScreenOverlay({
     }
   }, [])
 
-  // Intl 格式化器构造开销较大，按 locale/timezone 缓存，避免每秒 tick 重建。
   const formatters = useMemo(
     () => ({
       date: new Intl.DateTimeFormat(locale, {
@@ -288,28 +254,17 @@ export function LockScreenOverlay({
     formatters.meridiem.formatToParts(now).find(part => part.type === 'dayPeriod')?.value ?? ''
   const date = formatters.date.format(now)
 
-  /**
-   * 进入锁屏解锁表单。
-   */
   function openUnlockForm() {
     setError('')
     setShowUnlockForm(true)
   }
 
-  /**
-   * 关闭解锁表单并清理输入状态。
-   */
   function closeUnlockForm() {
     setError('')
     setUnlockPassword('')
     setShowUnlockForm(false)
   }
 
-  /**
-   * 校验锁屏密码并在通过后解锁。
-   *
-   * @param event - 表单提交事件。
-   */
   function handleUnlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
@@ -334,7 +289,7 @@ export function LockScreenOverlay({
       {!showUnlockForm ? (
         <div className="size-full">
           <button
-            className="group fixed top-6 left-1/2 z-[2001] flex -translate-x-1/2 flex-col items-center gap-1 text-xl font-semibold text-foreground/80 transition-colors hover:text-foreground"
+            className="group fixed top-6 left-1/2 z-[2001] flex -translate-x-1/2 flex-col items-center gap-1 text-xl font-semibold text-foreground/80 transition-colors hover:text-foreground border-0 bg-transparent cursor-pointer"
             onClick={openUnlockForm}
             type="button"
           >
@@ -361,27 +316,28 @@ export function LockScreenOverlay({
             <div className="mb-6 flex size-20 items-center justify-center rounded-full bg-accent text-muted-foreground">
               <CircleUserRound className="size-10" />
             </div>
-            <div className="mb-2 w-full">
-              <Label className="sr-only" htmlFor="lock-screen-unlock-password">
+            <div className="mb-4 w-full">
+              <label className="sr-only" htmlFor="lock-screen-unlock-password">
                 {messages.lock.password}
-              </Label>
+              </label>
               <Input
                 autoFocus
                 id="lock-screen-unlock-password"
-                onChange={event => {
+                mode="password"
+                onChange={val => {
                   setError('')
-                  setUnlockPassword(event.target.value)
+                  setUnlockPassword(val)
                 }}
                 placeholder={messages.lock.placeholder}
-                type="password"
                 value={unlockPassword}
+                className="w-full"
               />
               {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
             </div>
-            <Button className="w-full" type="submit">
+            <Button className="w-full mb-2" htmlType="submit" theme="solid" type="primary">
               {messages.lock.submit}
             </Button>
-            <Button className="my-2 w-full" onClick={closeUnlockForm} type="button" variant="ghost">
+            <Button className="w-full" onClick={closeUnlockForm} theme="borderless" type="tertiary">
               {messages.lock.back}
             </Button>
           </div>

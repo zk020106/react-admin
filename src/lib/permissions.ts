@@ -1,4 +1,4 @@
-import type { MenuRecord } from '@/types/admin'
+import type { MenuRecord } from '@/types'
 import type { AuthSession } from '@/types/auth'
 
 export type PermissionInput = string | string[] | undefined

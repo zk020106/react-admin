@@ -25,7 +25,7 @@ interface StoredAuthPayload {
   version?: number
 }
 
-export const AUTH_STORAGE_KEY = 'antd-react-admin:auth:v1'
+export const AUTH_STORAGE_KEY = 'react-admin:auth:v1'
 const AUTH_STORAGE_VERSION = 1
 
 function getLocalStorage() {

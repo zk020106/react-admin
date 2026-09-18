@@ -5,10 +5,9 @@ import {
   navigationKeys,
   notificationKeys,
   overviewKeys,
-  systemKeys,
   workplaceKeys
 } from '@/lib/query-keys'
-import { adminApi } from '@/api/admin'
+import { adminApi } from '@/api/system'
 import { mockAdminMenu } from '@/mock/admin-mock'
 
 // 导航查询：菜单通过 mock request 获取，placeholder 只用于避免首屏空菜单。
@@ -50,36 +49,11 @@ export const workplaceQueries = {
     })
 }
 
-// 系统管理查询：按资源拆分 query key，便于刷新当前页时精准失效。
-export const systemQueries = {
-  departments: () =>
-    queryOptions({
-      queryFn: ({ signal }) => adminApi.departments(signal),
-      queryKey: systemKeys.departments()
-    }),
-  menus: () =>
-    queryOptions({
-      queryFn: ({ signal }) => adminApi.menus(signal),
-      queryKey: systemKeys.menus()
-    }),
-  roles: () =>
-    queryOptions({
-      queryFn: ({ signal }) => adminApi.roles(signal),
-      queryKey: systemKeys.roles()
-    }),
-  users: () =>
-    queryOptions({
-      queryFn: ({ signal }) => adminApi.users(signal),
-      queryKey: systemKeys.users()
-    })
-}
-
-// 关于查询：项目元信息变化较少，设置更长 staleTime。
+// 关于页查询：读取构建产物版本与运行时配置。
 export const aboutQueries = {
   project: () =>
     queryOptions({
       queryFn: ({ signal }) => adminApi.about(signal),
-      queryKey: aboutKeys.project(),
-      staleTime: 10 * 60 * 1000
+      queryKey: aboutKeys.project()
     })
 }

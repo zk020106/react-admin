@@ -86,12 +86,12 @@ describe('admin route tree', () => {
   it('renders an in-shell 403 page for routes without permission', async () => {
     authStore.getState().setSession(overviewOnlySession)
 
-    renderAt('/system/users')
+    renderAt('/workplace')
 
     expect(await screen.findByText('403')).toBeInTheDocument()
     expect(document.querySelector("[data-slot='forbidden-page']")).toBeInTheDocument()
     expect(document.querySelector("[data-slot='sidebar']")).toBeInTheDocument()
-    expect(tabsStore.getState().tabs.some(tab => tab.path === '/system/users')).toBe(false)
+    expect(tabsStore.getState().tabs.some(tab => tab.path === '/workplace')).toBe(false)
   })
 
   it('registers the route error boundary fallback', () => {
