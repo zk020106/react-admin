@@ -341,6 +341,15 @@ const roles: RoleRecord[] = [
   }
 ]
 
+/** 创建或更新角色时允许编辑的字段集合（编码为键，不可改）。 */
+export interface RoleInput {
+  code: string
+  dataScope: string
+  description: string
+  name: string
+  status: string
+}
+
 const menus: MenuManagementRecord[] = [
   {
     childrenCount: 0,
@@ -468,9 +477,31 @@ const departments: DepartmentRecord[] = [
   }
 ]
 
+// 可变角色列表：mock 写接口在内存中维护，刷新页面即复位。
+let mutableRoles = [...roles]
+let roleIdSeed = 0
+
+// 函数：resetMockRoles。恢复角色 mock 数据到初始状态，测试隔离时调用。
+export function resetMockRoles() {
+  mutableRoles = [...roles]
+  roleIdSeed = 0
+}
+
 // Mock API 保持和真实请求一致的 Promise + AbortSignal 形态，方便后续替换为 axios。
 export const adminMockApi = {
   about: (signal?: AbortSignal) => delay(getProjectInfo(), signal),
+  createRole: (input: RoleInput) => {
+    roleIdSeed += 1
+    const record: RoleRecord = {
+      ...input,
+      code: input.code || `role-created-${roleIdSeed}`,
+      memberCount: 0,
+      permissions: []
+    }
+
+    mutableRoles = [record, ...mutableRoles]
+    return delay(record)
+  },
   createUser: (input: UserInput) => {
     userIdSeed += 1
     const record: UserRecord = {
@@ -483,6 +514,10 @@ export const adminMockApi = {
     mutableUsers = [record, ...mutableUsers]
     return delay(record)
   },
+  deleteRole: (code: string) => {
+    mutableRoles = mutableRoles.filter(role => role.code !== code)
+    return delay(undefined)
+  },
   deleteUser: (id: string) => {
     mutableUsers = mutableUsers.filter(user => user.id !== id)
     return delay(undefined)
@@ -492,7 +527,27 @@ export const adminMockApi = {
   menus: (signal?: AbortSignal) => delay(menus, signal),
   notifications: (signal?: AbortSignal) => delay(notifications, signal),
   overview: (signal?: AbortSignal) => delay(overviewSummary, signal),
-  roles: (signal?: AbortSignal) => delay(roles, signal),
+  roles: (signal?: AbortSignal) => delay(mutableRoles, signal),
+  updateRole: (code: string, input: RoleInput) => {
+    mutableRoles = mutableRoles.map(role => (role.code === code ? { ...role, ...input } : role))
+    const updated = mutableRoles.find(role => role.code === code)
+
+    if (!updated) {
+      return Promise.reject(new HttpError({ code: 404, message: '角色不存在', status: 404 }))
+    }
+
+    return delay(updated)
+  },
+  updateRolePermissions: (code: string, permissions: string[]) => {
+    mutableRoles = mutableRoles.map(role => (role.code === code ? { ...role, permissions } : role))
+    const updated = mutableRoles.find(role => role.code === code)
+
+    if (!updated) {
+      return Promise.reject(new HttpError({ code: 404, message: '角色不存在', status: 404 }))
+    }
+
+    return delay(updated)
+  },
   updateUser: (id: string, input: UserInput) => {
     mutableUsers = mutableUsers.map(user => (user.id === id ? { ...user, ...input } : user))
     const updated = mutableUsers.find(user => user.id === id)

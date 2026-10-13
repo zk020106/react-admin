@@ -2,15 +2,11 @@ import { Expand, PanelsTopLeft } from 'lucide-react'
 import { useState } from 'react'
 import { useStore } from 'zustand'
 
-import { SchemaForm } from '@/components/admin/form/schema-form'
-import { useAdminForm } from '@/components/admin/form/use-admin-form'
-import { AdminDrawer } from '@/components/admin/popup/admin-drawer'
-import { AdminModal } from '@/components/admin/popup/admin-modal'
-import { useDrawerApi, useModalApi } from '@/components/admin/popup/use-popup'
+import { CForm, useCForm } from '@/components/c-ui/form'
+import { CDrawer, CModal, useCDrawerApi, useCModalApi } from '@/components/c-ui/popup'
 import { Page, PageSection } from '@/components/page'
 import { getAdminMessages } from '@/i18n/admin-i18n'
 import { preferenceStore } from '@/store/preferences'
-import { AdminConfigProvider } from '@/theme/antd-theme'
 import { DrawerApi, ModalApi } from '@/utils/popup-api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,23 +19,21 @@ export default function EffectsPage() {
   const messages = getAdminMessages(appLocale)
 
   return (
-    <AdminConfigProvider>
-      <Page title="组件示例" description="演示 PopupApi 弹层与 SchemaForm 表单的框架用法。">
-        <PageSection contentClassName="grid gap-4">
-          <PopupLab messages={messages} />
-          <SchemaFormPanel messages={messages} />
-          <IframePanel messages={messages} />
-        </PageSection>
-      </Page>
-    </AdminConfigProvider>
+    <Page title="组件示例" description="演示 PopupApi 弹层与 CForm 表单的框架用法。">
+      <PageSection contentClassName="grid gap-4">
+        <PopupLab messages={messages} />
+        <SchemaFormPanel messages={messages} />
+        <IframePanel messages={messages} />
+      </PageSection>
+    </Page>
   )
 }
 
 /** 演示模态弹窗和抽屉 API 的交互能力。 */
 export function PopupLab({ messages }: { messages: AdminMessages }) {
   const popup = messages.pages.popup
-  const modalApi = useModalApi(() => new ModalApi({ title: popup.modalTitle }))
-  const drawerApi = useDrawerApi(
+  const modalApi = useCModalApi(() => new ModalApi({ title: popup.modalTitle }))
+  const drawerApi = useCDrawerApi(
     () => new DrawerApi({ placement: 'right', title: popup.drawerTitle })
   )
 
@@ -64,12 +58,12 @@ export function PopupLab({ messages }: { messages: AdminMessages }) {
           {popup.openDrawer}
         </Button>
       </CardContent>
-      <AdminModal api={modalApi}>
+      <CModal api={modalApi}>
         {popup.payload}: {JSON.stringify(modalApi.getData())}
-      </AdminModal>
-      <AdminDrawer api={drawerApi} onConfirm={() => void drawerApi.close()}>
+      </CModal>
+      <CDrawer api={drawerApi} onConfirm={() => void drawerApi.close()}>
         {popup.payload}: {JSON.stringify(drawerApi.getData())}
-      </AdminDrawer>
+      </CDrawer>
     </Card>
   )
 }
@@ -78,7 +72,7 @@ export function PopupLab({ messages }: { messages: AdminMessages }) {
 export function SchemaFormPanel({ messages }: { messages: AdminMessages }) {
   const schemaFormMessages = messages.pages.schemaForm
   const [submitted, setSubmitted] = useState<Record<string, unknown>>({})
-  const [formApi, form] = useAdminForm({
+  const [formApi, methods] = useCForm({
     handleSubmit: setSubmitted,
     schema: [
       {
@@ -114,7 +108,7 @@ export function SchemaFormPanel({ messages }: { messages: AdminMessages }) {
         <CardDescription>{schemaFormMessages.description}</CardDescription>
       </CardHeader>
       <CardContent className="grid max-w-2xl gap-4">
-        <SchemaForm api={formApi} form={form} />
+        <CForm api={formApi} methods={methods} />
         <div className="flex gap-2">
           <Button onClick={() => void formApi.submit()}>{schemaFormMessages.submit}</Button>
           <Button onClick={() => formApi.reset()} variant="outline">

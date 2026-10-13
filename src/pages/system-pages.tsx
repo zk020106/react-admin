@@ -1,13 +1,14 @@
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Button as AntdButton, Popconfirm, Space, Tag, type TableProps } from 'antd'
-import { useMemo, useState } from 'react'
+import type { ColumnDef } from '@tanstack/react-table'
+import { useMemo, useState, type ReactNode } from 'react'
 import {
   Building2,
-  CheckCircle2,
-  CircleMinus,
+  ChevronDown,
   FolderTree,
   KeyRound,
+  Loader2,
   Plus,
+  RefreshCw,
   Route,
   Search,
   Shield,
@@ -17,17 +18,42 @@ import {
   Users
 } from 'lucide-react'
 
-import { AdminTable } from '@/components/admin/table/admin-table'
+import { CTable } from '@/components/c-ui/table'
 import { HasPermission } from '@/components/has-permission'
 import { Page, PageSection } from '@/components/page'
-import { userMutations } from '@/pages/admin-mutations'
+import { cn } from '@/lib/utils'
+import { roleMutations, userMutations } from '@/pages/admin-mutations'
 import { systemQueries } from '@/pages/admin-queries'
-import { useUserFormModal } from '@/pages/user-form-modal'
-import { AdminConfigProvider } from '@/theme/antd-theme'
+import { useRoleFormDrawer, usePermissionDrawer } from '@/pages/role-form-drawer'
+import { useUserFormDrawer } from '@/pages/user-form-drawer'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select'
 import {
   Table,
   TableBody,
@@ -47,44 +73,108 @@ const emptyDepartments: DepartmentRecord[] = []
 const emptyMenus: MenuManagementRecord[] = []
 const emptyRoles: RoleRecord[] = []
 const emptyUsers: UserRecord[] = []
-const userStatusFilters = ['全部', '启用', '复核中'] as const
-const permissionLabels = [
-  { label: '概览', value: 'overview:read' },
-  { label: '工作台', value: 'workplace:read' },
-  { label: '用户', value: 'system:user:read' },
-  { label: '角色', value: 'system:role:read' },
-  { label: '菜单', value: 'system:menu:read' },
-  { label: '部门', value: 'system:department:read' },
-  { label: '关于', value: 'about:read' }
-]
+const userStatusOptions = ['全部', '启用', '复核中']
+const roleStatusOptions = ['全部', '启用', '停用']
+
+/** 行操作“更多”下拉菜单：收敛删除、分配权限等 destructive/次要操作，只留主要动作为文字链。 */
+function MoreActionsMenu({ children }: { children: ReactNode }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="link">
+          更多
+          <ChevronDown className="size-3.5" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">{children}</DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+/** 行内删除确认弹窗：受控 AlertDialog，由“更多”菜单项触发打开（避免菜单与弹窗嵌套）。 */
+function RowDeleteConfirm({
+  description,
+  onCancel,
+  onConfirm,
+  open,
+  pending,
+  title
+}: {
+  description: string
+  onCancel: () => void
+  onConfirm: () => void
+  open: boolean
+  pending: boolean
+  title: string
+}) {
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={value => {
+        if (!value) {
+          onCancel()
+        }
+      }}
+    >
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{title}</AlertDialogTitle>
+          <AlertDialogDescription>{description}</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>取消</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={pending}
+            onClick={event => {
+              // 阻止 Radix 点击后自动关闭：pending 期间保持弹框打开并显示 loading，
+              // 成功后由 onConfirm 手动关闭；失败时弹框保持打开，可重试或取消。
+              event.preventDefault()
+              onConfirm()
+            }}
+            variant="destructive"
+          >
+            {pending ? <Loader2 className="size-4 animate-spin" /> : null}
+            确认删除
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
 /**
- * 展示用户账号、角色、部门和状态列表。
+ * 用户管理页（三段式：搜索区 → 工具栏 → 表格）。
+ * 列收敛说明：只保留可排序/可筛选/可操作的列——登录方式、最近登录为纯展示信息列，
+ * 无筛选与操作需求，已砍掉（风险/状态列保留 Badge 展示且支持排序）。
  *
  * @returns 用户管理页面。
  */
 export function UsersPage() {
-  const [keyword, setKeyword] = useState('')
-  const [statusFilter, setStatusFilter] = useState<(typeof userStatusFilters)[number]>('全部')
-  const { data = emptyUsers, isLoading } = useQuery(systemQueries.users())
+  const [draftKeyword, setDraftKeyword] = useState('')
+  const [draftStatus, setDraftStatus] = useState<string>('全部')
+  const [appliedKeyword, setAppliedKeyword] = useState('')
+  const [appliedStatus, setAppliedStatus] = useState<string>('全部')
+  const [searchExpanded, setSearchExpanded] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<UserRecord | null>(null)
+  const { data = emptyUsers, isLoading, refetch } = useQuery(systemQueries.users())
   const createMutation = useMutation(userMutations.create())
   const updateMutation = useMutation(userMutations.update())
   const removeMutation = useMutation(userMutations.remove())
   const {
-    modal: userFormModal,
+    drawer: userFormDrawer,
     openCreate,
     openEdit
-  } = useUserFormModal({
+  } = useUserFormDrawer({
     onSubmit: (input, editing) =>
       editing
         ? updateMutation.mutateAsync({ id: editing.id, input })
         : createMutation.mutateAsync(input)
   })
   const filteredUsers = useMemo(() => {
-    const normalizedKeyword = keyword.trim().toLowerCase()
+    const normalizedKeyword = appliedKeyword.trim().toLowerCase()
 
     return data.filter(user => {
-      const matchesStatus = statusFilter === '全部' || user.status === statusFilter
+      const matchesStatus = appliedStatus === '全部' || user.status === appliedStatus
       const matchesKeyword =
         normalizedKeyword.length === 0 ||
         [user.name, user.email, user.role, user.department].some(value =>
@@ -93,7 +183,7 @@ export function UsersPage() {
 
       return matchesStatus && matchesKeyword
     })
-  }, [data, keyword, statusFilter])
+  }, [data, appliedKeyword, appliedStatus])
   const userSummary = useMemo(() => {
     // 单次遍历同时累计三类计数，避免对同一数组做多趟 filter。
     let enabledCount = 0
@@ -122,141 +212,231 @@ export function UsersPage() {
     ]
   }, [data])
 
-  const columns: TableProps<UserRecord>['columns'] = [
-    { dataIndex: 'name', key: 'name', title: '姓名' },
-    { dataIndex: 'email', key: 'email', title: '邮箱' },
-    { dataIndex: 'role', key: 'role', title: '角色' },
-    { dataIndex: 'department', key: 'department', title: '部门' },
-    { dataIndex: 'loginMethod', key: 'loginMethod', title: '登录方式' },
-    { dataIndex: 'lastLogin', key: 'lastLogin', title: '最近登录' },
+  // 函数：applySearch。把搜索区草稿值提交为生效条件。
+  function applySearch() {
+    setAppliedKeyword(draftKeyword)
+    setAppliedStatus(draftStatus)
+  }
+
+  // 函数：resetSearch。清空搜索区并恢复默认条件。
+  function resetSearch() {
+    setDraftKeyword('')
+    setDraftStatus('全部')
+    setAppliedKeyword('')
+    setAppliedStatus('全部')
+  }
+
+  const columns: ColumnDef<UserRecord>[] = [
+    { accessorKey: 'name', header: '姓名' },
+    { accessorKey: 'email', header: '邮箱' },
+    { accessorKey: 'role', header: '角色' },
+    { accessorKey: 'department', header: '部门' },
     {
-      key: 'riskLevel',
-      render: (_, record) => (
-        <Tag
-          color={record.riskLevel === '高' ? 'red' : record.riskLevel === '中' ? 'gold' : 'default'}
-        >
-          {record.riskLevel}
-        </Tag>
-      ),
-      title: '风险'
+      accessorKey: 'riskLevel',
+      cell: ({ row }) => {
+        const level = row.original.riskLevel
+        // ui Badge 没有 warning 变体：高风险用 destructive，中/低风险都降级为 secondary。
+        const variant = level === '高' ? 'destructive' : 'secondary'
+
+        return <Badge variant={variant}>{level}</Badge>
+      },
+      header: '风险'
     },
     {
-      key: 'status',
-      render: (_, record) => (
-        <Tag color={record.status === '启用' ? 'blue' : 'default'}>{record.status}</Tag>
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === '启用' ? 'default' : 'secondary'}>
+          {row.original.status}
+        </Badge>
       ),
-      title: '状态'
+      header: '状态'
     },
     {
-      key: 'actions',
-      render: (_, record) => (
-        <Space size="small">
-          <HasPermission permission="system:user:update">
-            <AntdButton onClick={() => openEdit(record)} size="small" type="link">
-              编辑
-            </AntdButton>
-          </HasPermission>
-          <HasPermission permission="system:user:delete">
-            <Popconfirm
-              cancelText="取消"
-              okButtonProps={{ danger: true }}
-              okText="确认删除"
-              onConfirm={() => removeMutation.mutateAsync(record.id)}
-              title="确认删除该用户？"
-            >
-              <AntdButton danger size="small" type="link">
-                删除
-              </AntdButton>
-            </Popconfirm>
-          </HasPermission>
-        </Space>
-      ),
-      title: '操作'
+      cell: ({ row }) => {
+        const record = row.original
+
+        return (
+          <div className="flex items-center gap-1">
+            <HasPermission permission="system:user:update">
+              <Button onClick={() => openEdit(record)} size="sm" variant="link">
+                编辑
+              </Button>
+            </HasPermission>
+            <HasPermission permission="system:user:delete">
+              <MoreActionsMenu>
+                <DropdownMenuItem onSelect={() => setDeleteTarget(record)} variant="destructive">
+                  删除
+                </DropdownMenuItem>
+              </MoreActionsMenu>
+            </HasPermission>
+          </div>
+        )
+      },
+      enableSorting: false,
+      header: '操作',
+      id: 'actions'
     }
   ]
 
-  return (
-    <AdminConfigProvider>
-      <Page title="用户管理" description="查询用户账号、角色、部门、登录方式和风险状态。">
-        <PageSection contentClassName="grid gap-4 md:grid-cols-4">
-          {userSummary.map(item => {
-            const Icon = item.icon
+  const searchBar = (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="relative">
+        <Label className="sr-only" htmlFor="user-search-keyword">
+          搜索用户
+        </Label>
+        <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          aria-label="搜索用户"
+          className="w-64 pl-9"
+          id="user-search-keyword"
+          onChange={event => setDraftKeyword(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              applySearch()
+            }
+          }}
+          placeholder="搜索姓名、邮箱、角色或部门"
+          value={draftKeyword}
+        />
+      </div>
+      {searchExpanded ? (
+        <Select onValueChange={setDraftStatus} value={draftStatus}>
+          <SelectTrigger aria-label="账号状态筛选" className="w-40">
+            <SelectValue placeholder="账号状态" />
+          </SelectTrigger>
+          <SelectContent>
+            {userStatusOptions.map(status => (
+              <SelectItem key={status} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : null}
+      <div className="flex items-center gap-2">
+        <Button onClick={applySearch} size="sm">
+          <Search className="size-3.5" />
+          搜索
+        </Button>
+        <Button onClick={resetSearch} size="sm" variant="outline">
+          重置
+        </Button>
+        <Button
+          aria-expanded={searchExpanded}
+          onClick={() => setSearchExpanded(current => !current)}
+          size="sm"
+          variant="ghost"
+        >
+          {searchExpanded ? '收起' : '展开'}
+          <ChevronDown
+            className={cn('size-3.5 transition-transform', searchExpanded && 'rotate-180')}
+          />
+        </Button>
+      </div>
+    </div>
+  )
 
-            return (
-              <Card key={item.label}>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                  <div>
-                    <CardDescription>{item.label}</CardDescription>
-                    <CardTitle>{item.value}</CardTitle>
-                  </div>
-                  <Icon className="size-5 text-primary" />
-                </CardHeader>
-              </Card>
-            )
-          })}
-        </PageSection>
-        <PageSection>
-          <Card>
-            <CardContent className="grid gap-4">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                <label className="relative block lg:w-80" htmlFor="user-search-input">
-                  <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
-                  <span className="sr-only">搜索用户</span>
-                  <Input
-                    className="pl-8"
-                    id="user-search-input"
-                    onChange={event => setKeyword(event.target.value)}
-                    placeholder="搜索姓名、邮箱、角色或部门"
-                    value={keyword}
-                  />
-                </label>
-                <div className="flex flex-wrap gap-2" role="group" aria-label="账号状态筛选">
-                  {userStatusFilters.map(status => (
-                    <Button
-                      aria-pressed={statusFilter === status}
-                      key={status}
-                      onClick={() => setStatusFilter(status)}
-                      size="sm"
-                      variant={statusFilter === status ? 'default' : 'outline'}
-                    >
-                      {status}
-                    </Button>
-                  ))}
+  return (
+    <Page title="用户管理" description="查询用户账号、角色、部门和风险状态。">
+      <PageSection contentClassName="grid gap-4 md:grid-cols-4">
+        {userSummary.map(item => {
+          const Icon = item.icon
+
+          return (
+            <Card key={item.label}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                <div>
+                  <CardDescription>{item.label}</CardDescription>
+                  <CardTitle>{item.value}</CardTitle>
                 </div>
-              </div>
-              <AdminTable<UserRecord>
-                columns={columns}
-                dataSource={filteredUsers}
-                loading={isLoading}
-                rowKey="id"
-                toolbar={
-                  <HasPermission permission="system:user:create">
-                    <AntdButton
-                      icon={<Plus className="size-4" />}
-                      onClick={openCreate}
-                      type="primary"
-                    >
-                      新增用户
-                    </AntdButton>
-                  </HasPermission>
-                }
-              />
-            </CardContent>
-          </Card>
-        </PageSection>
-        {userFormModal}
-      </Page>
-    </AdminConfigProvider>
+                <Icon className="size-5 text-primary" />
+              </CardHeader>
+            </Card>
+          )
+        })}
+      </PageSection>
+      <PageSection>
+        <Card>
+          <CardContent className="grid gap-4">
+            <CTable<UserRecord>
+              columns={columns}
+              data={filteredUsers}
+              getRowId={row => row.id}
+              loading={isLoading}
+              searchBar={searchBar}
+              toolbarLeft={
+                <HasPermission permission="system:user:create">
+                  <Button onClick={openCreate}>
+                    <Plus className="size-4" />
+                    新增用户
+                  </Button>
+                </HasPermission>
+              }
+              toolbarRight={
+                <Button onClick={() => void refetch()} size="sm" variant="outline">
+                  <RefreshCw className="size-3.5" />
+                  刷新
+                </Button>
+              }
+            />
+          </CardContent>
+        </Card>
+      </PageSection>
+      {userFormDrawer}
+      <RowDeleteConfirm
+        description={
+          deleteTarget ? `删除后「${deleteTarget.name}」将无法登录，此操作不可撤销。` : ''
+        }
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeMutation
+              .mutateAsync(deleteTarget.id)
+              .then(() => setDeleteTarget(null))
+              .catch(() => {
+                // 删除失败时保持弹框打开（可重试/取消），错误由 MutationCache 全局 toast 提示
+              })
+          }
+        }}
+        open={deleteTarget !== null}
+        pending={removeMutation.isPending}
+        title="确认删除该用户？"
+      />
+    </Page>
   )
 }
 
 /**
- * 展示角色编码、成员数量和权限说明。
+ * 角色管理页（三段式：搜索区 → 工具栏 → 表格）。
+ * 新增/编辑/分配权限统一走抽屉；删除收进“更多”菜单并用行内确认。
  *
  * @returns 角色管理页面。
  */
 export function RolesPage() {
+  const [draftName, setDraftName] = useState('')
+  const [draftCode, setDraftCode] = useState('')
+  const [draftStatus, setDraftStatus] = useState<string>('全部')
+  const [appliedFilters, setAppliedFilters] = useState({ code: '', name: '', status: '全部' })
+  const [deleteTarget, setDeleteTarget] = useState<RoleRecord | null>(null)
   const { data = emptyRoles } = useQuery(systemQueries.roles())
+  const createMutation = useMutation(roleMutations.create())
+  const updateMutation = useMutation(roleMutations.update())
+  const removeMutation = useMutation(roleMutations.remove())
+  const permissionsMutation = useMutation(roleMutations.updatePermissions())
+  const {
+    drawer: roleFormDrawer,
+    openCreate,
+    openEdit
+  } = useRoleFormDrawer({
+    onSubmit: (input, editing) =>
+      editing
+        ? updateMutation.mutateAsync({ code: editing.code, input })
+        : createMutation.mutateAsync(input)
+  })
+  const { drawer: permissionDrawer, openAssign } = usePermissionDrawer({
+    onSubmit: (role, permissions) =>
+      permissionsMutation.mutateAsync({ code: role.code, permissions })
+  })
   const roleSummary = useMemo(() => {
     const enabledCount = data.filter(role => role.status === '启用').length
     const permissionCount = new Set(data.flatMap(role => role.permissions)).size
@@ -266,12 +446,145 @@ export function RolesPage() {
       { icon: Shield, label: '角色数量', value: data.length },
       { icon: Users, label: '授权成员', value: memberCount },
       { icon: KeyRound, label: '权限编码', value: permissionCount },
-      { icon: CheckCircle2, label: '启用角色', value: enabledCount }
+      { icon: UserCheck, label: '启用角色', value: enabledCount }
     ]
   }, [data])
+  const filteredRoles = useMemo(() => {
+    const nameKeyword = appliedFilters.name.trim().toLowerCase()
+    const codeKeyword = appliedFilters.code.trim().toLowerCase()
+
+    return data.filter(role => {
+      const matchesName = nameKeyword.length === 0 || role.name.toLowerCase().includes(nameKeyword)
+      const matchesCode = codeKeyword.length === 0 || role.code.toLowerCase().includes(codeKeyword)
+      const matchesStatus =
+        appliedFilters.status === '全部' || role.status === appliedFilters.status
+
+      return matchesName && matchesCode && matchesStatus
+    })
+  }, [data, appliedFilters])
+
+  // 函数：applySearch。把搜索区草稿值提交为生效条件。
+  function applySearch() {
+    setAppliedFilters({ code: draftCode, name: draftName, status: draftStatus })
+  }
+
+  // 函数：resetSearch。清空搜索区并恢复默认条件。
+  function resetSearch() {
+    setDraftName('')
+    setDraftCode('')
+    setDraftStatus('全部')
+    setAppliedFilters({ code: '', name: '', status: '全部' })
+  }
+
+  const columns: ColumnDef<RoleRecord>[] = [
+    { accessorKey: 'name', header: '角色名称' },
+    { accessorKey: 'code', header: '角色编码' },
+    {
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === '启用' ? 'default' : 'secondary'}>
+          {row.original.status}
+        </Badge>
+      ),
+      header: '状态'
+    },
+    {
+      accessorKey: 'memberCount',
+      cell: ({ row }) => `${row.original.memberCount} 人`,
+      header: '成员数量'
+    },
+    { accessorKey: 'dataScope', header: '数据范围' },
+    {
+      cell: ({ row }) => {
+        const record = row.original
+
+        return (
+          <div className="flex items-center gap-1">
+            <HasPermission permission="system:role:update">
+              <Button onClick={() => openEdit(record)} size="sm" variant="link">
+                编辑
+              </Button>
+            </HasPermission>
+            <MoreActionsMenu>
+              <HasPermission permission="system:role:update">
+                <DropdownMenuItem onSelect={() => openAssign(record)}>分配权限</DropdownMenuItem>
+              </HasPermission>
+              <HasPermission permission="system:role:delete">
+                <DropdownMenuItem onSelect={() => setDeleteTarget(record)} variant="destructive">
+                  删除
+                </DropdownMenuItem>
+              </HasPermission>
+            </MoreActionsMenu>
+          </div>
+        )
+      },
+      enableSorting: false,
+      header: '操作',
+      id: 'actions'
+    }
+  ]
+
+  const searchBar = (
+    <div className="flex flex-wrap items-center gap-3">
+      <div className="grid gap-1.5">
+        <Label htmlFor="role-search-name">角色名称</Label>
+        <Input
+          className="w-48"
+          id="role-search-name"
+          onChange={event => setDraftName(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              applySearch()
+            }
+          }}
+          placeholder="请输入角色名称"
+          value={draftName}
+        />
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="role-search-code">角色编码</Label>
+        <Input
+          className="w-48"
+          id="role-search-code"
+          onChange={event => setDraftCode(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === 'Enter') {
+              applySearch()
+            }
+          }}
+          placeholder="请输入角色编码"
+          value={draftCode}
+        />
+      </div>
+      <div className="grid gap-1.5">
+        <Label htmlFor="role-search-status">状态</Label>
+        <Select onValueChange={setDraftStatus} value={draftStatus}>
+          <SelectTrigger className="w-32" id="role-search-status">
+            <SelectValue placeholder="状态" />
+          </SelectTrigger>
+          <SelectContent>
+            {roleStatusOptions.map(status => (
+              <SelectItem key={status} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-end gap-2 self-end pb-px">
+        <Button onClick={applySearch} size="sm">
+          <Search className="size-3.5" />
+          搜索
+        </Button>
+        <Button onClick={resetSearch} size="sm" variant="outline">
+          重置
+        </Button>
+      </div>
+    </div>
+  )
 
   return (
-    <Page title="角色管理" description="管理角色编码、成员数量、数据范围和页面级权限。">
+    <Page title="角色管理" description="管理角色、成员规模、数据范围与模块权限分配。">
       <PageSection contentClassName="grid gap-4 md:grid-cols-4">
         {roleSummary.map(item => {
           const Icon = item.icon
@@ -289,84 +602,246 @@ export function RolesPage() {
           )
         })}
       </PageSection>
-      <PageSection contentClassName="grid gap-4 lg:grid-cols-3">
-        {data.map(role => (
-          <Card key={role.code}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-3">
+      <PageSection>
+        <Card>
+          <CardContent className="grid gap-4">
+            <CTable<RoleRecord>
+              columns={columns}
+              data={filteredRoles}
+              getRowId={row => row.code}
+              searchBar={searchBar}
+              toolbarLeft={
+                <HasPermission permission="system:role:create">
+                  <Button onClick={openCreate}>
+                    <Plus className="size-4" />
+                    新增角色
+                  </Button>
+                </HasPermission>
+              }
+            />
+          </CardContent>
+        </Card>
+      </PageSection>
+      {roleFormDrawer}
+      {permissionDrawer}
+      <RowDeleteConfirm
+        description={
+          deleteTarget ? `删除后「${deleteTarget.name}」的权限配置将一并移除，此操作不可撤销。` : ''
+        }
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (deleteTarget) {
+            removeMutation
+              .mutateAsync(deleteTarget.code)
+              .then(() => setDeleteTarget(null))
+              .catch(() => {
+                // 删除失败时保持弹框打开（可重试/取消），错误由 MutationCache 全局 toast 提示
+              })
+          }
+        }}
+        open={deleteTarget !== null}
+        pending={removeMutation.isPending}
+        title="确认删除该角色？"
+      />
+    </Page>
+  )
+}
+
+/** 部门树节点：按 parent 名称组装层级，支持选中。 */
+interface DepartmentNode {
+  children: DepartmentNode[]
+  depth: number
+  record: DepartmentRecord
+}
+
+/** 函数：buildDepartmentTree。按 parent 名称把平铺部门组装成树，parent 为 '-' 或找不到时视为根。 */
+function buildDepartmentTree(departments: DepartmentRecord[]): DepartmentNode[] {
+  const names = new Set(departments.map(item => item.name))
+  const build = (record: DepartmentRecord, depth: number): DepartmentNode => ({
+    children: departments
+      .filter(item => item.parent === record.name)
+      .map(item => build(item, depth + 1)),
+    depth,
+    record
+  })
+
+  return departments
+    .filter(item => item.parent === '-' || !names.has(item.parent))
+    .map(item => build(item, 0))
+}
+
+function DepartmentTreeNode({
+  node,
+  onSelect,
+  selectedCode
+}: {
+  node: DepartmentNode
+  onSelect: (code: string | null) => void
+  selectedCode: string | null
+}) {
+  const selected = selectedCode === node.record.code
+
+  return (
+    <>
+      <button
+        aria-current={selected ? 'true' : undefined}
+        className={cn(
+          'flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+          selected ? 'bg-primary/10 font-medium text-primary' : 'text-foreground hover:bg-muted'
+        )}
+        onClick={() => onSelect(node.record.code)}
+        style={{ paddingLeft: 8 + node.depth * 16 }}
+        type="button"
+      >
+        {node.children.length > 0 ? (
+          <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+        ) : (
+          <span className="size-3.5 shrink-0" />
+        )}
+        <span className="truncate">{node.record.name}</span>
+        <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+          {node.record.memberCount} 人
+        </span>
+      </button>
+      {node.children.map(child => (
+        <DepartmentTreeNode
+          key={child.record.code}
+          node={child}
+          onSelect={onSelect}
+          selectedCode={selectedCode}
+        />
+      ))}
+    </>
+  )
+}
+
+/**
+ * 部门管理页（树 + 表布局）：左侧部门树、右侧组织明细表，共用一个页面容器；
+ * 选中树节点时右侧只展示该节点及其后代部门。
+ *
+ * @returns 部门管理页面。
+ */
+export function DepartmentsPage() {
+  const { data = emptyDepartments } = useQuery(systemQueries.departments())
+  const [selectedCode, setSelectedCode] = useState<string | null>(null)
+  const departmentSummary = useMemo(() => {
+    const memberCount = data.reduce((total, department) => total + department.memberCount, 0)
+    const projectCount = data.reduce((total, department) => total + department.projectCount, 0)
+    const childrenCount = data.reduce((total, department) => total + department.childrenCount, 0)
+
+    return [
+      { icon: Building2, label: '部门数量', value: data.length },
+      { icon: Users, label: '成员总数', value: memberCount },
+      { icon: Route, label: '项目数量', value: projectCount },
+      { icon: FolderTree, label: '子部门', value: childrenCount }
+    ]
+  }, [data])
+  const departmentTree = useMemo(() => buildDepartmentTree(data), [data])
+  const visibleDepartments = useMemo(() => {
+    if (!selectedCode) {
+      return data
+    }
+
+    // 收集选中节点及其所有后代的编码。
+    const codes = new Set<string>([selectedCode])
+    let grown = true
+
+    while (grown) {
+      grown = false
+
+      for (const item of data) {
+        if (codes.has(item.code)) {
+          continue
+        }
+
+        const parent = data.find(candidate => candidate.name === item.parent)
+
+        if (parent && codes.has(parent.code)) {
+          codes.add(item.code)
+          grown = true
+        }
+      }
+    }
+
+    return data.filter(item => codes.has(item.code))
+  }, [data, selectedCode])
+
+  const columns: ColumnDef<DepartmentRecord>[] = [
+    { accessorKey: 'name', header: '部门名称' },
+    { accessorKey: 'code', header: '部门编码' },
+    { accessorKey: 'leader', header: '负责人' },
+    { accessorKey: 'memberCount', header: '成员数' },
+    { accessorKey: 'projectCount', header: '项目数' },
+    {
+      accessorKey: 'status',
+      cell: ({ row }) => (
+        <Badge variant={row.original.status === '启用' ? 'default' : 'secondary'}>
+          {row.original.status}
+        </Badge>
+      ),
+      header: '状态'
+    }
+  ]
+
+  return (
+    <Page title="部门管理" description="查看组织部门、负责人、层级关系和资源规模。">
+      <PageSection contentClassName="grid gap-4 md:grid-cols-4">
+        {departmentSummary.map(item => {
+          const Icon = item.icon
+
+          return (
+            <Card key={item.label}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0">
                 <div>
-                  <CardTitle>{role.name}</CardTitle>
-                  <CardDescription>{role.description}</CardDescription>
+                  <CardDescription>{item.label}</CardDescription>
+                  <CardTitle>{item.value}</CardTitle>
                 </div>
-                <Badge variant={role.status === '启用' ? 'default' : 'secondary'}>
-                  {role.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-                <span className="text-muted-foreground">角色编码</span>
-                <span className="font-medium">{role.code}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-                <span className="text-muted-foreground">数据范围</span>
-                <span className="font-medium">{role.dataScope}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-                <span className="text-muted-foreground">成员数量</span>
-                <span className="font-medium">{role.memberCount} 人</span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                <Icon className="size-5 text-primary" />
+              </CardHeader>
+            </Card>
+          )
+        })}
       </PageSection>
       <PageSection>
         <Card>
-          <CardHeader>
-            <CardTitle>权限矩阵</CardTitle>
-            <CardDescription>按角色展示后台页面级权限编码的授权状态。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>角色</TableHead>
-                  {permissionLabels.map(permission => (
-                    <TableHead key={permission.value}>{permission.label}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map(role => {
-                  const permissionSet = new Set(role.permissions)
-
-                  return (
-                    <TableRow key={role.code}>
-                      <TableCell className="font-medium">{role.name}</TableCell>
-                      {permissionLabels.map(permission => {
-                        const granted = permissionSet.has(permission.value)
-
-                        return (
-                          <TableCell key={permission.value}>
-                            <span className="inline-flex items-center gap-1">
-                              {granted ? (
-                                <CheckCircle2 className="size-4 text-primary" />
-                              ) : (
-                                <CircleMinus className="size-4 text-muted-foreground" />
-                              )}
-                              <span className="sr-only">{granted ? '已授权' : '未授权'}</span>
-                              <span className="text-xs text-muted-foreground">
-                                {granted ? permission.value : '-'}
-                              </span>
-                            </span>
-                          </TableCell>
-                        )
-                      })}
-                    </TableRow>
-                  )
-                })}
-              </TableBody>
-            </Table>
+          <CardContent className="flex flex-col gap-4 md:flex-row">
+            <div
+              className="w-full shrink-0 md:w-60 md:border-r md:pr-4"
+              data-slot="department-tree"
+            >
+              <p className="mb-2 px-2 text-xs font-medium text-muted-foreground">部门树</p>
+              <div className="grid gap-0.5">
+                <button
+                  aria-current={selectedCode === null ? 'true' : undefined}
+                  className={cn(
+                    'flex w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-sm transition-colors',
+                    selectedCode === null
+                      ? 'bg-primary/10 font-medium text-primary'
+                      : 'text-foreground hover:bg-muted'
+                  )}
+                  onClick={() => setSelectedCode(null)}
+                  type="button"
+                >
+                  <FolderTree className="size-3.5 shrink-0 text-muted-foreground" />
+                  全部部门
+                </button>
+                {departmentTree.map(node => (
+                  <DepartmentTreeNode
+                    key={node.record.code}
+                    node={node}
+                    onSelect={setSelectedCode}
+                    selectedCode={selectedCode}
+                  />
+                ))}
+              </div>
+            </div>
+            <div className="min-w-0 flex-1" data-slot="department-table">
+              <CTable<DepartmentRecord>
+                columns={columns}
+                data={visibleDepartments}
+                getRowId={row => row.code}
+              />
+            </div>
           </CardContent>
         </Card>
       </PageSection>
@@ -455,124 +930,6 @@ export function MenusPage() {
                           {menu.childrenCount} 个子项
                         </span>
                       ) : null}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      </PageSection>
-    </Page>
-  )
-}
-
-/**
- * 展示组织部门、负责人和成员数量。
- *
- * @returns 部门管理页面。
- */
-export function DepartmentsPage() {
-  const { data = emptyDepartments } = useQuery(systemQueries.departments())
-  const departmentSummary = useMemo(() => {
-    const memberCount = data.reduce((total, department) => total + department.memberCount, 0)
-    const projectCount = data.reduce((total, department) => total + department.projectCount, 0)
-    const childrenCount = data.reduce((total, department) => total + department.childrenCount, 0)
-
-    return [
-      { icon: Building2, label: '部门数量', value: data.length },
-      { icon: Users, label: '成员总数', value: memberCount },
-      { icon: Route, label: '项目数量', value: projectCount },
-      { icon: FolderTree, label: '子部门', value: childrenCount }
-    ]
-  }, [data])
-
-  return (
-    <Page title="部门管理" description="查看组织部门、负责人、层级关系和资源规模。">
-      <PageSection contentClassName="grid gap-4 md:grid-cols-4">
-        {departmentSummary.map(item => {
-          const Icon = item.icon
-
-          return (
-            <Card key={item.label}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0">
-                <div>
-                  <CardDescription>{item.label}</CardDescription>
-                  <CardTitle>{item.value}</CardTitle>
-                </div>
-                <Icon className="size-5 text-primary" />
-              </CardHeader>
-            </Card>
-          )
-        })}
-      </PageSection>
-      <PageSection contentClassName="grid gap-4 lg:grid-cols-3">
-        {data.map(department => (
-          <Card key={department.code}>
-            <CardHeader>
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <CardTitle>{department.name}</CardTitle>
-                  <CardDescription>{department.description}</CardDescription>
-                </div>
-                <Badge variant={department.status === '启用' ? 'default' : 'secondary'}>
-                  {department.status}
-                </Badge>
-              </div>
-            </CardHeader>
-            <CardContent className="grid gap-3 text-sm">
-              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-                <span className="text-muted-foreground">负责人</span>
-                <span className="font-medium">{department.leader}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-                <span className="text-muted-foreground">上级部门</span>
-                <span className="font-medium">{department.parent}</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-background px-3 py-2">
-                <span className="text-muted-foreground">成员 / 项目</span>
-                <span className="font-medium">
-                  {department.memberCount} 人 / {department.projectCount} 项
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </PageSection>
-      <PageSection>
-        <Card>
-          <CardHeader>
-            <CardTitle>组织明细</CardTitle>
-            <CardDescription>展示部门编码、层级关系、负责人和资源规模。</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>部门</TableHead>
-                  <TableHead>编码</TableHead>
-                  <TableHead>上级</TableHead>
-                  <TableHead>负责人</TableHead>
-                  <TableHead>成员</TableHead>
-                  <TableHead>项目</TableHead>
-                  <TableHead>子部门</TableHead>
-                  <TableHead>状态</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {data.map(department => (
-                  <TableRow key={department.code}>
-                    <TableCell className="font-medium">{department.name}</TableCell>
-                    <TableCell>{department.code}</TableCell>
-                    <TableCell>{department.parent}</TableCell>
-                    <TableCell>{department.leader}</TableCell>
-                    <TableCell>{department.memberCount}</TableCell>
-                    <TableCell>{department.projectCount}</TableCell>
-                    <TableCell>{department.childrenCount}</TableCell>
-                    <TableCell>
-                      <Badge variant={department.status === '启用' ? 'default' : 'secondary'}>
-                        {department.status}
-                      </Badge>
                     </TableCell>
                   </TableRow>
                 ))}

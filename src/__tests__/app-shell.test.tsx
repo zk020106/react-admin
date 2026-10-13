@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 
 import App from '../App'
 import { queryClient } from '@/lib/query-client'
-import { resetMockUsers } from '@/mock/admin-mock'
+import { resetMockRoles, resetMockUsers } from '@/mock/admin-mock'
 import { preferenceStore } from '@/store/preferences'
 import { tabsStore } from '@/store/tabs'
 
@@ -61,6 +61,7 @@ describe('admin app shell', () => {
     preferenceStore.getState().resetPreferences()
     resetGlobalTabs()
     resetMockUsers()
+    resetMockRoles()
     queryClient.clear()
     resizeViewport(1024)
     window.history.replaceState(null, '', '/')
@@ -385,7 +386,7 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/users']"
     ) as HTMLElement
 
-    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
+    // system-pages 懒 chunk 较大，测试环境首次转换耗时较长。
     expect(
       await within(pageSurface).findByText('用户管理', undefined, { timeout: 30000 })
     ).toBeInTheDocument()
@@ -403,17 +404,24 @@ describe('admin app shell', () => {
     expect(summarySectionContent).toHaveClass('grid')
     expect(summarySectionContent).toHaveClass('md:grid-cols-4')
     expect(within(pageSurface).getByText('风险关注')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('密码 + MFA')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('2026-06-10 09:24')).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('超级管理员')).toBeInTheDocument()
+    // 列收敛：登录方式 / 最近登录为纯展示列（无筛选无操作），已从用户表砍掉。
+    expect(within(pageSurface).queryByText('密码 + MFA')).not.toBeInTheDocument()
+    expect(within(pageSurface).queryByText('2026-06-10 09:24')).not.toBeInTheDocument()
 
     const searchInput = within(pageSurface).getByLabelText('搜索用户')
     await userEvent.type(searchInput, 'audit')
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '搜索' }))
 
     expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
     expect(within(pageSurface).queryByText('超级管理员')).not.toBeInTheDocument()
 
-    await userEvent.clear(searchInput)
-    await userEvent.click(within(pageSurface).getByRole('button', { name: '复核中' }))
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '重置' }))
+    // 状态筛选：展开搜索区 → 状态下拉 → 搜索。
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '展开' }))
+    await userEvent.click(within(pageSurface).getByLabelText('账号状态筛选'))
+    await userEvent.click(screen.getByRole('option', { name: '复核中' }))
+    await userEvent.click(within(pageSurface).getByRole('button', { name: '搜索' }))
 
     expect(await within(pageSurface).findByText('审计账号')).toBeInTheDocument()
     expect(within(pageSurface).queryByText('运营账号')).not.toBeInTheDocument()
@@ -427,10 +435,10 @@ describe('admin app shell', () => {
     const { usersLink } = await openSystemMenu(sidebarNavigation)
 
     await userEvent.click(usersLink)
-    // system-pages 懒 chunk 含 antd，测试环境首次转换耗时较长。
+    // system-pages 懒 chunk 较大，测试环境首次转换耗时较长。
     expect(await screen.findByText('超级管理员', undefined, { timeout: 30000 })).toBeInTheDocument()
 
-    // 新增用户：弹窗表单提交后列表自动失效刷新。
+    // 新增用户：抽屉表单提交后列表自动失效刷新。
     await userEvent.click(screen.getByRole('button', { name: /新增用户/ }))
     const dialog = await screen.findByRole('dialog')
 
@@ -438,7 +446,7 @@ describe('admin app shell', () => {
     await userEvent.type(within(dialog).getByLabelText('邮箱'), 'qa@example.com')
     await userEvent.type(within(dialog).getByLabelText('角色'), '测试员')
     await userEvent.type(within(dialog).getByLabelText('部门'), '质量部')
-    await userEvent.click(within(dialog).getByRole('button', { name: /确 定|OK/ }))
+    await userEvent.click(within(dialog).getByRole('button', { name: '确认' }))
 
     // 新增成功：等用户出现在表格(mutation + invalidate 完成)。
     expect(await screen.findByText('测试账号', undefined, { timeout: 10000 })).toBeInTheDocument()
@@ -500,12 +508,38 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/roles']"
     ) as HTMLElement
 
-    expect(await within(pageSurface).findByText('权限矩阵')).toBeInTheDocument()
+    expect(
+      await within(pageSurface).findByText('角色管理', undefined, { timeout: 30000 })
+    ).toBeInTheDocument()
     expect(within(pageSurface).getByText('授权成员')).toBeInTheDocument()
-    expect(await within(pageSurface).findByText('全部数据')).toBeInTheDocument()
-    expect(within(pageSurface).getByText('只读审计数据')).toBeInTheDocument()
-    expect(within(pageSurface).getAllByText('system:menu:read').length).toBeGreaterThan(0)
+    // 搜索区限定作用域：角色抽屉 forceRender 时表单预挂载在隐藏容器里，同名 label 会重复。
+    const roleSearchBar = pageSurface.querySelector(
+      "[data-slot='c-table-search-bar']"
+    ) as HTMLElement
+
+    expect(within(roleSearchBar).getByLabelText('角色名称')).toBeInTheDocument()
+    expect(within(roleSearchBar).getByLabelText('角色编码')).toBeInTheDocument()
+    expect(within(pageSurface).getByRole('button', { name: /新增角色/ })).toBeInTheDocument()
+    expect(await within(pageSurface).findByText('owner')).toBeInTheDocument()
     expect(within(pageSurface).getByText('auditor')).toBeInTheDocument()
+
+    // 行操作收敛：编辑为文字链，分配权限 / 删除收进“更多”菜单。
+    await userEvent.click(within(pageSurface).getAllByRole('button', { name: '更多' })[0])
+    expect(await screen.findByRole('menuitem', { name: '分配权限' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: '删除' })).toBeInTheDocument()
+
+    // 分配权限抽屉：按模块分组渲染 checkbox。
+    await userEvent.click(screen.getByRole('menuitem', { name: '分配权限' }))
+    const permissionDialog = await screen.findByRole('dialog')
+
+    expect(
+      within(permissionDialog).getByText('为「所有者」勾选可访问的模块，保存后即时生效。')
+    ).toBeInTheDocument()
+    expect(within(permissionDialog).getByRole('checkbox', { name: /概览/ })).toBeInTheDocument()
+    await userEvent.click(within(permissionDialog).getByRole('button', { name: '取消' }))
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    })
   })
 
   it('opens the department management page from the sidebar', async () => {
@@ -529,16 +563,25 @@ describe('admin app shell', () => {
       "[data-slot='page-surface'][data-route-key='/system/departments']"
     ) as HTMLElement
 
-    expect(await within(pageSurface).findByText('组织明细')).toBeInTheDocument()
+    expect(
+      await within(pageSurface).findByText('部门树', undefined, { timeout: 30000 })
+    ).toBeInTheDocument()
     expect(within(pageSurface).getByText('成员总数')).toBeInTheDocument()
-    expect(
-      await within(pageSurface).findByText('负责后台基础能力、权限体系和工程框架。')
-    ).toBeInTheDocument()
+    expect(within(pageSurface).getByRole('button', { name: /全部部门/ })).toBeInTheDocument()
     expect(await within(pageSurface).findByText('dept-risk')).toBeInTheDocument()
-    expect(
-      within(pageSurface).getByText('负责风险复核、审计追踪和异常流程处置。')
-    ).toBeInTheDocument()
-    expect(within(pageSurface).getAllByText('运营部').length).toBeGreaterThan(0)
+
+    const departmentTable = pageSurface.querySelector(
+      "[data-slot='department-table']"
+    ) as HTMLElement
+
+    expect(within(departmentTable).getByText('平台部')).toBeInTheDocument()
+
+    // 选中树节点：右侧表格只展示该节点及其后代。
+    await userEvent.click(within(pageSurface).getByRole('button', { name: /运营部/ }))
+
+    expect(within(departmentTable).queryByText('平台部')).not.toBeInTheDocument()
+    expect(within(departmentTable).getByText('运营部')).toBeInTheDocument()
+    expect(within(departmentTable).getByText('风控部')).toBeInTheDocument()
   })
 
   it('renders header widgets in admin order', async () => {

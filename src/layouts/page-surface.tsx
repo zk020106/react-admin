@@ -5,8 +5,8 @@ import { cn } from '@/lib/utils'
 import { usePreferencesSlice } from '@/store/use-preferences'
 
 /** 渲染后台内容区容器，承载路由出口与懒加载兜底骨架。
- *  注意：antd 页面需在自身懒加载模块内包裹 AdminConfigProvider，
- *  此处不做全局包裹，避免 antd 进入首屏主包。 */
+ *  注意：C-UI 组件直接消费主题变量，无需主题桥包裹，
+ *  此处不做全局包裹，避免首屏主包膨胀。 */
 export function PageSurface({
   activePath,
   children

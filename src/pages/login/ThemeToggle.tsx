@@ -1,7 +1,7 @@
-import { Tooltip } from 'antd'
 import { Moon, Sun } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 export type LoginThemeMode = 'dark' | 'light'
 
@@ -17,15 +17,18 @@ export function ThemeToggle({ onToggle, themeMode }: ThemeToggleProps) {
   const isDark = themeMode === 'dark'
 
   return (
-    <Tooltip title={isDark ? '切换为亮色模式' : '切换为暗黑模式'}>
-      <button
-        aria-label={isDark ? '切换为亮色模式' : '切换为暗黑模式'}
-        className={cn(iconButtonClass)}
-        onClick={onToggle}
-        type="button"
-      >
-        {isDark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
-      </button>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          aria-label={isDark ? '切换为亮色模式' : '切换为暗黑模式'}
+          className={cn(iconButtonClass)}
+          onClick={onToggle}
+          type="button"
+        >
+          {isDark ? <Sun className="size-[18px]" /> : <Moon className="size-[18px]" />}
+        </button>
+      </TooltipTrigger>
+      <TooltipContent>{isDark ? '切换为亮色模式' : '切换为暗黑模式'}</TooltipContent>
     </Tooltip>
   )
 }

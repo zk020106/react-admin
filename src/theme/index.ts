@@ -205,7 +205,7 @@ function resolvePrimaryColor(
   return (dark ? preset.darkPrimaryColor : preset.primaryColor) || preset.color
 }
 
-// 函数：resolveAdminPrimaryColor。按偏好设置和明暗模式解析当前主色，供 antd 主题桥使用。
+// 函数：resolveAdminPrimaryColor。按偏好设置和明暗模式解析当前主色，供主题变量与 C-UI 组件使用。
 export function resolveAdminPrimaryColor(
   options: Pick<AdminThemeOptions, 'builtinType' | 'colorPrimary'>,
   dark: boolean

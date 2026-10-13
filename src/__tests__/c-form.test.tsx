@@ -2,8 +2,7 @@ import { act, cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { SchemaForm } from '@/components/admin/form/schema-form'
-import { useAdminForm } from '@/components/admin/form/use-admin-form'
+import { CForm, useCForm } from '@/components/c-ui/form'
 import type { FormApi, FormApiOptions } from '@/utils/form-api'
 
 function Harness({
@@ -13,14 +12,14 @@ function Harness({
   onReady: (api: FormApi) => void
   options: FormApiOptions
 }) {
-  const [api, form] = useAdminForm(options)
+  const [api, methods] = useCForm(options)
 
   onReady(api)
 
-  return <SchemaForm api={api} form={form} />
+  return <CForm api={api} methods={methods} />
 }
 
-function renderSchemaForm(options: FormApiOptions) {
+function renderCForm(options: FormApiOptions) {
   let api: FormApi | undefined
 
   render(
@@ -39,13 +38,13 @@ function renderSchemaForm(options: FormApiOptions) {
   return api
 }
 
-describe('schema form', () => {
+describe('c form', () => {
   afterEach(() => {
     cleanup()
   })
 
   it('renders fields from schema with labels and default values', () => {
-    renderSchemaForm({
+    renderCForm({
       schema: [
         { component: 'input', defaultValue: 'Root', fieldName: 'name', label: '姓名' },
         { component: 'select', fieldName: 'role', label: '角色' }
@@ -58,7 +57,7 @@ describe('schema form', () => {
 
   it('blocks submit when required rules fail', async () => {
     const handleSubmit = vi.fn()
-    const api = renderSchemaForm({
+    const api = renderCForm({
       handleSubmit,
       schema: [
         {
@@ -79,7 +78,7 @@ describe('schema form', () => {
 
   it('submits typed values through the FormApi pipeline', async () => {
     const handleSubmit = vi.fn()
-    const api = renderSchemaForm({
+    const api = renderCForm({
       handleSubmit,
       schema: [
         {
@@ -100,7 +99,7 @@ describe('schema form', () => {
   })
 
   it('reads live values after programmatic setValue', async () => {
-    const api = renderSchemaForm({
+    const api = renderCForm({
       schema: [{ component: 'input', defaultValue: 'before', fieldName: 'name', label: '姓名' }]
     })
 
@@ -110,7 +109,7 @@ describe('schema form', () => {
   })
 
   it('re-renders fields when updateSchema changes the schema', async () => {
-    const api = renderSchemaForm({
+    const api = renderCForm({
       schema: [{ component: 'input', fieldName: 'email', label: 'Email' }]
     })
 
